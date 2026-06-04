@@ -1,5 +1,6 @@
 import { View, Text, TouchableOpacity, ScrollView, StatusBar } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 import { Calendar, Car, Home, Clock, ChevronRight } from "lucide-react-native";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { EmptyState } from "@/components/EmptyState";
@@ -26,6 +27,7 @@ const MOCK_INSPECTIONS = [
 ];
 
 export default function InspectionsScreen() {
+  const router = useRouter();
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
       <StatusBar barStyle="dark-content" />
@@ -46,6 +48,7 @@ export default function InspectionsScreen() {
               return (
                 <TouchableOpacity
                   key={insp.id}
+                  onPress={() => router.push(`/inspection-details?id=${insp.id}` as any)}
                   className="bg-white rounded-3xl p-5 border border-gray-100"
                   style={shadow.card}
                 >

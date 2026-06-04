@@ -12,8 +12,10 @@ import {
 import { Link } from "expo-router";
 import { Image } from "expo-image";
 import { Mail, Lock, Eye, EyeOff, AlertCircle } from "lucide-react-native";
+import { useRouter } from "expo-router";
 
 export default function Login() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -141,7 +143,7 @@ export default function Login() {
 
           {/* Footer Links */}
           <View className="mt-6 items-center flex flex-col gap-3">
-            <TouchableOpacity onPress={() => console.log("Forgot Password")}>
+            <TouchableOpacity onPress={() => router.push("/forgot-password" as any)}>
               <Text className="text-primary text-sm font-medium underline">
                 Forgot your password?
               </Text>

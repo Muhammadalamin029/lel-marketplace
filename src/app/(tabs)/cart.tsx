@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { View, Text, ScrollView, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ShoppingBag, Trash2, Plus, Minus, MapPin, CreditCard, ChevronDown } from "lucide-react-native";
+import { useRouter } from "expo-router";
+import { ShoppingBag, Trash2, Plus, Minus, MapPin, CreditCard, ChevronRight } from "lucide-react-native";
 import { EmptyState } from "@/components/EmptyState";
 import { SectionHeader } from "@/components/SectionHeader";
 import { fmt } from "@/utils/format";
@@ -54,6 +55,7 @@ function CartItem({ item, onQtyChange, onRemove }: {
 // ─── Cart Screen ───────────────────────────────────────────────────────────────
 
 export default function CartScreen() {
+  const router = useRouter();
   const [items, setItems] = useState(INITIAL_CART);
 
   const handleQtyChange = (id: string, delta: number) => {
@@ -101,15 +103,19 @@ export default function CartScreen() {
           {/* ── Delivery Address ── */}
           <View className="px-5 mt-6">
             <SectionHeader title="Delivery" showDots={false} />
-            <TouchableOpacity className="bg-white rounded-2xl border border-gray-100 p-4 flex-row items-center gap-3" style={shadow.md}>
+            <TouchableOpacity
+              onPress={() => router.push("/addresses")}
+              className="bg-white rounded-2xl border border-gray-100 p-4 flex-row items-center gap-3"
+              style={shadow.md}
+            >
               <View className="w-10 h-10 rounded-full bg-amber-50 items-center justify-center">
                 <MapPin size={18} color="#f59e0b" />
               </View>
               <View className="flex-1">
                 <Text className="text-sm font-semibold text-gray-900">12 Adeola Odeku St, VI</Text>
-                <Text className="text-xs text-gray-400">Lagos, Nigeria</Text>
+                <Text className="text-xs text-gray-400">Lagos, Nigeria · Tap to change</Text>
               </View>
-              <ChevronDown size={16} color="#9ca3af" />
+              <ChevronRight size={16} color="#9ca3af" />
             </TouchableOpacity>
           </View>
 
@@ -138,6 +144,7 @@ export default function CartScreen() {
           {/* ── Checkout Button ── */}
           <View className="px-5 mt-5">
             <TouchableOpacity
+              onPress={() => router.push("/checkout")}
               className="bg-amber-400 rounded-2xl py-4 flex-row items-center justify-center gap-2"
               style={shadow.btn}
             >

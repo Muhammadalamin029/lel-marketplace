@@ -64,25 +64,26 @@ function getIconColor(type: ProductType) {
 
 // ─── Sub-components ────────────────────────────────────────────────────────────
 
-function CtaButtons({ type }: { type: ProductType }) {
+function CtaButtons({ type, onBookInspection, onBuyNow }: { type: ProductType; onBookInspection: () => void; onBuyNow: () => void }) {
   const isPhysical = type === "vehicle" || type === "real_estate";
   if (isPhysical) {
     return (
       <View className="flex-row gap-3">
         <TouchableOpacity
+          onPress={onBookInspection}
           className="flex-1 border-2 border-amber-400 rounded-2xl py-4 items-center justify-center"
           style={{ shadowColor: "#f59e0b", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 6, elevation: 3 }}
         >
           <Text className="text-amber-500 text-sm font-bold">Book Inspection</Text>
         </TouchableOpacity>
-        <TouchableOpacity className="flex-1 bg-amber-400 rounded-2xl py-4 items-center justify-center" style={shadow.btn}>
+        <TouchableOpacity onPress={onBuyNow} className="flex-1 bg-amber-400 rounded-2xl py-4 items-center justify-center" style={shadow.btn}>
           <Text className="text-white text-sm font-bold">Buy Now</Text>
         </TouchableOpacity>
       </View>
     );
   }
   return (
-    <TouchableOpacity className="bg-amber-400 rounded-2xl py-4 items-center justify-center" style={shadow.btn}>
+    <TouchableOpacity onPress={onBuyNow} className="bg-amber-400 rounded-2xl py-4 items-center justify-center" style={shadow.btn}>
       <Text className="text-white text-base font-bold">Buy Now</Text>
     </TouchableOpacity>
   );
@@ -117,6 +118,19 @@ export default function ProductDetailsScreen() {
   const [liked, setLiked] = useState(false);
   const product = PRODUCT;
 
+  const handleBookInspection = () => {
+    // TODO: pass real asset id when API-connected
+    router.push("/inspection-details?id=INSP-001");
+  };
+
+  const handleBuyNow = () => {
+    router.push("/checkout");
+  };
+
+  const handleShare = async () => {
+    // TODO: use expo-sharing when available
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-white">
       <StatusBar barStyle="dark-content" />
@@ -130,7 +144,7 @@ export default function ProductDetailsScreen() {
           <TouchableOpacity onPress={() => setLiked(!liked)} className="w-10 h-10 rounded-full bg-white items-center justify-center" style={shadow.float}>
             <Heart size={18} color={liked ? "#ef4444" : "#6b7280"} fill={liked ? "#ef4444" : "transparent"} />
           </TouchableOpacity>
-          <TouchableOpacity className="w-10 h-10 rounded-full bg-white items-center justify-center" style={shadow.float}>
+          <TouchableOpacity onPress={handleShare} className="w-10 h-10 rounded-full bg-white items-center justify-center" style={shadow.float}>
             <Share2 size={18} color="#6b7280" />
           </TouchableOpacity>
         </View>
@@ -211,7 +225,7 @@ export default function ProductDetailsScreen() {
           {/* Seller */}
           <View>
             <Text className="text-base font-extrabold text-gray-900 mb-3">Seller</Text>
-            <TouchableOpacity className="flex-row items-center gap-3 bg-gray-50 rounded-2xl p-3">
+            <TouchableOpacity onPress={() => {}} className="flex-row items-center gap-3 bg-gray-50 rounded-2xl p-3">
               <View className="w-12 h-12 rounded-full bg-indigo-950 items-center justify-center">
                 <Text className="text-white font-bold text-base">{product.seller.name[0]}</Text>
               </View>
@@ -238,7 +252,7 @@ export default function ProductDetailsScreen() {
         className="absolute bottom-0 left-0 right-0 bg-white px-5 pb-8 pt-4"
         style={{ borderTopWidth: 1, borderTopColor: "#f3f4f6", shadowColor: "#000", shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.06, shadowRadius: 10, elevation: 10 }}
       >
-        <CtaButtons type={product.type} />
+        <CtaButtons type={product.type} onBookInspection={handleBookInspection} onBuyNow={handleBuyNow} />
       </View>
     </SafeAreaView>
   );

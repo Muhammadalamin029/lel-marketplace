@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from "react";
 import {
   View,
   Text,
@@ -8,32 +8,49 @@ import {
   Platform,
   ScrollView,
   ActivityIndicator,
-} from 'react-native';
-import { Link } from 'expo-router';
-import { Image } from 'expo-image';
+} from "react-native";
+import { Link, useRouter } from "expo-router";
+import { useAuthStore } from "@/store/authStore";
+import { getApiError } from "@/api";
+import { Image } from "expo-image";
 import {
-  Mail, Lock, Building2, Phone, Globe, FileText,
-  Eye, EyeOff, AlertCircle, CheckCircle2, XCircle,
-  Store, Car, Home,
-} from 'lucide-react-native';
+  Mail,
+  Lock,
+  Building2,
+  Phone,
+  Globe,
+  FileText,
+  Eye,
+  EyeOff,
+  AlertCircle,
+  CheckCircle2,
+  XCircle,
+  Store,
+  Car,
+  Home,
+} from "lucide-react-native";
 
 // --- Password Policy ---
 function PasswordPolicy({ password }: { password: string }) {
   const rules = [
-    { label: 'At least 8 characters', met: password.length >= 8 },
-    { label: 'One uppercase letter', met: /[A-Z]/.test(password) },
-    { label: 'One lowercase letter', met: /[a-z]/.test(password) },
-    { label: 'One number', met: /[0-9]/.test(password) },
-    { label: 'One special character', met: /[^A-Za-z0-9]/.test(password) },
+    { label: "At least 8 characters", met: password.length >= 8 },
+    { label: "One uppercase letter", met: /[A-Z]/.test(password) },
+    { label: "One lowercase letter", met: /[a-z]/.test(password) },
+    { label: "One number", met: /[0-9]/.test(password) },
+    { label: "One special character", met: /[^A-Za-z0-9]/.test(password) },
   ];
   return (
     <View className="mt-2 flex flex-col gap-1">
       {rules.map((rule) => (
         <View key={rule.label} className="flex-row items-center gap-1.5">
-          {rule.met
-            ? <CheckCircle2 size={13} color="#22c55e" />
-            : <XCircle size={13} color="#9ca3af" />}
-          <Text className={`text-xs ${rule.met ? 'text-green-500' : 'text-muted-foreground'}`}>
+          {rule.met ? (
+            <CheckCircle2 size={13} color="#22c55e" />
+          ) : (
+            <XCircle size={13} color="#9ca3af" />
+          )}
+          <Text
+            className={`text-xs ${rule.met ? "text-green-500" : "text-muted-foreground"}`}
+          >
             {rule.label}
           </Text>
         </View>
@@ -52,7 +69,15 @@ function SectionHeader({ title }: { title: string }) {
 }
 
 // --- Field wrapper ---
-function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
+function Field({
+  label,
+  error,
+  children,
+}: {
+  label: string;
+  error?: string;
+  children: React.ReactNode;
+}) {
   return (
     <View className="flex flex-col gap-1.5">
       <Text className="text-sm font-medium text-foreground">{label}</Text>
@@ -63,29 +88,41 @@ function Field({ label, error, children }: { label: string; error?: string; chil
 }
 
 // --- Seller Type Option ---
-type SellerType = 'retailer' | 'car_dealer' | 'real_agent';
+type SellerType = "retailer" | "car_dealer" | "real_agent";
 
-const SELLER_TYPES: { value: SellerType; label: string; Icon: React.ComponentType<{ size: number; color: string }> }[] = [
-  { value: 'retailer',   label: 'Retail Business',   Icon: Store },
-  { value: 'car_dealer', label: 'Car Dealer',         Icon: Car },
-  { value: 'real_agent', label: 'Real Estate Agent',  Icon: Home },
+const SELLER_TYPES: {
+  value: SellerType;
+  label: string;
+  Icon: React.ComponentType<{ size: number; color: string }>;
+}[] = [
+  { value: "retailer", label: "Retail Business", Icon: Store },
+  { value: "car_dealer", label: "Car Dealer", Icon: Car },
+  { value: "real_agent", label: "Real Estate Agent", Icon: Home },
 ];
 
 function SellerTypeCard({
-  value, label, Icon, selected, onPress,
+  value,
+  label,
+  Icon,
+  selected,
+  onPress,
 }: {
-  value: SellerType; label: string;
+  value: SellerType;
+  label: string;
   Icon: React.ComponentType<{ size: number; color: string }>;
-  selected: boolean; onPress: () => void;
+  selected: boolean;
+  onPress: () => void;
 }) {
   return (
     <TouchableOpacity
       onPress={onPress}
       className={`flex-1 min-w-[44%] flex-col items-center justify-center rounded-xl border-2 p-4 gap-2
-        ${selected ? 'border-amber-400 bg-amber-50' : 'border-border bg-card'}`}
+        ${selected ? "border-amber-400 bg-amber-50" : "border-border bg-card"}`}
     >
-      <Icon size={24} color={selected ? '#f59e0b' : '#9ca3af'} />
-      <Text className={`text-xs font-medium text-center ${selected ? 'text-amber-600' : 'text-muted-foreground'}`}>
+      <Icon size={24} color={selected ? "#f59e0b" : "#9ca3af"} />
+      <Text
+        className={`text-xs font-medium text-center ${selected ? "text-amber-600" : "text-muted-foreground"}`}
+      >
         {label}
       </Text>
     </TouchableOpacity>
@@ -94,56 +131,90 @@ function SellerTypeCard({
 
 // --- Main Screen ---
 export default function SellerRegister() {
+  const router = useRouter();
+  const { registerSeller, isLoading } = useAuthStore();
   const [sellerType, setSellerType] = useState<SellerType | null>(null);
   const [form, setForm] = useState({
-    businessName: '', contactPhone: '', contactEmail: '',
-    websiteUrl: '', description: '', password: '', confirmPassword: '',
+    businessName: "",
+    contactPhone: "",
+    contactEmail: "",
+    websiteUrl: "",
+    description: "",
+    password: "",
+    confirmPassword: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<Partial<typeof form & { sellerType: string }>>({});
+  const [fieldErrors, setFieldErrors] = useState<
+    Partial<typeof form & { sellerType: string }>
+  >({});
 
   const set = (key: keyof typeof form) => (val: string) =>
     setForm((prev) => ({ ...prev, [key]: val }));
 
   const validate = () => {
     const errs: Partial<typeof form & { sellerType: string }> = {};
-    if (!sellerType)                       errs.sellerType    = 'Please select a business category';
-    if (!form.businessName.trim())         errs.businessName  = 'Business name is required';
-    if (!form.contactPhone.trim())         errs.contactPhone  = 'Contact phone is required';
-    if (!form.contactEmail.trim())         errs.contactEmail  = 'Business email is required';
-    else if (!/\S+@\S+\.\S+/.test(form.contactEmail)) errs.contactEmail = 'Enter a valid email';
-    if (!form.description.trim())          errs.description   = 'Business description is required';
-    if (!form.password)                    errs.password      = 'Password is required';
-    if (!form.confirmPassword)             errs.confirmPassword = 'Please confirm your password';
-    else if (form.password !== form.confirmPassword) errs.confirmPassword = 'Passwords do not match';
+    if (!sellerType) errs.sellerType = "Please select a business category";
+    if (!form.businessName.trim())
+      errs.businessName = "Business name is required";
+    if (!form.contactPhone.trim())
+      errs.contactPhone = "Contact phone is required";
+    if (!form.contactEmail.trim())
+      errs.contactEmail = "Business email is required";
+    else if (!/\S+@\S+\.\S+/.test(form.contactEmail))
+      errs.contactEmail = "Enter a valid email";
+    if (!form.description.trim())
+      errs.description = "Business description is required";
+    if (!form.password) errs.password = "Password is required";
+    if (!form.confirmPassword)
+      errs.confirmPassword = "Please confirm your password";
+    else if (form.password !== form.confirmPassword)
+      errs.confirmPassword = "Passwords do not match";
     setFieldErrors(errs);
     return Object.keys(errs).length === 0;
   };
 
   const handleSubmit = async () => {
     if (!validate()) return;
-    setIsLoading(true);
     setError(null);
     try {
-      console.log('SellerRegister', { sellerType, ...form });
-    } catch {
-      setError('Something went wrong. Please try again.');
-    } finally {
-      setIsLoading(false);
+      const typeMap: Record<string, "retailer" | "car_dealer" | "real_agent"> =
+        {
+          retailer: "retailer",
+          car_dealer: "car_dealer",
+          real_agent: "real_agent",
+        };
+      await registerSeller({
+        business_name: form.businessName.trim(),
+        contact_email: form.contactEmail.trim(),
+        contact_phone: form.contactPhone.trim(),
+        description: form.description.trim(),
+        seller_type: typeMap[sellerType!] ?? "retailer",
+        website_url: form.websiteUrl.trim() || undefined,
+        password: form.password,
+      });
+      router.replace("/(tabs)");
+    } catch (e) {
+      setError(getApiError(e));
     }
   };
 
-  const allFilled = !!sellerType && !!form.businessName && !!form.contactPhone &&
-    !!form.contactEmail && !!form.description && !!form.password && !!form.confirmPassword;
-  const isDisabled = isLoading || !allFilled || form.password !== form.confirmPassword;
+  const allFilled =
+    !!sellerType &&
+    !!form.businessName &&
+    !!form.contactPhone &&
+    !!form.contactEmail &&
+    !!form.description &&
+    !!form.password &&
+    !!form.confirmPassword;
+  const isDisabled =
+    isLoading || !allFilled || form.password !== form.confirmPassword || false;
 
   return (
     <KeyboardAvoidingView
       className="flex-1 bg-background"
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <ScrollView
         contentContainerClassName="flex-grow items-center p-6 pb-12"
@@ -152,18 +223,19 @@ export default function SellerRegister() {
         {/* Logo */}
         <View className="mt-4 mb-8 items-center">
           <Image
-            source={require('../../../assets/images/logo.png')}
+            source={require("../../../assets/images/logo.png")}
             style={{ width: 180, height: 60 }}
             contentFit="contain"
           />
         </View>
 
         <View className="w-full max-w-[480px] bg-card rounded-xl p-6 shadow-sm border border-border">
-
           {/* Header */}
           <View className="flex-row items-center justify-center gap-2 mb-1">
             <Store size={24} color="#f59e0b" />
-            <Text className="text-2xl font-semibold text-foreground">Start Selling</Text>
+            <Text className="text-2xl font-semibold text-foreground">
+              Start Selling
+            </Text>
           </View>
           <Text className="text-sm text-muted-foreground text-center mb-6">
             Join our marketplace and grow your business
@@ -178,7 +250,6 @@ export default function SellerRegister() {
           )}
 
           <View className="flex flex-col gap-6">
-
             {/* ── Business Category ── */}
             <View className="flex flex-col gap-3">
               <SectionHeader title="Business Category *" />
@@ -195,7 +266,9 @@ export default function SellerRegister() {
                 ))}
               </View>
               {fieldErrors.sellerType && (
-                <Text className="text-xs text-destructive">{fieldErrors.sellerType}</Text>
+                <Text className="text-xs text-destructive">
+                  {fieldErrors.sellerType}
+                </Text>
               )}
             </View>
 
@@ -206,7 +279,10 @@ export default function SellerRegister() {
               {/* Business Name + Phone row */}
               <View className="flex-row gap-3">
                 <View className="flex-1">
-                  <Field label="Business Name *" error={fieldErrors.businessName}>
+                  <Field
+                    label="Business Name *"
+                    error={fieldErrors.businessName}
+                  >
                     <View className="flex-row items-center border border-border rounded-lg bg-card px-3">
                       <Building2 size={16} color="#9ca3af" />
                       <TextInput
@@ -214,13 +290,16 @@ export default function SellerRegister() {
                         placeholder="Your business name"
                         placeholderTextColor="#9ca3af"
                         value={form.businessName}
-                        onChangeText={set('businessName')}
+                        onChangeText={set("businessName")}
                       />
                     </View>
                   </Field>
                 </View>
                 <View className="flex-1">
-                  <Field label="Contact Phone *" error={fieldErrors.contactPhone}>
+                  <Field
+                    label="Contact Phone *"
+                    error={fieldErrors.contactPhone}
+                  >
                     <View className="flex-row items-center border border-border rounded-lg bg-card px-3">
                       <Phone size={16} color="#9ca3af" />
                       <TextInput
@@ -228,7 +307,7 @@ export default function SellerRegister() {
                         placeholder="+1234567890"
                         placeholderTextColor="#9ca3af"
                         value={form.contactPhone}
-                        onChangeText={set('contactPhone')}
+                        onChangeText={set("contactPhone")}
                         keyboardType="phone-pad"
                       />
                     </View>
@@ -245,7 +324,7 @@ export default function SellerRegister() {
                     placeholder="business@example.com"
                     placeholderTextColor="#9ca3af"
                     value={form.contactEmail}
-                    onChangeText={set('contactEmail')}
+                    onChangeText={set("contactEmail")}
                     keyboardType="email-address"
                     autoCapitalize="none"
                   />
@@ -253,7 +332,10 @@ export default function SellerRegister() {
               </Field>
 
               {/* Website URL */}
-              <Field label="Website URL (Optional)" error={fieldErrors.websiteUrl}>
+              <Field
+                label="Website URL (Optional)"
+                error={fieldErrors.websiteUrl}
+              >
                 <View className="flex-row items-center border border-border rounded-lg bg-card px-3">
                   <Globe size={16} color="#9ca3af" />
                   <TextInput
@@ -261,7 +343,7 @@ export default function SellerRegister() {
                     placeholder="https://yourbusiness.com"
                     placeholderTextColor="#9ca3af"
                     value={form.websiteUrl}
-                    onChangeText={set('websiteUrl')}
+                    onChangeText={set("websiteUrl")}
                     keyboardType="url"
                     autoCapitalize="none"
                   />
@@ -269,15 +351,22 @@ export default function SellerRegister() {
               </Field>
 
               {/* Description */}
-              <Field label="Business Description *" error={fieldErrors.description}>
+              <Field
+                label="Business Description *"
+                error={fieldErrors.description}
+              >
                 <View className="flex-row items-start border border-border rounded-lg bg-card px-3 pt-1">
-                  <FileText size={16} color="#9ca3af" style={{ marginTop: 12 }} />
+                  <FileText
+                    size={16}
+                    color="#9ca3af"
+                    style={{ marginTop: 12 }}
+                  />
                   <TextInput
                     className="flex-1 p-3 text-sm text-foreground"
                     placeholder="Tell us about your business, what you sell, and what makes you unique..."
                     placeholderTextColor="#9ca3af"
                     value={form.description}
-                    onChangeText={set('description')}
+                    onChangeText={set("description")}
                     multiline
                     numberOfLines={4}
                     textAlignVertical="top"
@@ -302,20 +391,32 @@ export default function SellerRegister() {
                         placeholder="Create a strong password"
                         placeholderTextColor="#9ca3af"
                         value={form.password}
-                        onChangeText={set('password')}
+                        onChangeText={set("password")}
                         secureTextEntry={!showPassword}
                       />
-                      <TouchableOpacity onPress={() => setShowPassword(!showPassword)} className="p-1">
-                        {showPassword ? <EyeOff size={16} color="#9ca3af" /> : <Eye size={16} color="#9ca3af" />}
+                      <TouchableOpacity
+                        onPress={() => setShowPassword(!showPassword)}
+                        className="p-1"
+                      >
+                        {showPassword ? (
+                          <EyeOff size={16} color="#9ca3af" />
+                        ) : (
+                          <Eye size={16} color="#9ca3af" />
+                        )}
                       </TouchableOpacity>
                     </View>
-                    {form.password.length > 0 && <PasswordPolicy password={form.password} />}
+                    {form.password.length > 0 && (
+                      <PasswordPolicy password={form.password} />
+                    )}
                   </Field>
                 </View>
 
                 {/* Confirm Password */}
                 <View className="flex-1">
-                  <Field label="Confirm Password *" error={fieldErrors.confirmPassword}>
+                  <Field
+                    label="Confirm Password *"
+                    error={fieldErrors.confirmPassword}
+                  >
                     <View className="flex-row items-center border border-border rounded-lg bg-card px-3">
                       <Lock size={16} color="#9ca3af" />
                       <TextInput
@@ -323,11 +424,20 @@ export default function SellerRegister() {
                         placeholder="Confirm your password"
                         placeholderTextColor="#9ca3af"
                         value={form.confirmPassword}
-                        onChangeText={set('confirmPassword')}
+                        onChangeText={set("confirmPassword")}
                         secureTextEntry={!showConfirmPassword}
                       />
-                      <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)} className="p-1">
-                        {showConfirmPassword ? <EyeOff size={16} color="#9ca3af" /> : <Eye size={16} color="#9ca3af" />}
+                      <TouchableOpacity
+                        onPress={() =>
+                          setShowConfirmPassword(!showConfirmPassword)
+                        }
+                        className="p-1"
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff size={16} color="#9ca3af" />
+                        ) : (
+                          <Eye size={16} color="#9ca3af" />
+                        )}
                       </TouchableOpacity>
                     </View>
                   </Field>
@@ -337,13 +447,15 @@ export default function SellerRegister() {
 
             {/* Submit */}
             <TouchableOpacity
-              className={`rounded-lg p-3.5 items-center flex-row justify-center gap-2 ${isDisabled ? 'bg-primary/50' : 'bg-primary'}`}
+              className={`rounded-lg p-3.5 items-center flex-row justify-center gap-2 ${isDisabled ? "bg-primary/50" : "bg-primary"}`}
               onPress={handleSubmit}
               disabled={isDisabled}
             >
               {isLoading && <ActivityIndicator size="small" color="#ffffff" />}
               <Text className="text-primary-foreground text-sm font-semibold">
-                {isLoading ? 'Creating Seller Account...' : 'Create Seller Account'}
+                {isLoading
+                  ? "Creating Seller Account..."
+                  : "Create Seller Account"}
               </Text>
             </TouchableOpacity>
           </View>
@@ -351,18 +463,26 @@ export default function SellerRegister() {
           {/* Footer Links */}
           <View className="mt-6 items-center flex flex-col gap-3">
             <View className="flex-row items-center flex-wrap justify-center gap-1">
-              <Text className="text-muted-foreground text-sm">Want to shop instead?</Text>
+              <Text className="text-muted-foreground text-sm">
+                Want to shop instead?
+              </Text>
               <Link href="/(auth)/register" asChild>
                 <TouchableOpacity>
-                  <Text className="text-primary text-sm font-medium underline">Create customer account</Text>
+                  <Text className="text-primary text-sm font-medium underline">
+                    Create customer account
+                  </Text>
                 </TouchableOpacity>
               </Link>
             </View>
             <View className="flex-row items-center gap-1">
-              <Text className="text-muted-foreground text-sm">Already have an account?</Text>
+              <Text className="text-muted-foreground text-sm">
+                Already have an account?
+              </Text>
               <Link href="/(auth)/login" asChild>
                 <TouchableOpacity>
-                  <Text className="text-primary text-sm font-medium underline">Sign in</Text>
+                  <Text className="text-primary text-sm font-medium underline">
+                    Sign in
+                  </Text>
                 </TouchableOpacity>
               </Link>
             </View>

@@ -1,49 +1,109 @@
-import { useState } from "react";
-import { View, Text, ScrollView, TouchableOpacity, TextInput, StatusBar } from "react-native";
+import { useEffect, useState, useCallback } from "react";
+import { View, Text, ScrollView, TouchableOpacity, TextInput, StatusBar, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { ScreenHeader } from "@/components/ScreenHeader";
-import { ProductCard } from "@/components/ProductCard";
 import { EmptyState } from "@/components/EmptyState";
-import { Car, Home, Tag, Search, SlidersHorizontal, Package } from "lucide-react-native";
+import { ProductCard } from "@/components/ProductCard";
+import type { ProductCardItem } from "@/components/ProductCard";
+import { Car, Home, Tag, Search, Package } from "lucide-react-native";
+import { productsApi } from "@/api";
+import type { Product, Car as CarType, Property } from "@/api";
 import { fmt } from "@/utils/format";
-import { shadow } from "@/constants/shadows";
 
-const CATEGORIES = [
-  { id: "all", label: "All" },
-  { id: "vehicle", label: "Vehicles" },
-  { id: "real_estate", label: "Real Estate" },
-  { id: "product", label: "Products" },
-];
+type Category = "all" | "vehicle" | "real_estate" | "product";
 
-const ALL_ITEMS = [
-  { id: "1", name: "Toyota Camry 2022", price: fmt(18500000), tag: "Verified", tagColor: "#ea580c", iconColor: "#ea580c", bgColor: "#fff7ed", Icon: Car, type: "vehicle" },
-  { id: "2", name: "3-Bed Apartment Lekki", price: fmt(85000000), tag: "Hot Deal", tagColor: "#dc2626", iconColor: "#dc2626", bgColor: "#fef2f2", Icon: Home, type: "real_estate" },
-  { id: "3", name: "Honda Civic 2021", price: fmt(12000000), tag: "Verified", tagColor: "#2563eb", iconColor: "#2563eb", bgColor: "#eff6ff", Icon: Car, type: "vehicle" },
-  { id: "4", name: "BMW 5 Series 2020", price: fmt(32000000), tag: "Verified", tagColor: "#7c3aed", iconColor: "#7c3aed", bgColor: "#f5f3ff", Icon: Car, type: "vehicle" },
-  { id: "5", name: "Office Complex VI", price: fmt(200000000), tag: "Commercial", tagColor: "#0284c7", iconColor: "#0284c7", bgColor: "#f0f9ff", Icon: Home, type: "real_estate" },
-  { id: "6", name: "Leather Sofa Set", price: fmt(850000), tag: "New", tagColor: "#16a34a", iconColor: "#16a34a", bgColor: "#f0fdf4", Icon: Tag, type: "product" },
-  { id: "7", name: "Samsung 65\" QLED TV", price: fmt(1200000), tag: "New", tagColor: "#0891b2", iconColor: "#0891b2", bgColor: "#ecfeff", Icon: Tag, type: "product" },
-  { id: "8", name: "2-Bed Flat Surulere", price: fmt(45000000), tag: "Rental", tagColor: "#d97706", iconColor: "#d97706", bgColor: "#fffbeb", Icon: Home, type: "real_estate" },
+const CATEGORIES: { id: Category; label: string; Icon: any }[] = [
+  { id: "all",         label: "All",         Icon: Tag  },
+  { id: "vehicle",     label: "Vehicles",    Icon: Car  },
+  { id: "real_estate", label: "Real Estate", Icon: Home },
+  { id: "product",     label: "Products",    Icon: Tag  },
 ];
 
 export default function BrowseScreen() {
   const router = useRouter();
   const [search, setSearch] = useState("");
-  const [activeCategory, setActiveCategory] = useState("all");
+  const [activeCategory, setActiveCategory] = useState<Category>("all");
+  const [allItems, setAllItems] = useState<ProductCardItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchDebounce, setSearchDebounce] = useState("");
 
-  const filtered = ALL_ITEMS.filter((item) => {
-    const matchesSearch = !search || item.name.toLowerCase().includes(search.toLowerCase());
-    const matchesCategory = activeCategory === "all" || item.type === activeCategory;
-    return matchesSearch && matchesCategory;
+  // Debounce the search term — send to API 500 ms after the user stops typing
+  useEffect(() => {
+    const t = setTimeout(() => setSearchDebounce(search), 500);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  const loadAll = useCallback(async (q: string) => {
+    setLoading(true);
+    try {
+      const searchParam = q.trim() || undefined;
+
+      const [productsRes, carsRes, propsRes] = await Promise.allSettled([
+        productsApi.list({ limit: 30, search: searchParam }),
+        productsApi.listCars({ limit: 30, search: searchParam }),
+        productsApi.listProperties({ limit: 30, search: searchParam }),
+      ]);
+
+      const items: ProductCardItem[] = [];
+
+      if (productsRes.status === "fulfilled") {
+        productsRes.value.data.forEach((p: Product) => items.push({
+          id: p.id,
+          name: p.name,
+          price: fmt(p.price),
+          type: "product",
+          imageUrl: p.images?.[0]?.image_url ?? null,
+          tag: p.category?.name,
+        }));
+      }
+      if (carsRes.status === "fulfilled") {
+        carsRes.value.data.forEach((c: CarType) => items.push({
+          id: c.id,
+          name: `${c.brand} ${c.model} ${c.year}`,
+          price: fmt(c.price),
+          type: "vehicle",
+          imageUrl: c.images?.[0]?.image_url ?? null,
+          tag: "Verified",
+          tagColor: "#ea580c",
+        }));
+      }
+      if (propsRes.status === "fulfilled") {
+        propsRes.value.data.forEach((p: Property) => items.push({
+          id: p.id,
+          name: p.title,
+          price: fmt(p.price),
+          type: "real_estate",
+          imageUrl: p.images?.[0]?.image_url ?? null,
+          tag: p.listing_type,
+          tagColor: "#0284c7",
+        }));
+      }
+
+      setAllItems(items);
+    } catch { /* silent */ }
+    finally { setLoading(false); }
+  }, []);
+
+  // Reload whenever the debounced search changes
+  useEffect(() => { loadAll(searchDebounce); }, [loadAll, searchDebounce]);
+
+  // Category filtering is still client-side (fast, no extra request needed)
+  const filtered = allItems.filter((item) => {
+    const matchCat = activeCategory === "all" || item.type === activeCategory;
+    return matchCat;
   });
+
+  const handlePress = (item: ProductCardItem) => {
+    router.push(`/product-details?id=${item.id}&type=${item.type}` as any);
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
       <StatusBar barStyle="dark-content" />
       <ScreenHeader title="Browse" subtitle="Vehicles, Real Estate & Products" />
 
-      {/* Search bar */}
+      {/* Search */}
       <View className="px-5 py-3 bg-white border-b border-gray-100">
         <View className="flex-row items-center gap-2.5 bg-gray-100 rounded-xl px-3.5 py-2.5">
           <Search size={16} color="#9ca3af" />
@@ -65,9 +125,7 @@ export default function BrowseScreen() {
               <TouchableOpacity
                 key={cat.id}
                 onPress={() => setActiveCategory(cat.id)}
-                className={`px-4 py-1.5 rounded-full border ${
-                  activeCategory === cat.id ? "bg-amber-400 border-amber-400" : "bg-white border-gray-200"
-                }`}
+                className={`px-4 py-1.5 rounded-full border ${activeCategory === cat.id ? "bg-amber-400 border-amber-400" : "bg-white border-gray-200"}`}
               >
                 <Text className={`text-xs font-semibold ${activeCategory === cat.id ? "text-white" : "text-gray-700"}`}>
                   {cat.label}
@@ -80,20 +138,31 @@ export default function BrowseScreen() {
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
         <View className="px-5 pt-4">
-          <Text className="text-xs text-gray-400 font-semibold uppercase tracking-wider mb-4">
-            {filtered.length} listing{filtered.length !== 1 ? "s" : ""}
-          </Text>
-
-          {filtered.length === 0 ? (
-            <EmptyState Icon={Package} title="No listings found" subtitle="Try a different search or category." />
-          ) : (
-            <View className="flex-row flex-wrap gap-4">
-              {filtered.map((item) => (
-                <View key={item.id} style={{ width: "47%" }}>
-                  <ProductCard item={item} onPress={() => router.push("/product-details")} variant="horizontal" />
-                </View>
-              ))}
+          {loading ? (
+            <View className="items-center justify-center pt-20 gap-3">
+              <ActivityIndicator size="large" color="#f59e0b" />
+              <Text className="text-sm text-gray-400">Loading listings…</Text>
             </View>
+          ) : (
+            <>
+              <Text className="text-xs text-gray-400 font-semibold uppercase tracking-wider mb-4">
+                {filtered.length} listing{filtered.length !== 1 ? "s" : ""}
+              </Text>
+              {filtered.length === 0 ? (
+                <EmptyState Icon={Package} title="No listings found" subtitle="Try a different search or category." />
+              ) : (
+                <View className="flex-row flex-wrap gap-4">
+                  {filtered.map((item) => (
+                    <ProductCard
+                      key={item.id}
+                      item={item}
+                      onPress={() => handlePress(item)}
+                      variant="horizontal"
+                    />
+                  ))}
+                </View>
+              )}
+            </>
           )}
         </View>
       </ScrollView>

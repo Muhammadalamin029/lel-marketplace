@@ -1,32 +1,36 @@
-import { useState } from "react";
-import { View, Text, ScrollView, TouchableOpacity, StatusBar } from "react-native";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { useEffect, useState, useCallback } from "react";
+import { View, Text, ScrollView, TouchableOpacity, StatusBar, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { EmptyState } from "@/components/EmptyState";
 import { TabSelector } from "@/components/TabSelector";
-import { Bell, Package, CreditCard, Calendar, ShieldCheck, MessageCircle } from "lucide-react-native";
+import { Bell, Package, CreditCard, Calendar, ShieldCheck } from "lucide-react-native";
 import { shadow } from "@/constants/shadows";
 import { formatDate } from "@/utils/format";
-
-const MOCK_NOTIFICATIONS = [
-  { id: "1", type: "order", title: "Order Shipped", message: "Your order #ORD-2023-8942 has been shipped.", time: new Date(Date.now() - 3600000).toISOString(), read: false },
-  { id: "2", type: "payment", title: "Payment Successful", message: "Payment of ₦1,200,000 for your order was confirmed.", time: new Date(Date.now() - 86400000).toISOString(), read: false },
-  { id: "3", type: "inspection", title: "Inspection Confirmed", message: "Your inspection for Toyota Camry 2022 is confirmed for June 10.", time: new Date(Date.now() - 2 * 86400000).toISOString(), read: true },
-  { id: "4", type: "agreement", title: "Agreement Approved", message: "Your installment plan for 3-Bed Apartment Lekki is now active.", time: new Date(Date.now() - 3 * 86400000).toISOString(), read: true },
-  { id: "5", type: "system", title: "Welcome to LEL Marketplace", message: "Your account is verified. Start exploring verified listings!", time: new Date(Date.now() - 7 * 86400000).toISOString(), read: true },
-];
-
-type NotifType = { id: string; type: string; title: string; message: string; time: string; read: boolean };
+import { notificationsApi } from "@/api";
+import type { Notification } from "@/api";
 
 const TABS = ["All", "Unread"] as const;
+type Tab = typeof TABS[number];
 
 function getIcon(type: string) {
   switch (type) {
-    case "order": return { Icon: Package, bg: "#eff6ff", color: "#3b82f6" };
-    case "payment": return { Icon: CreditCard, bg: "#f0fdf4", color: "#22c55e" };
-    case "inspection": return { Icon: Calendar, bg: "#fffbeb", color: "#f59e0b" };
-    case "agreement": return { Icon: ShieldCheck, bg: "#faf5ff", color: "#a855f7" };
-    default: return { Icon: Bell, bg: "#f3f4f6", color: "#6b7280" };
+    case "order_confirmed":
+    case "order_shipped":
+    case "order_delivered":
+      return { Icon: Package, bg: "#eff6ff", color: "#3b82f6" };
+    case "payment_successful":
+    case "installment_paid":
+      return { Icon: CreditCard, bg: "#f0fdf4", color: "#22c55e" };
+    case "inspection_confirmed":
+    case "inspection_scheduled":
+      return { Icon: Calendar, bg: "#fffbeb", color: "#f59e0b" };
+    case "agreement_approved":
+    case "agreement_created":
+      return { Icon: ShieldCheck, bg: "#faf5ff", color: "#a855f7" };
+    default:
+      return { Icon: Bell, bg: "#f3f4f6", color: "#6b7280" };
   }
 }
 
@@ -39,38 +43,38 @@ function timeAgo(iso: string) {
   return formatDate(iso);
 }
 
-function NotifCard({ notif, onPress }: { notif: NotifType; onPress: () => void }) {
-  const { Icon, bg, color } = getIcon(notif.type);
-  return (
-    <TouchableOpacity
-      onPress={onPress}
-      className={`flex-row gap-3 p-4 rounded-2xl mb-3 ${notif.read ? "bg-white" : "bg-amber-50"}`}
-      style={shadow.card}
-    >
-      <View className="w-10 h-10 rounded-full items-center justify-center flex-shrink-0" style={{ backgroundColor: bg }}>
-        <Icon size={18} color={color} />
-      </View>
-      <View className="flex-1">
-        <View className="flex-row items-start justify-between gap-2">
-          <Text className="text-sm font-bold text-gray-900 flex-1">{notif.title}</Text>
-          {!notif.read && <View className="w-2 h-2 rounded-full bg-amber-400 mt-1 flex-shrink-0" />}
-        </View>
-        <Text className="text-xs text-gray-500 mt-0.5 leading-relaxed" numberOfLines={2}>{notif.message}</Text>
-        <Text className="text-[10px] text-gray-400 mt-1.5 font-medium">{timeAgo(notif.time)}</Text>
-      </View>
-    </TouchableOpacity>
-  );
-}
-
 export default function NotificationsScreen() {
-  const [activeTab, setActiveTab] = useState<typeof TABS[number]>("All");
-  const [notifications, setNotifications] = useState(MOCK_NOTIFICATIONS);
+  useRequireAuth();
+  const [activeTab, setActiveTab] = useState<Tab>("All");
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [loading, setLoading] = useState(true);
 
-  const filtered = activeTab === "Unread" ? notifications.filter((n) => !n.read) : notifications;
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  const load = useCallback(async () => {
+    try {
+      const res = await notificationsApi.list({ limit: 50 });
+      // Backend returns { notifications, pagination, unread_count }
+      setNotifications(res.notifications);
+      setUnreadCount(res.unread_count ?? res.notifications.filter((n) => !n.is_read).length);
+    } catch { /* silent */ }
+    finally { setLoading(false); }
+  }, []);
 
-  const markAllRead = () => setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-  const markRead = (id: string) => setNotifications((prev) => prev.map((n) => n.id === id ? { ...n, read: true } : n));
+  useEffect(() => { load(); }, [load]);
+
+  const markRead = async (id: string) => {
+    setNotifications((prev) => prev.map((n) => n.id === id ? { ...n, is_read: true } : n));
+    setUnreadCount((c) => Math.max(0, c - 1));
+    try { await notificationsApi.markRead(id); } catch { /* revert on error is optional */ }
+  };
+
+  const markAllRead = async () => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+    setUnreadCount(0);
+    try { await notificationsApi.markAllRead(); } catch { /* silent */ }
+  };
+
+  const visible = activeTab === "Unread" ? notifications.filter((n) => !n.is_read) : notifications;
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
@@ -92,13 +96,37 @@ export default function NotificationsScreen() {
       </View>
 
       <ScrollView className="flex-1 px-5 pt-4" showsVerticalScrollIndicator={false}>
-        {filtered.length === 0 ? (
+        {loading ? (
+          <View className="items-center justify-center pt-20">
+            <ActivityIndicator size="large" color="#f59e0b" />
+          </View>
+        ) : visible.length === 0 ? (
           <EmptyState Icon={Bell} title="No notifications" subtitle={activeTab === "Unread" ? "You're all caught up!" : "Nothing here yet."} />
         ) : (
           <View className="pb-10">
-            {filtered.map((n) => (
-              <NotifCard key={n.id} notif={n} onPress={() => markRead(n.id)} />
-            ))}
+            {visible.map((n) => {
+              const { Icon, bg, color } = getIcon(n.type);
+              return (
+                <TouchableOpacity
+                  key={n.id}
+                  onPress={() => markRead(n.id)}
+                  className={`flex-row gap-3 p-4 rounded-2xl mb-3 ${n.is_read ? "bg-white" : "bg-amber-50"}`}
+                  style={shadow.card}
+                >
+                  <View className="w-10 h-10 rounded-full items-center justify-center flex-shrink-0" style={{ backgroundColor: bg }}>
+                    <Icon size={18} color={color} />
+                  </View>
+                  <View className="flex-1">
+                    <View className="flex-row items-start justify-between gap-2">
+                      <Text className="text-sm font-bold text-gray-900 flex-1">{n.title}</Text>
+                      {!n.is_read && <View className="w-2 h-2 rounded-full bg-amber-400 mt-1 flex-shrink-0" />}
+                    </View>
+                    <Text className="text-xs text-gray-500 mt-0.5 leading-relaxed" numberOfLines={2}>{n.message}</Text>
+                    <Text className="text-[10px] text-gray-400 mt-1.5 font-medium">{timeAgo(n.created_at)}</Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
           </View>
         )}
       </ScrollView>

@@ -1,50 +1,65 @@
-import { useState } from "react";
-import { View, Text, ScrollView, TouchableOpacity } from "react-native";
+import { useEffect } from "react";
+import {
+  View, Text, ScrollView, TouchableOpacity, Image, ActivityIndicator,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { ShoppingBag, Trash2, Plus, Minus, MapPin, CreditCard, ChevronRight } from "lucide-react-native";
+import {
+  ShoppingBag, Trash2, Plus, Minus, MapPin, CreditCard, ChevronRight,
+} from "lucide-react-native";
 import { EmptyState } from "@/components/EmptyState";
 import { SectionHeader } from "@/components/SectionHeader";
 import { fmt } from "@/utils/format";
 import { shadow } from "@/constants/shadows";
-
-// ─── Data ──────────────────────────────────────────────────────────────────────
-
-const INITIAL_CART = [
-  { id: "1", name: "Toyota Camry 2022", price: 18500000, qty: 1, bg: "#fff7ed", iconColor: "#ea580c", type: "vehicle" },
-  { id: "2", name: "Dining Table Set", price: 1200000, qty: 2, bg: "#f0fdf4", iconColor: "#16a34a", type: "product" },
-  { id: "3", name: "Honda Civic 2021", price: 12000000, qty: 1, bg: "#eff6ff", iconColor: "#2563eb", type: "vehicle" },
-];
+import { useCartStore } from "@/store/cartStore";
+import type { OrderItem } from "@/api/orders";
 
 // ─── Cart Item Row ─────────────────────────────────────────────────────────────
 
-function CartItem({ item, onQtyChange, onRemove }: {
-  item: typeof INITIAL_CART[0];
-  onQtyChange: (id: string, delta: number) => void;
-  onRemove: (id: string) => void;
+function CartItemRow({ item, onQtyChange, onRemove, isLoading }: {
+  item: OrderItem;
+  onQtyChange: (itemId: string, newQty: number) => void;
+  onRemove: (itemId: string) => void;
+  isLoading: boolean;
 }) {
-  const isPhysicalAsset = item.type === "vehicle" || item.type === "real_estate";
+  const imageUrl = item.product?.images?.[0]?.image_url;
+  const isPhysical = false; // products in orders are never physical assets
+
   return (
     <View className="bg-white rounded-2xl border border-gray-100 p-3 flex-row items-center gap-3" style={shadow.md}>
-      <View className="w-16 h-16 rounded-xl items-center justify-center flex-shrink-0" style={{ backgroundColor: item.bg }}>
-        <ShoppingBag size={28} color={item.iconColor} strokeWidth={1.5} />
-      </View>
+      {imageUrl ? (
+        <Image source={{ uri: imageUrl }} className="w-16 h-16 rounded-xl" resizeMode="cover" />
+      ) : (
+        <View className="w-16 h-16 rounded-xl bg-gray-100 items-center justify-center flex-shrink-0">
+          <ShoppingBag size={24} color="#6b7280" strokeWidth={1.5} />
+        </View>
+      )}
+
       <View className="flex-1 min-w-0 gap-0.5">
-        <Text className="text-sm font-semibold text-gray-900" numberOfLines={2}>{item.name}</Text>
+        <Text className="text-sm font-semibold text-gray-900" numberOfLines={2}>
+          {item.product?.name ?? "Product"}
+        </Text>
         <Text className="text-sm font-bold text-amber-400">{fmt(item.price)}</Text>
-        {isPhysicalAsset && <Text className="text-[11px] text-green-600 font-medium">Free inspection</Text>}
+        <Text className="text-[11px] text-gray-400">Each</Text>
       </View>
+
       <View className="items-end gap-2">
-        <TouchableOpacity onPress={() => onRemove(item.id)}>
-          <Trash2 size={15} color="#d1d5db" />
+        <TouchableOpacity onPress={() => onRemove(item.id)} disabled={isLoading}>
+          <Trash2 size={15} color={isLoading ? "#e5e7eb" : "#d1d5db"} />
         </TouchableOpacity>
         <View className="flex-row items-center gap-2 bg-gray-100 rounded-xl px-2 py-1">
-          <TouchableOpacity onPress={() => onQtyChange(item.id, -1)}>
-            <Minus size={13} color="#6b7280" />
+          <TouchableOpacity
+            onPress={() => onQtyChange(item.id, item.quantity - 1)}
+            disabled={isLoading || item.quantity <= 1}
+          >
+            <Minus size={13} color={item.quantity <= 1 || isLoading ? "#d1d5db" : "#6b7280"} />
           </TouchableOpacity>
-          <Text className="text-sm font-bold text-gray-900 w-4 text-center">{item.qty}</Text>
-          <TouchableOpacity onPress={() => onQtyChange(item.id, 1)}>
-            <Plus size={13} color="#6b7280" />
+          <Text className="text-sm font-bold text-gray-900 w-4 text-center">{item.quantity}</Text>
+          <TouchableOpacity
+            onPress={() => onQtyChange(item.id, item.quantity + 1)}
+            disabled={isLoading}
+          >
+            <Plus size={13} color={isLoading ? "#d1d5db" : "#6b7280"} />
           </TouchableOpacity>
         </View>
       </View>
@@ -56,26 +71,46 @@ function CartItem({ item, onQtyChange, onRemove }: {
 
 export default function CartScreen() {
   const router = useRouter();
-  const [items, setItems] = useState(INITIAL_CART);
+  const {
+    pendingOrder,
+    isLoading,
+    fetchPendingOrder,
+    updateQty,
+    removeItem,
+    clearCart,
+    totalPrice,
+    totalItems,
+  } = useCartStore();
 
-  const handleQtyChange = (id: string, delta: number) => {
-    setItems((prev) => prev.map((i) => i.id === id ? { ...i, qty: i.qty + delta } : i).filter((i) => i.qty > 0));
+  useEffect(() => {
+    fetchPendingOrder();
+  }, []);
+
+  const items = pendingOrder?.order_items ?? [];
+  const total = totalPrice();
+  const qty = totalItems();
+
+  const handleRemove = async (itemId: string) => {
+    await removeItem(itemId);
   };
 
-  const handleRemove = (id: string) => setItems((prev) => prev.filter((i) => i.id !== id));
-
-  const total = items.reduce((sum, i) => sum + i.price * i.qty, 0);
-  const totalQty = items.reduce((sum, i) => sum + i.qty, 0);
-  const hasInspection = items.some((i) => i.type === "vehicle" || i.type === "real_estate");
+  const handleQtyChange = async (itemId: string, newQty: number) => {
+    if (newQty <= 0) {
+      await removeItem(itemId);
+    } else {
+      await updateQty(itemId, newQty);
+    }
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
-      {/* ── Header ── */}
+      {/* Header */}
       <View className="flex-row items-center justify-between px-5 pt-4 pb-3 bg-white">
         <View>
           <Text className="text-xs text-gray-400 font-medium">Your selections</Text>
           <Text className="text-xl font-extrabold text-gray-900 tracking-tight">
             My <Text className="text-amber-400">Cart</Text>
+            {qty > 0 && <Text className="text-base font-bold text-amber-400"> ({qty})</Text>}
           </Text>
         </View>
         <View className="w-11 h-11 rounded-full bg-gray-100 items-center justify-center">
@@ -83,24 +118,35 @@ export default function CartScreen() {
         </View>
       </View>
 
-      {items.length === 0 ? (
+      {isLoading && items.length === 0 ? (
+        <View className="flex-1 items-center justify-center gap-3">
+          <ActivityIndicator size="large" color="#f59e0b" />
+          <Text className="text-sm text-gray-400">Loading cart…</Text>
+        </View>
+      ) : items.length === 0 ? (
         <EmptyState
           Icon={ShoppingBag}
-          title="Cart is empty"
-          subtitle="Add items from the home page to get started."
+          title="Your cart is empty"
+          subtitle="Browse listings and tap 'Add to Cart' on a product."
           iconBg="#fffbeb"
           iconColor="#f59e0b"
         />
       ) : (
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
-          {/* ── Cart Items ── */}
+          {/* Items */}
           <View className="px-5 mt-4 gap-3">
             {items.map((item) => (
-              <CartItem key={item.id} item={item} onQtyChange={handleQtyChange} onRemove={handleRemove} />
+              <CartItemRow
+                key={item.id}
+                item={item}
+                onQtyChange={handleQtyChange}
+                onRemove={handleRemove}
+                isLoading={isLoading}
+              />
             ))}
           </View>
 
-          {/* ── Delivery Address ── */}
+          {/* Delivery address */}
           <View className="px-5 mt-6">
             <SectionHeader title="Delivery" showDots={false} />
             <TouchableOpacity
@@ -112,27 +158,25 @@ export default function CartScreen() {
                 <MapPin size={18} color="#f59e0b" />
               </View>
               <View className="flex-1">
-                <Text className="text-sm font-semibold text-gray-900">12 Adeola Odeku St, VI</Text>
-                <Text className="text-xs text-gray-400">Lagos, Nigeria · Tap to change</Text>
+                <Text className="text-sm font-semibold text-gray-900">Select delivery address</Text>
+                <Text className="text-xs text-gray-400">Tap to choose or add an address</Text>
               </View>
               <ChevronRight size={16} color="#9ca3af" />
             </TouchableOpacity>
           </View>
 
-          {/* ── Order Summary ── */}
+          {/* Summary */}
           <View className="px-5 mt-6">
             <SectionHeader title="Summary" showDots={false} />
             <View className="bg-white rounded-2xl border border-gray-100 p-4 gap-3" style={shadow.md}>
               <View className="flex-row justify-between">
-                <Text className="text-sm text-gray-500">Subtotal ({totalQty} items)</Text>
+                <Text className="text-sm text-gray-500">Subtotal ({qty} item{qty !== 1 ? "s" : ""})</Text>
                 <Text className="text-sm font-semibold text-gray-900">{fmt(total)}</Text>
               </View>
-              {hasInspection && (
-                <View className="flex-row justify-between">
-                  <Text className="text-sm text-gray-500">Inspection fee</Text>
-                  <Text className="text-sm font-semibold text-green-600">Free</Text>
-                </View>
-              )}
+              <View className="flex-row justify-between">
+                <Text className="text-sm text-gray-500">Delivery</Text>
+                <Text className="text-sm font-semibold text-gray-400">Paid separately</Text>
+              </View>
               <View className="h-px bg-gray-100" />
               <View className="flex-row justify-between">
                 <Text className="text-base font-extrabold text-gray-900">Total</Text>
@@ -141,7 +185,7 @@ export default function CartScreen() {
             </View>
           </View>
 
-          {/* ── Checkout Button ── */}
+          {/* Checkout */}
           <View className="px-5 mt-5">
             <TouchableOpacity
               onPress={() => router.push("/checkout")}
@@ -149,7 +193,9 @@ export default function CartScreen() {
               style={shadow.btn}
             >
               <CreditCard size={18} color="#ffffff" />
-              <Text className="text-white text-base font-bold">Proceed to Checkout</Text>
+              <Text className="text-white text-base font-bold">
+                Proceed to Checkout — {fmt(total)}
+              </Text>
             </TouchableOpacity>
           </View>
         </ScrollView>

@@ -1,17 +1,15 @@
-import { Tabs } from "expo-router";
+import { Redirect, Tabs } from "expo-router";
 import { View, Text } from "react-native";
 import { Home, ShoppingBag, Heart, User } from "lucide-react-native";
+import { useAuthStore } from "@/store/authStore";
+import { useCartStore } from "@/store/cartStore";
 
 function TabIcon({
   icon: Icon,
   label,
   focused,
 }: {
-  icon: React.ComponentType<{
-    size: number;
-    color: string;
-    strokeWidth?: number;
-  }>;
+  icon: React.ComponentType<{ size: number; color: string; strokeWidth?: number }>;
   label: string;
   focused: boolean;
 }) {
@@ -30,6 +28,13 @@ function TabIcon({
 }
 
 export default function TabsLayout() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const cartCount = useCartStore((s) => s.totalItems());
+
+  if (!isAuthenticated) {
+    return <Redirect href="/(auth)/login" />;
+  }
+
   return (
     <Tabs
       screenOptions={{
@@ -52,35 +57,39 @@ export default function TabsLayout() {
     >
       <Tabs.Screen
         name="index"
-        options={{
-          tabBarIcon: ({ focused }) => (
-            <TabIcon icon={Home} label="Home" focused={focused} />
-          ),
-        }}
+        options={{ tabBarIcon: ({ focused }) => <TabIcon icon={Home} label="Home" focused={focused} /> }}
       />
       <Tabs.Screen
         name="cart"
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabIcon icon={ShoppingBag} label="Cart" focused={focused} />
+            <View>
+              <TabIcon icon={ShoppingBag} label="Cart" focused={focused} />
+              {cartCount > 0 && (
+                <View
+                  style={{
+                    position: "absolute", top: 0, right: focused ? -2 : 2,
+                    backgroundColor: "#ef4444", borderRadius: 8,
+                    minWidth: 16, height: 16, alignItems: "center", justifyContent: "center",
+                    paddingHorizontal: 3,
+                  }}
+                >
+                  <Text style={{ color: "#fff", fontSize: 9, fontWeight: "800" }}>
+                    {cartCount > 9 ? "9+" : cartCount}
+                  </Text>
+                </View>
+              )}
+            </View>
           ),
         }}
       />
       <Tabs.Screen
         name="wishlist"
-        options={{
-          tabBarIcon: ({ focused }) => (
-            <TabIcon icon={Heart} label="Saved" focused={focused} />
-          ),
-        }}
+        options={{ tabBarIcon: ({ focused }) => <TabIcon icon={Heart} label="Saved" focused={focused} /> }}
       />
       <Tabs.Screen
         name="profile"
-        options={{
-          tabBarIcon: ({ focused }) => (
-            <TabIcon icon={User} label="Profile" focused={focused} />
-          ),
-        }}
+        options={{ tabBarIcon: ({ focused }) => <TabIcon icon={User} label="Profile" focused={focused} /> }}
       />
     </Tabs>
   );

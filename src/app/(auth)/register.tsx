@@ -9,9 +9,11 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { Mail, Phone, Lock, User, Eye, EyeOff, AlertCircle, CheckCircle2, XCircle } from 'lucide-react-native';
+import { useAuthStore } from '@/store/authStore';
+import { getApiError } from '@/api';
 
 // --- Password Policy Component ---
 function PasswordPolicy({ password }: { password: string }) {
@@ -53,9 +55,10 @@ function Field({ label, error, children }: { label: string; error?: string; chil
 
 // --- Main Register Screen ---
 export default function Register() {
+  const router = useRouter();
+  const { registerCustomer, isLoading } = useAuthStore();
   const [form, setForm] = useState({ name: '', email: '', phone: '', password: '', confirmPassword: '' });
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Partial<typeof form>>({});
 
@@ -77,22 +80,20 @@ export default function Register() {
 
   const handleRegister = async () => {
     if (!validate()) return;
-    setIsLoading(true);
     setError(null);
     try {
-      // Registration logic here
-      console.log('Register', form);
-    } catch (err) {
-      setError('Something went wrong. Please try again.');
-    } finally {
-      setIsLoading(false);
+      await registerCustomer({ name: form.name.trim(), email: form.email.trim(), phone: form.phone.trim(), password: form.password });
+      // Send to email verification screen before entering the app
+      router.replace(`/(auth)/verify-email?email=${encodeURIComponent(form.email.trim())}` as any);
+    } catch (e) {
+      setError(getApiError(e));
     }
   };
 
   const allFilled =
     !!form.name && !!form.email && !!form.phone && !!form.password && !!form.confirmPassword;
   const passwordsMatch = form.password === form.confirmPassword;
-  const isDisabled = isLoading || !allFilled || !passwordsMatch;
+  const isDisabled = isLoading || !allFilled || !passwordsMatch || false;
 
   return (
     <KeyboardAvoidingView

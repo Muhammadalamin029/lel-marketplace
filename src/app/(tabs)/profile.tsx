@@ -24,17 +24,14 @@ import {
   AlertCircle,
   CheckCircle,
   Edit,
+  FileText,
+  CreditCard,
+  Store,
+  Grid3x3,
+  Info,
 } from "lucide-react-native";
 import { shadow } from "@/constants/shadows";
-
-// TODO: replace with auth store data when API is connected
-const MOCK_USER = {
-  name: "Alameen Muhammad",
-  email: "alameen@example.com",
-  phone: "+234 800 000 0000",
-  isVerified: true,
-  isSeller: false,
-};
+import { useAuthStore } from "@/store/authStore";
 
 const STATS = [
   { label: "Orders", value: "12", icon: ShoppingBag, color: "#f59e0b" },
@@ -97,6 +94,27 @@ const MENU_SECTIONS: { title: string; items: MenuItem[] }[] = [
         route: "/inspections",
       },
       {
+        icon: FileText,
+        label: "My Agreements",
+        color: "#8b5cf6",
+        bg: "#f5f3ff",
+        route: "/my-agreements",
+      },
+      {
+        icon: CreditCard,
+        label: "My Payments",
+        color: "#f59e0b",
+        bg: "#fffbeb",
+        route: "/my-payments",
+      },
+      {
+        icon: Star,
+        label: "My Reviews",
+        color: "#f59e0b",
+        bg: "#fffbeb",
+        route: "/my-reviews",
+      },
+      {
         icon: AlertCircle,
         label: "My Disputes",
         color: "#ef4444",
@@ -109,6 +127,25 @@ const MENU_SECTIONS: { title: string; items: MenuItem[] }[] = [
         color: "#ef4444",
         bg: "#fef2f2",
         route: "/(tabs)/wishlist",
+      },
+    ],
+  },
+  {
+    title: "Discover",
+    items: [
+      {
+        icon: Grid3x3,
+        label: "Categories",
+        color: "#22c55e",
+        bg: "#f0fdf4",
+        route: "/categories",
+      },
+      {
+        icon: Store,
+        label: "Browse Sellers",
+        color: "#6366f1",
+        bg: "#eef2ff",
+        route: "/sellers",
       },
     ],
   },
@@ -132,7 +169,7 @@ const MENU_SECTIONS: { title: string; items: MenuItem[] }[] = [
     ],
   },
   {
-    title: "Support",
+    title: "Support & Legal",
     items: [
       {
         icon: HelpCircle,
@@ -140,6 +177,27 @@ const MENU_SECTIONS: { title: string; items: MenuItem[] }[] = [
         color: "#0ea5e9",
         bg: "#f0f9ff",
         route: "/help",
+      },
+      {
+        icon: FileText,
+        label: "Terms of Service",
+        color: "#6b7280",
+        bg: "#f9fafb",
+        route: "/terms",
+      },
+      {
+        icon: Shield,
+        label: "Privacy Policy",
+        color: "#6b7280",
+        bg: "#f9fafb",
+        route: "/privacy",
+      },
+      {
+        icon: Info,
+        label: "About LEL Marketplace",
+        color: "#6b7280",
+        bg: "#f9fafb",
+        route: "/about",
       },
     ],
   },
@@ -179,6 +237,18 @@ function MenuItem({ item, onPress }: { item: MenuItem; onPress: () => void }) {
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const { user, profile, logout } = useAuthStore();
+
+  // Derive display fields from the auth store
+  const displayName =
+    (profile as any)?.name ||
+    (profile as any)?.business_name ||
+    user?.email?.split("@")[0] ||
+    "User";
+  const displayEmail = user?.email ?? "";
+  const displayPhone = (profile as any)?.phone || (profile as any)?.contact_phone || "";
+  const isVerified = user?.email_verified ?? false;
+  const isSeller = user?.role === "seller";
 
   const handleLogout = () => {
     Alert.alert("Sign Out", "Are you sure you want to sign out?", [
@@ -186,8 +256,8 @@ export default function ProfileScreen() {
       {
         text: "Sign Out",
         style: "destructive",
-        onPress: () => {
-          // TODO: clear auth token + state, then navigate to login
+        onPress: async () => {
+          await logout();
           router.replace("/(auth)/login");
         },
       },
@@ -239,10 +309,10 @@ export default function ProfileScreen() {
             <View className="relative">
               <View className="w-16 h-16 rounded-full bg-indigo-900 items-center justify-center">
                 <Text className="text-white text-2xl font-bold">
-                  {MOCK_USER.name.charAt(0)}
+                  {displayName.charAt(0).toUpperCase()}
                 </Text>
               </View>
-              {MOCK_USER.isVerified && (
+              {isVerified && (
                 <View className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-green-400 rounded-full border-2 border-white items-center justify-center">
                   <CheckCircle size={10} color="#fff" />
                 </View>
@@ -250,12 +320,12 @@ export default function ProfileScreen() {
             </View>
             <View className="flex-1">
               <Text className="text-base font-extrabold text-gray-900">
-                {MOCK_USER.name}
+                {displayName}
               </Text>
               <Text className="text-xs text-gray-400 mt-0.5">
-                {MOCK_USER.email}
+                {displayEmail}
               </Text>
-              <Text className="text-xs text-gray-400">{MOCK_USER.phone}</Text>
+              <Text className="text-xs text-gray-400">{displayPhone}</Text>
             </View>
             <TouchableOpacity
               onPress={() => router.push("/edit-profile")}
@@ -282,7 +352,7 @@ export default function ProfileScreen() {
         </View>
 
         {/* Become a seller banner */}
-        {!MOCK_USER.isSeller && (
+        {!isSeller && (
           <TouchableOpacity
             onPress={handleBecomeSeller}
             className="mx-5 mb-4 bg-amber-400 rounded-2xl p-4 flex-row items-center gap-3"

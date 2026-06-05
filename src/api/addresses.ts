@@ -6,7 +6,7 @@ export interface Address {
   street_address: string;
   city: string;
   state_province: string;
-  postal_code?: string;
+  postal_code: string;
   country: string;
   is_default: boolean;
 }
@@ -16,7 +16,7 @@ export interface AddressPayload {
   street_address: string;
   city: string;
   state_province: string;
-  postal_code?: string;
+  postal_code: string;
   country: string;
   is_default?: boolean;
 }

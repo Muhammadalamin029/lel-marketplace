@@ -26,7 +26,7 @@ export interface ProductCardItem {
 interface ProductCardProps {
   item: ProductCardItem;
   onPress: () => void;
-  /** "vertical" = fixed 160px wide (horizontal scroll), "horizontal" = flex-1 (grid) */
+  /** "vertical" = compact tile, "horizontal" = full-width row card */
   variant?: "vertical" | "horizontal";
   onWishlist?: (id: string, liked: boolean) => void;
 }
@@ -48,11 +48,11 @@ export function ProductCard({ item, onPress, variant = "vertical", onWishlist }:
     <TouchableOpacity
       onPress={onPress}
       activeOpacity={0.85}
-      className="bg-white rounded-2xl overflow-hidden border border-gray-100"
-      style={[shadow.md, variant === "vertical" ? { width: 160 } : { flex: 1 }]}
+      className={`bg-white rounded-2xl overflow-hidden border border-gray-100 ${variant === "horizontal" ? "flex-row" : ""}`}
+      style={[shadow.md, variant === "vertical" ? { width: 160 } : { width: "100%" }]}
     >
       {/* ── Thumbnail ── */}
-      <View className="relative h-28">
+      <View className={`relative ${variant === "horizontal" ? "w-32 h-32" : "h-28"}`}>
         {item.imageUrl ? (
           <Image source={{ uri: item.imageUrl }} className="w-full h-full" resizeMode="cover" />
         ) : (
@@ -86,9 +86,9 @@ export function ProductCard({ item, onPress, variant = "vertical", onWishlist }:
       </View>
 
       {/* ── Info ── */}
-      <View className="p-3 gap-1">
+      <View className={`p-3 gap-1 ${variant === "horizontal" ? "flex-1 justify-center" : ""}`}>
         <Text className="text-sm font-semibold text-gray-900" numberOfLines={2}>{item.name}</Text>
-        <Text className="text-sm font-bold text-amber-400">{item.price}</Text>
+        <Text className="text-sm font-bold text-amber-400" numberOfLines={1}>{item.price}</Text>
         {(item.type === "vehicle" || item.type === "real_estate") && (
           <Text className="text-[11px] text-green-600 font-medium">Free inspection</Text>
         )}

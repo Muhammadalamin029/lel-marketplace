@@ -111,7 +111,7 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView className="flex-1" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
         <View className="pb-6">
 
           {/* ── Header ── */}
@@ -202,13 +202,11 @@ export default function HomeScreen() {
             ) : hotSales.length === 0 ? (
               <Text className="text-sm text-gray-400 text-center py-6">No listings available</Text>
             ) : (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                <View className="flex-row gap-3.5 px-5">
-                  {hotSales.map((item) => (
-                    <ProductCard key={item.id} item={item} onPress={() => goToItem(item)} />
-                  ))}
-                </View>
-              </ScrollView>
+              <View className="gap-3.5 px-5">
+                {hotSales.map((item) => (
+                  <ProductCard key={item.id} item={item} onPress={() => goToItem(item)} variant="horizontal" />
+                ))}
+              </View>
             )}
           </View>
 
@@ -216,9 +214,9 @@ export default function HomeScreen() {
           {recent.length > 0 && (
             <View className="mt-7 px-5">
               <SectionHeader title="More Listings" onSeeAll={() => router.push("/browse")} />
-              <View className="flex-row flex-wrap gap-4">
+              <View className="gap-3.5">
                 {recent.map((item) => (
-                  <ProductCard key={item.id} item={item} onPress={() => goToItem(item)} />
+                  <ProductCard key={item.id} item={item} onPress={() => goToItem(item)} variant="horizontal" />
                 ))}
               </View>
             </View>

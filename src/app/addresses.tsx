@@ -2,13 +2,13 @@ import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { useEffect, useState } from "react";
 import {
   View, Text, TouchableOpacity, ScrollView, StatusBar,
-  Modal, TextInput, ActivityIndicator, Alert,
+  Modal, TextInput, ActivityIndicator, Alert, KeyboardAvoidingView, Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { ArrowLeft, MapPin, Plus, CheckCircle, Edit2, Trash2, X, Star } from "lucide-react-native";
 import { shadow } from "@/constants/shadows";
-import { addressesApi } from "@/api";
+import { addressesApi, getApiError } from "@/api";
 import type { Address, AddressPayload } from "@/api";
 
 const BLANK: AddressPayload = { title: "", street_address: "", city: "", state_province: "", postal_code: "", country: "Nigeria" };
@@ -40,8 +40,8 @@ export default function AddressesScreen() {
   const showMsg = (title: string, msg?: string) => Alert.alert(title, msg);
 
   const handleSave = async () => {
-    if (!form.title.trim() || !form.street_address.trim() || !form.city.trim()) {
-      showMsg("Missing Fields", "Please fill in the title, street, and city.");
+    if (!form.title.trim() || !form.street_address.trim() || !form.city.trim() || !form.state_province.trim() || !form.postal_code.trim()) {
+      showMsg("Missing Fields", "Please fill in the title, street, city, state, and postal code.");
       return;
     }
     setSaving(true);
@@ -54,8 +54,8 @@ export default function AddressesScreen() {
         setAddresses((prev) => [...prev, created]);
       }
       setModalOpen(false);
-    } catch {
-      showMsg("Error", "Failed to save address. Please try again.");
+    } catch (error) {
+      showMsg("Error", getApiError(error));
     } finally {
       setSaving(false);
     }
@@ -103,7 +103,7 @@ export default function AddressesScreen() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView className="flex-1 px-5 pt-5" showsVerticalScrollIndicator={false}>
+      <ScrollView className="flex-1 px-5 pt-5" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 140 }}>
         {loading ? (
           <View className="items-center justify-center pt-20">
             <ActivityIndicator size="large" color="#f59e0b" />
@@ -177,44 +177,56 @@ export default function AddressesScreen() {
 
       <Modal visible={modalOpen} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setModalOpen(false)}>
         <SafeAreaView className="flex-1 bg-white">
-          <View className="flex-row items-center justify-between px-5 pt-4 pb-4 border-b border-gray-100">
-            <Text className="text-lg font-extrabold text-gray-900">{editing ? "Edit Address" : "New Address"}</Text>
-            <TouchableOpacity onPress={() => setModalOpen(false)} className="w-9 h-9 rounded-full bg-gray-100 items-center justify-center">
-              <X size={18} color="#374151" />
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView className="flex-1 px-5 pt-5" showsVerticalScrollIndicator={false}>
-            <View className="gap-4 pb-10">
-              {[
-                { label: "Label (e.g. Home, Office)", key: "title" as const, placeholder: "Home" },
-                { label: "Street Address", key: "street_address" as const, placeholder: "123 Awolowo Road" },
-                { label: "City / Area", key: "city" as const, placeholder: "Ikoyi" },
-                { label: "State", key: "state_province" as const, placeholder: "Lagos" },
-                { label: "Country", key: "country" as const, placeholder: "Nigeria" },
-              ].map(({ label, key, placeholder }) => (
-                <View key={key} className="gap-1.5">
-                  <Text className="text-xs font-bold text-gray-500 uppercase tracking-wide">{label}</Text>
-                  <TextInput
-                    className="border border-gray-200 rounded-xl bg-gray-50 px-4 py-3 text-sm text-gray-900"
-                    placeholder={placeholder}
-                    placeholderTextColor="#9ca3af"
-                    value={form[key]}
-                    onChangeText={(val) => setForm((p) => ({ ...p, [key]: val }))}
-                  />
-                </View>
-              ))}
-
-              <TouchableOpacity
-                onPress={handleSave}
-                disabled={saving}
-                className="bg-amber-400 py-4 rounded-2xl items-center mt-2"
-                style={shadow.btn}
-              >
-                {saving ? <ActivityIndicator color="#fff" /> : <Text className="text-white font-bold">{editing ? "Save Changes" : "Add Address"}</Text>}
+          <KeyboardAvoidingView
+            className="flex-1"
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            keyboardVerticalOffset={Platform.OS === "ios" ? 12 : 0}
+          >
+            <View className="flex-row items-center justify-between px-5 pt-4 pb-4 border-b border-gray-100">
+              <Text className="text-lg font-extrabold text-gray-900">{editing ? "Edit Address" : "New Address"}</Text>
+              <TouchableOpacity onPress={() => setModalOpen(false)} className="w-9 h-9 rounded-full bg-gray-100 items-center justify-center">
+                <X size={18} color="#374151" />
               </TouchableOpacity>
             </View>
-          </ScrollView>
+
+            <ScrollView
+              className="flex-1 px-5 pt-5"
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={{ paddingBottom: 32 }}
+            >
+              <View className="gap-4">
+                {[
+                  { label: "Label (e.g. Home, Office)", key: "title" as const, placeholder: "Home" },
+                  { label: "Street Address", key: "street_address" as const, placeholder: "123 Awolowo Road" },
+                  { label: "City / Area", key: "city" as const, placeholder: "Ikoyi" },
+                  { label: "State", key: "state_province" as const, placeholder: "Lagos" },
+                  { label: "Postal Code", key: "postal_code" as const, placeholder: "100001" },
+                  { label: "Country", key: "country" as const, placeholder: "Nigeria" },
+                ].map(({ label, key, placeholder }) => (
+                  <View key={key} className="gap-1.5">
+                    <Text className="text-xs font-bold text-gray-500 uppercase tracking-wide">{label}</Text>
+                    <TextInput
+                      className="border border-gray-200 rounded-xl bg-gray-50 px-4 py-3 text-sm text-gray-900"
+                      placeholder={placeholder}
+                      placeholderTextColor="#9ca3af"
+                      value={form[key]}
+                      onChangeText={(val) => setForm((p) => ({ ...p, [key]: val }))}
+                    />
+                  </View>
+                ))}
+
+                <TouchableOpacity
+                  onPress={handleSave}
+                  disabled={saving}
+                  className={`py-4 rounded-2xl items-center mt-2 ${saving ? "bg-amber-300" : "bg-amber-400"}`}
+                  style={shadow.btn}
+                >
+                  {saving ? <ActivityIndicator color="#fff" /> : <Text className="text-white font-bold">{editing ? "Save Changes" : "Add Address"}</Text>}
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+          </KeyboardAvoidingView>
         </SafeAreaView>
       </Modal>
     </SafeAreaView>

@@ -136,7 +136,7 @@ export default function BrowseScreen() {
         </ScrollView>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
+      <ScrollView className="flex-1" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
         <View className="px-5 pt-4">
           {loading ? (
             <View className="items-center justify-center pt-20 gap-3">
@@ -151,7 +151,7 @@ export default function BrowseScreen() {
               {filtered.length === 0 ? (
                 <EmptyState Icon={Package} title="No listings found" subtitle="Try a different search or category." />
               ) : (
-                <View className="flex-row flex-wrap gap-4">
+                <View className="gap-3.5">
                   {filtered.map((item) => (
                     <ProductCard
                       key={item.id}

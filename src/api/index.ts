@@ -11,6 +11,8 @@ export { notificationsApi } from "./notifications";
 export { paymentsApi } from "./payments";
 export { reviewsApi } from "./reviews";
 export { categoriesApi, publicApi } from "./public";
+export { dashboardApi } from "./dashboard";
+export type { CustomerStats } from "./dashboard";
 
 export type { LoginPayload, RegisterPayload, SellerRegisterPayload, UserProfile, CustomerProfileData, SellerProfileData } from "./auth";
 export type { Product, Car, Property, ProductImage, CarUnit, PropertyUnit, SellerInfo } from "./products";

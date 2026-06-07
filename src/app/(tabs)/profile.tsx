@@ -6,6 +6,7 @@ import {
   StatusBar,
   Alert,
 } from "react-native";
+import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import {
@@ -32,12 +33,8 @@ import {
 } from "lucide-react-native";
 import { shadow } from "@/constants/shadows";
 import { useAuthStore } from "@/store/authStore";
-
-const STATS = [
-  { label: "Orders", value: "12", icon: ShoppingBag, color: "#f59e0b" },
-  { label: "Saved", value: "8", icon: Heart, color: "#ef4444" },
-  { label: "Reviews", value: "5", icon: Star, color: "#8b5cf6" },
-];
+import { useEffect, useState } from "react";
+import { dashboardApi } from "@/api";
 
 type MenuItem = {
   icon: any;
@@ -249,6 +246,20 @@ export default function ProfileScreen() {
   const displayPhone = (profile as any)?.phone || (profile as any)?.contact_phone || "";
   const isVerified = user?.email_verified ?? false;
   const isSeller = user?.role === "seller";
+  const avatarUrl: string | null = (profile as any)?.avatar_url ?? null;
+
+  const [stats, setStats] = useState({ orders: "-", saved: "-" });
+
+  useEffect(() => {
+    dashboardApi.customerStats().then((s) => {
+      setStats({
+        orders: String(s.total_orders ?? 0),
+        saved: String(s.wishlist_items ?? 0),
+      });
+    }).catch(() => {
+      setStats({ orders: "0", saved: "0" });
+    });
+  }, []);
 
   const handleLogout = () => {
     Alert.alert("Sign Out", "Are you sure you want to sign out?", [
@@ -307,11 +318,19 @@ export default function ProfileScreen() {
         >
           <View className="flex-row items-center gap-4">
             <View className="relative">
-              <View className="w-16 h-16 rounded-full bg-indigo-900 items-center justify-center">
-                <Text className="text-white text-2xl font-bold">
-                  {displayName.charAt(0).toUpperCase()}
-                </Text>
-              </View>
+              {avatarUrl ? (
+                <Image
+                  source={{ uri: avatarUrl }}
+                  style={{ width: 64, height: 64, borderRadius: 32 }}
+                  contentFit="cover"
+                />
+              ) : (
+                <View className="w-16 h-16 rounded-full bg-indigo-900 items-center justify-center">
+                  <Text className="text-white text-2xl font-bold">
+                    {displayName.charAt(0).toUpperCase()}
+                  </Text>
+                </View>
+              )}
               {isVerified && (
                 <View className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-green-400 rounded-full border-2 border-white items-center justify-center">
                   <CheckCircle size={10} color="#fff" />
@@ -337,7 +356,10 @@ export default function ProfileScreen() {
 
           {/* Stats row */}
           <View className="flex-row mt-4 pt-4 border-t border-gray-100">
-            {STATS.map(({ label, value, icon: Icon, color }) => (
+            {[
+              { label: "Orders", value: stats.orders, icon: ShoppingBag, color: "#f59e0b" },
+              { label: "Saved", value: stats.saved, icon: Heart, color: "#ef4444" },
+            ].map(({ label, value, icon: Icon, color }) => (
               <View key={label} className="flex-1 items-center gap-1">
                 <Icon size={18} color={color} />
                 <Text className="text-base font-extrabold text-gray-900">

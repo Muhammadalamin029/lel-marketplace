@@ -8,7 +8,7 @@
     "scheme": "lelmarketplace",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/images/icon.png"
     },
     "android": {
       "adaptiveIcon": {
@@ -26,6 +26,13 @@
     },
     "plugins": [
       "expo-router",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow $(PRODUCT_NAME) to access your photos to set a profile picture.",
+          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera to take a profile photo."
+        }
+      ],
       [
         "expo-splash-screen",
         {

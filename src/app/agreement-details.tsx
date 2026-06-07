@@ -164,7 +164,7 @@ function PaymentModal({
 export default function AgreementDetailsScreen() {
   useRequireAuth();
   const router = useRouter();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, openPayment } = useLocalSearchParams<{ id: string; openPayment?: string }>();
   const { user } = useAuthStore();
 
   const [agr, setAgr] = useState<Agreement | null>(null);
@@ -188,6 +188,13 @@ export default function AgreementDetailsScreen() {
   }, [id]);
 
   useEffect(() => { load(); }, [load]);
+
+  // Auto-open payment modal when navigated here from the list's Pay button
+  useEffect(() => {
+    if (!loading && agr && openPayment === "true") {
+      setPayModalVisible(true);
+    }
+  }, [loading, agr, openPayment]);
 
   const handlePay = async (amount: number) => {
     if (!agr || !user?.email) return;

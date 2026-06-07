@@ -1,12 +1,14 @@
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, ScrollView, StatusBar, ActivityIndicator, Alert } from "react-native";
+import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { shadow } from "@/constants/shadows";
 import { Camera, User, Mail, Phone, FileText, CheckCircle } from "lucide-react-native";
 import { useAuthStore } from "@/store/authStore";
+import * as ImagePicker from "expo-image-picker";
 
 type Field = { label: string; key: string; placeholder: string; icon: any; keyboard?: any; multiline?: boolean };
 
@@ -29,8 +31,38 @@ export default function EditProfileScreen() {
     phone: p?.phone ?? "",
     bio: p?.bio ?? "",
   });
+  const [avatarUri, setAvatarUri] = useState<string | null>(p?.avatar_url ?? null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   const set = (key: string) => (val: string) => setForm((prev) => ({ ...prev, [key]: val }));
+
+  const handlePickAvatar = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert("Permission required", "Please allow access to your photo library to change your profile picture.");
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: "images",
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.5,
+      base64: true,
+    });
+    if (result.canceled || !result.assets?.[0]) return;
+    const asset = result.assets[0];
+    const dataUrl = `data:image/jpeg;base64,${asset.base64}`;
+    setAvatarUri(dataUrl);
+    setUploadingAvatar(true);
+    try {
+      await updateProfile({ avatar_url: dataUrl });
+    } catch {
+      Alert.alert("Error", "Failed to save profile picture. Please try again.");
+      setAvatarUri(p?.avatar_url ?? null);
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
 
   const handleSave = async () => {
     try {
@@ -54,14 +86,26 @@ export default function EditProfileScreen() {
 
           {/* Avatar */}
           <View className="items-center">
-            <View className="relative">
-              <View className="w-24 h-24 rounded-full bg-indigo-900 items-center justify-center">
-                <Text className="text-white text-3xl font-bold">{displayInitial}</Text>
+            <TouchableOpacity onPress={handlePickAvatar} disabled={uploadingAvatar} className="relative">
+              {avatarUri ? (
+                <Image
+                  source={{ uri: avatarUri }}
+                  style={{ width: 96, height: 96, borderRadius: 48 }}
+                  contentFit="cover"
+                />
+              ) : (
+                <View className="w-24 h-24 rounded-full bg-indigo-900 items-center justify-center">
+                  <Text className="text-white text-3xl font-bold">{displayInitial}</Text>
+                </View>
+              )}
+              <View className="absolute bottom-0 right-0 w-8 h-8 bg-amber-400 rounded-full items-center justify-center" style={shadow.md}>
+                {uploadingAvatar ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Camera size={14} color="#fff" />
+                )}
               </View>
-              <TouchableOpacity className="absolute bottom-0 right-0 w-8 h-8 bg-amber-400 rounded-full items-center justify-center" style={shadow.md}>
-                <Camera size={14} color="#fff" />
-              </TouchableOpacity>
-            </View>
+            </TouchableOpacity>
             <Text className="text-xs text-gray-400 mt-2">Tap to change photo</Text>
           </View>
 

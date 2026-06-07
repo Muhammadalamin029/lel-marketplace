@@ -160,13 +160,21 @@ export default function MyAgreementsScreen() {
                   {/* CTAs */}
                   <View className="flex-row items-center justify-between pt-3 border-t border-gray-100">
                     {agr.status === "pending_deposit" && (
-                      <TouchableOpacity className="flex-row items-center gap-1.5 bg-amber-400 px-4 py-2 rounded-xl" style={shadow.btn}>
+                      <TouchableOpacity
+                        onPress={() => router.push(`/agreement-details?id=${agr.id}&openPayment=true` as any)}
+                        className="flex-row items-center gap-1.5 bg-amber-400 px-4 py-2 rounded-xl"
+                        style={shadow.btn}
+                      >
                         <CreditCard size={14} color="#fff" />
                         <Text className="text-white text-xs font-bold">Pay Deposit</Text>
                       </TouchableOpacity>
                     )}
                     {agr.status === "active" && (
-                      <TouchableOpacity className="flex-row items-center gap-1.5 bg-amber-400 px-4 py-2 rounded-xl" style={shadow.btn}>
+                      <TouchableOpacity
+                        onPress={() => router.push(`/agreement-details?id=${agr.id}&openPayment=true` as any)}
+                        className="flex-row items-center gap-1.5 bg-amber-400 px-4 py-2 rounded-xl"
+                        style={shadow.btn}
+                      >
                         <CreditCard size={14} color="#fff" />
                         <Text className="text-white text-xs font-bold">Pay Installment</Text>
                       </TouchableOpacity>

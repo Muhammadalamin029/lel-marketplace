@@ -245,7 +245,6 @@ export default function ProfileScreen() {
   const displayEmail = user?.email ?? "";
   const displayPhone = (profile as any)?.phone || (profile as any)?.contact_phone || "";
   const isVerified = user?.email_verified ?? false;
-  const isSeller = user?.role === "seller";
   const avatarUrl: string | null = (profile as any)?.avatar_url ?? null;
 
   const [stats, setStats] = useState({ orders: "-", saved: "-" });
@@ -273,10 +272,6 @@ export default function ProfileScreen() {
         },
       },
     ]);
-  };
-
-  const handleBecomeSeller = () => {
-    router.push("/(auth)/seller-register");
   };
 
   const handleMenuPress = (item: MenuItem) => {
@@ -373,29 +368,7 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        {/* Become a seller banner */}
-        {!isSeller && (
-          <TouchableOpacity
-            onPress={handleBecomeSeller}
-            className="mx-5 mb-4 bg-amber-400 rounded-2xl p-4 flex-row items-center gap-3"
-            style={shadow.btn}
-          >
-            <View className="w-10 h-10 rounded-full bg-white/20 items-center justify-center">
-              <Star size={18} color="#fff" />
-            </View>
-            <View className="flex-1">
-              <Text className="text-white font-bold text-sm">
-                Become a Seller
-              </Text>
-              <Text className="text-white/70 text-xs mt-0.5">
-                List vehicles, properties, and products
-              </Text>
-            </View>
-            <ChevronRight size={16} color="#fff" />
-          </TouchableOpacity>
-        )}
-
-        {/* Menu sections */}
+{/* Menu sections */}
         <View className="mx-5 gap-4">
           {MENU_SECTIONS.map((section) => (
             <View key={section.title}>

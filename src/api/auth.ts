@@ -3,16 +3,6 @@ import { storage } from "./storage";
 
 export interface LoginPayload { email: string; password: string }
 export interface RegisterPayload { name: string; email: string; phone: string; password: string }
-export interface SellerRegisterPayload {
-  business_name: string;
-  contact_email: string;
-  contact_phone: string;
-  description: string;
-  seller_type: "retailer" | "car_dealer" | "real_agent";
-  website_url?: string;
-  password: string;
-}
-
 export interface TokenResponse { access_token: string; refresh_token: string }
 export interface UserProfile {
   id: string;
@@ -46,17 +36,11 @@ export const authApi = {
 
   async registerCustomer(payload: RegisterPayload): Promise<TokenResponse> {
     const { data } = await api.post<TokenResponse>("/auth/register/customer", {
-      name: payload.name,
+      full_name: payload.name,
       email: payload.email,
       phone: payload.phone,
       password: payload.password,
     });
-    await storage.setTokens(data.access_token, data.refresh_token);
-    return data;
-  },
-
-  async registerSeller(payload: SellerRegisterPayload): Promise<TokenResponse> {
-    const { data } = await api.post<TokenResponse>("/auth/register/seller", payload);
     await storage.setTokens(data.access_token, data.refresh_token);
     return data;
   },

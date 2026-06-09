@@ -220,16 +220,7 @@ export default function Register() {
           </View>
 
           {/* Footer Links */}
-          <View className="mt-6 items-center flex flex-col gap-3">
-            <View className="flex-row items-center flex-wrap justify-center gap-1">
-              <Text className="text-muted-foreground text-sm">Want to sell on our platform?</Text>
-              <Link href="/(auth)/seller-register" asChild>
-                <TouchableOpacity>
-                  <Text className="text-primary text-sm font-medium underline">Create seller account</Text>
-                </TouchableOpacity>
-              </Link>
-            </View>
-
+          <View className="mt-6 items-center">
             <View className="flex-row items-center gap-1">
               <Text className="text-muted-foreground text-sm">Already have an account?</Text>
               <Link href="/(auth)/login" asChild>

@@ -6,7 +6,6 @@ import type {
   SellerProfileData,
   LoginPayload,
   RegisterPayload,
-  SellerRegisterPayload,
 } from "@/api";
 
 type Profile = CustomerProfileData | SellerProfileData | null;
@@ -21,7 +20,6 @@ interface AuthState {
 
   login: (payload: LoginPayload) => Promise<void>;
   registerCustomer: (payload: RegisterPayload) => Promise<void>;
-  registerSeller: (payload: SellerRegisterPayload) => Promise<void>;
   logout: () => Promise<void>;
   fetchMe: () => Promise<void>;
   updateProfile: (updates: Partial<CustomerProfileData>) => Promise<void>;
@@ -78,20 +76,8 @@ export const useAuthStore = create<AuthState>((set, get) => {
       set({ isLoading: true, error: null });
       try {
         await authApi.registerCustomer(payload);
-        const { user, profile } = await authApi.getMe();
-        set({ user, profile, isAuthenticated: true, isLoading: false });
-      } catch (e) {
-        set({ isLoading: false, error: getApiError(e) });
-        throw e;
-      }
-    },
-
-    registerSeller: async (payload) => {
-      set({ isLoading: true, error: null });
-      try {
-        await authApi.registerSeller(payload);
-        const { user, profile } = await authApi.getMe();
-        set({ user, profile, isAuthenticated: true, isLoading: false });
+        // Don't set isAuthenticated — user must verify email first
+        set({ isLoading: false });
       } catch (e) {
         set({ isLoading: false, error: getApiError(e) });
         throw e;

@@ -128,12 +128,6 @@ export default function Login() {
                   <Text className="text-primary text-sm font-medium underline">Sign up</Text>
                 </TouchableOpacity>
               </Link>
-              <Text className="text-muted-foreground text-sm">or</Text>
-              <Link href="/(auth)/seller-register" asChild>
-                <TouchableOpacity>
-                  <Text className="text-primary text-sm font-medium underline">Become a seller</Text>
-                </TouchableOpacity>
-              </Link>
             </View>
           </View>
         </View>

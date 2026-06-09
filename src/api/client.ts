@@ -104,6 +104,10 @@ export function getApiError(error: unknown): string {
   if (axios.isAxiosError(error)) {
     const data = error.response?.data;
     if (typeof data?.detail === "string") return data.detail;
+    if (Array.isArray(data?.detail)) {
+      const msg = data.detail[0]?.msg;
+      if (msg) return msg;
+    }
     if (typeof data?.message === "string") return data.message;
     if (error.code === "ECONNABORTED") return "Request timed out. Check your connection.";
     if (!error.response) return "Could not reach the server. Check your internet connection.";

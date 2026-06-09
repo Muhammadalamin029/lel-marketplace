@@ -6,10 +6,12 @@ import {
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Mail, CheckCircle, AlertCircle, RefreshCw } from "lucide-react-native";
 import { authApi, getApiError } from "@/api";
+import { useAuthStore } from "@/store/authStore";
 
 export default function VerifyEmail() {
   const router = useRouter();
   const { email } = useLocalSearchParams<{ email: string }>();
+  const { fetchMe } = useAuthStore();
 
   const [code, setCode] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
@@ -24,7 +26,10 @@ export default function VerifyEmail() {
     try {
       await authApi.verifyEmail(email ?? "", code);
       setSuccess(true);
-      setTimeout(() => router.replace("/(tabs)"), 1800);
+      setTimeout(async () => {
+        await fetchMe(); // sets isAuthenticated: true, auth layout will redirect to tabs
+        router.replace("/(tabs)" as any);
+      }, 1800);
     } catch (e) {
       setError(getApiError(e));
     } finally {

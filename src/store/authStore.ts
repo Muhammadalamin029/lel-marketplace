@@ -48,7 +48,13 @@ export const useAuthStore = create<AuthState>((set, get) => {
         const token = await storage.getAccessToken();
         if (token) {
           const { user, profile } = await authApi.getMe();
-          set({ user, profile, isAuthenticated: true });
+          // Only allow verified customers into the app
+          if (user.role !== "customer" || !user.email_verified) {
+            await storage.clearTokens();
+            set({ user: null, profile: null, isAuthenticated: false });
+          } else {
+            set({ user, profile, isAuthenticated: true });
+          }
         }
       } catch {
         // Token invalid or expired — clear it and stay logged out
@@ -65,6 +71,15 @@ export const useAuthStore = create<AuthState>((set, get) => {
       try {
         await authApi.login(payload);
         const { user, profile } = await authApi.getMe();
+        if (user.role !== "customer") {
+          await storage.clearTokens();
+          set({ isLoading: false });
+          throw new Error("This app is for customers only.");
+        }
+        if (!user.email_verified) {
+          set({ isLoading: false });
+          throw new Error("EMAIL_NOT_VERIFIED");
+        }
         set({ user, profile, isAuthenticated: true, isLoading: false });
       } catch (e) {
         set({ isLoading: false, error: getApiError(e) });

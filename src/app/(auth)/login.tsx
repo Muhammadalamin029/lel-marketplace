@@ -24,8 +24,12 @@ export default function Login() {
     try {
       await login({ email: email.trim(), password });
       router.replace("/(tabs)");
-    } catch (e) {
-      setError(getApiError(e));
+    } catch (e: any) {
+      if (e?.message === "EMAIL_NOT_VERIFIED") {
+        router.replace(`/(auth)/verify-email?email=${encodeURIComponent(email.trim())}` as any);
+      } else {
+        setError(getApiError(e));
+      }
     }
   };
 

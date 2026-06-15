@@ -3,9 +3,11 @@ import { useAuthStore } from "@/store/authStore";
 
 export default function AuthLayout() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const user = useAuthStore((s) => s.user);
 
-  // If the user is already signed in, bounce them out of the auth flow.
-  if (isAuthenticated) {
+  // If the user is already signed in and verified, bounce them out of the auth flow.
+  // Unverified users stay here so they can reach the verify-email screen.
+  if (isAuthenticated && user?.email_verified) {
     return <Redirect href="/(tabs)" />;
   }
 

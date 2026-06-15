@@ -29,10 +29,15 @@ function TabIcon({
 
 export default function TabsLayout() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const user = useAuthStore((s) => s.user);
   const cartCount = useCartStore((s) => s.totalItems());
 
   if (!isAuthenticated) {
     return <Redirect href="/(auth)/login" />;
+  }
+
+  if (!user?.email_verified) {
+    return <Redirect href="/(auth)/verify-email" />;
   }
 
   return (

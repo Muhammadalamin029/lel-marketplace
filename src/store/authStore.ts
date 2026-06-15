@@ -48,8 +48,8 @@ export const useAuthStore = create<AuthState>((set, get) => {
         const token = await storage.getAccessToken();
         if (token) {
           const { user, profile } = await authApi.getMe();
-          // Only allow verified customers into the app
-          if (user.role !== "customer" || !user.email_verified) {
+          // Only customers can use the app; verification is handled by layout redirects
+          if (user.role !== "customer") {
             await storage.clearTokens();
             set({ user: null, profile: null, isAuthenticated: false });
           } else {
@@ -76,10 +76,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
           set({ isLoading: false });
           throw new Error("This app is for customers only.");
         }
-        if (!user.email_verified) {
-          set({ isLoading: false });
-          throw new Error("EMAIL_NOT_VERIFIED");
-        }
+        // Authenticated regardless of email verification — layouts handle the redirect
         set({ user, profile, isAuthenticated: true, isLoading: false });
       } catch (e) {
         set({ isLoading: false, error: getApiError(e) });

@@ -7,7 +7,7 @@ import { Link, useRouter } from "expo-router";
 import { Image } from "expo-image";
 import { Mail, Lock, Eye, EyeOff, AlertCircle } from "lucide-react-native";
 import { useAuthStore } from "@/store/authStore";
-import { getApiError } from "@/api";
+import { authApi, getApiError } from "@/api";
 
 export default function Login() {
   const router = useRouter();
@@ -22,14 +22,18 @@ export default function Login() {
     if (!email.trim() || !password) return;
     setError(null);
     try {
-      await login({ email: email.trim(), password });
-      router.replace("/(tabs)");
-    } catch (e: any) {
-      if (e?.message === "EMAIL_NOT_VERIFIED") {
-        router.replace(`/(auth)/verify-email?email=${encodeURIComponent(email.trim())}` as any);
+      const trimmedEmail = email.trim();
+      await login({ email: trimmedEmail, password });
+      const { user } = useAuthStore.getState();
+      if (!user?.email_verified) {
+        // Auto-send a verification code, mirroring the web app's behavior.
+        authApi.sendVerificationEmail(trimmedEmail).catch(() => {});
+        router.replace(`/(auth)/verify-email?email=${encodeURIComponent(trimmedEmail)}` as any);
       } else {
-        setError(getApiError(e));
+        router.replace("/(tabs)");
       }
+    } catch (e) {
+      setError(getApiError(e));
     }
   };
 

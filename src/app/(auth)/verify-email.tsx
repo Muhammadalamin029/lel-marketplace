@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   View, Text, TextInput, TouchableOpacity,
   KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator,
@@ -10,8 +10,9 @@ import { useAuthStore } from "@/store/authStore";
 
 export default function VerifyEmail() {
   const router = useRouter();
-  const { email } = useLocalSearchParams<{ email: string }>();
-  const { fetchMe } = useAuthStore();
+  const params = useLocalSearchParams<{ email?: string }>();
+  const { fetchMe, user } = useAuthStore();
+  const email = params.email || user?.email || "";
 
   const [code, setCode] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
@@ -19,15 +20,23 @@ export default function VerifyEmail() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
+  // If we arrived here without a freshly-sent code (e.g. reopening the app
+  // while still unverified), send one automatically so there's a code waiting.
+  useEffect(() => {
+    if (!params.email && email) {
+      authApi.sendVerificationEmail(email).catch(() => {});
+    }
+  }, []);
+
   const handleVerify = async () => {
     if (code.length < 6) { setError("Enter the 6-digit code from your email."); return; }
     setIsVerifying(true);
     setError(null);
     try {
-      await authApi.verifyEmail(email ?? "", code);
+      await authApi.verifyEmail(email, code);
       setSuccess(true);
       setTimeout(async () => {
-        await fetchMe(); // sets isAuthenticated: true, auth layout will redirect to tabs
+        await fetchMe(); // refreshes user.email_verified, layout will redirect to tabs
         router.replace("/(tabs)" as any);
       }, 1800);
     } catch (e) {
@@ -41,7 +50,7 @@ export default function VerifyEmail() {
     setIsResending(true);
     setError(null);
     try {
-      await authApi.sendVerificationEmail(email ?? "");
+      await authApi.sendVerificationEmail(email);
     } catch (e) {
       setError(getApiError(e));
     } finally {

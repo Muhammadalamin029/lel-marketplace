@@ -5,6 +5,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Mail, ArrowLeft, CheckCircle, AlertCircle } from "lucide-react-native";
+import { authApi, getApiError } from "@/api";
 
 type Step = "email" | "code" | "password" | "done";
 
@@ -23,29 +24,19 @@ export default function ForgotPassword() {
     setIsLoading(true);
     setError(null);
     try {
-      // TODO: POST /auth/forgot-password { email }
-      await new Promise((r) => setTimeout(r, 800));
+      await authApi.requestPasswordReset(email.trim());
       setStep("code");
-    } catch {
-      setError("Could not send reset code. Please try again.");
+    } catch (e) {
+      setError(getApiError(e));
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleVerifyCode = async () => {
+  const handleVerifyCode = () => {
     if (code.length < 6) { setError("Enter the 6-digit code from your email."); return; }
-    setIsLoading(true);
     setError(null);
-    try {
-      // TODO: POST /auth/verify-reset-code { email, code }
-      await new Promise((r) => setTimeout(r, 600));
-      setStep("password");
-    } catch {
-      setError("Invalid or expired code. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
+    setStep("password");
   };
 
   const handleResetPassword = async () => {
@@ -54,11 +45,11 @@ export default function ForgotPassword() {
     setIsLoading(true);
     setError(null);
     try {
-      // TODO: POST /auth/reset-password { email, code, new_password }
-      await new Promise((r) => setTimeout(r, 800));
+      await authApi.resetPassword(email.trim(), code, newPassword, confirmPassword);
       setStep("done");
-    } catch {
-      setError("Could not reset password. Please try again.");
+    } catch (e) {
+      setError(getApiError(e));
+      setStep("code");
     } finally {
       setIsLoading(false);
     }

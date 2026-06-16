@@ -55,7 +55,7 @@ export const authApi = {
   },
 
   async changePassword(current_password: string, new_password: string): Promise<void> {
-    await api.put("/auth/change-password", { current_password, new_password });
+    await api.put("/auth/change-password", { current_password, new_password, confirm_password: new_password });
   },
 
   async sendVerificationEmail(email: string): Promise<void> {
@@ -63,7 +63,7 @@ export const authApi = {
   },
 
   async verifyEmail(email: string, code: string): Promise<void> {
-    await api.post("/auth/verify-email", { email, code });
+    await api.post("/auth/verify-email", { email, verification_code: code });
   },
 
   async requestPasswordReset(email: string): Promise<void> {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   View, Text, TextInput, TouchableOpacity,
   KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator,
@@ -7,6 +7,8 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { Mail, CheckCircle, AlertCircle, RefreshCw } from "lucide-react-native";
 import { authApi, getApiError } from "@/api";
 import { useAuthStore } from "@/store/authStore";
+
+const RESEND_COOLDOWN = 60;
 
 export default function VerifyEmail() {
   const router = useRouter();
@@ -19,13 +21,36 @@ export default function VerifyEmail() {
   const [isResending, setIsResending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [countdown, setCountdown] = useState(RESEND_COOLDOWN);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // If we arrived here without a freshly-sent code (e.g. reopening the app
-  // while still unverified), send one automatically so there's a code waiting.
+  const startCooldown = () => {
+    setCountdown(RESEND_COOLDOWN);
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current!);
+          timerRef.current = null;
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  // Auto-send a code on mount. login.tsx and register.tsx fire-and-forget their
+  // own send before navigating here; this covers the app-reopen / tabs-redirect
+  // path (no params.email) and acts as a fallback for all other paths.
+  // Rate limiting on the backend silently absorbs duplicate sends.
   useEffect(() => {
-    if (!params.email && email) {
+    if (email) {
       authApi.sendVerificationEmail(email).catch(() => {});
+      startCooldown();
     }
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
   }, []);
 
   const handleVerify = async () => {
@@ -36,7 +61,7 @@ export default function VerifyEmail() {
       await authApi.verifyEmail(email, code);
       setSuccess(true);
       setTimeout(async () => {
-        await fetchMe(); // refreshes user.email_verified, layout will redirect to tabs
+        await fetchMe();
         router.replace("/(tabs)" as any);
       }, 1800);
     } catch (e) {
@@ -51,12 +76,15 @@ export default function VerifyEmail() {
     setError(null);
     try {
       await authApi.sendVerificationEmail(email);
+      startCooldown();
     } catch (e) {
       setError(getApiError(e));
     } finally {
       setIsResending(false);
     }
   };
+
+  const canResend = countdown === 0 && !isResending;
 
   if (success) {
     return (
@@ -118,11 +146,17 @@ export default function VerifyEmail() {
 
           <View className="flex-row items-center justify-center gap-2">
             <Text className="text-sm text-muted-foreground">Didn't receive it?</Text>
-            <TouchableOpacity onPress={handleResend} disabled={isResending} className="flex-row items-center gap-1">
+            <TouchableOpacity
+              onPress={handleResend}
+              disabled={!canResend}
+              className="flex-row items-center gap-1"
+            >
               {isResending
                 ? <ActivityIndicator size="small" color="#f59e0b" />
-                : <RefreshCw size={13} color="#f59e0b" />}
-              <Text className="text-primary text-sm font-medium">Resend</Text>
+                : <RefreshCw size={13} color={canResend ? "#f59e0b" : "#d1d5db"} />}
+              <Text className={`text-sm font-medium ${canResend ? "text-primary" : "text-muted-foreground"}`}>
+                {countdown > 0 ? `Resend in ${countdown}s` : "Resend"}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>

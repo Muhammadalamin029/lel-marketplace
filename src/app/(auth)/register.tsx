@@ -13,7 +13,7 @@ import { Link, useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { Mail, Phone, Lock, User, Eye, EyeOff, AlertCircle, CheckCircle2, XCircle } from 'lucide-react-native';
 import { useAuthStore } from '@/store/authStore';
-import { getApiError } from '@/api';
+import { authApi, getApiError } from '@/api';
 
 // --- Password Policy Component ---
 function PasswordPolicy({ password }: { password: string }) {
@@ -83,7 +83,8 @@ export default function Register() {
     setError(null);
     try {
       await registerCustomer({ name: form.name.trim(), email: form.email.trim(), phone: form.phone.trim(), password: form.password });
-      // Send to email verification screen before entering the app
+      // Send verification code then navigate to verification screen
+      authApi.sendVerificationEmail(form.email.trim()).catch(() => {});
       router.replace(`/(auth)/verify-email?email=${encodeURIComponent(form.email.trim())}` as any);
     } catch (e) {
       setError(getApiError(e));

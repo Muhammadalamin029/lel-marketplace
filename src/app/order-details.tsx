@@ -10,6 +10,8 @@ import { fmt, formatDate } from "@/utils/format";
 import { shadow } from "@/constants/shadows";
 import { ordersApi } from "@/api";
 import type { Order } from "@/api";
+import { useAuthStore } from "@/store/authStore";
+import BankTransferPanel from "@/components/BankTransferPanel";
 
 const STATUS_STEPS = ["pending", "processing", "paid", "shipped", "delivered"] as const;
 
@@ -41,6 +43,7 @@ export default function OrderDetailsScreen() {
   useRequireAuth();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { user } = useAuthStore();
 
   const [order, setOrder] = useState<Order | null>(null);
   const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
@@ -68,6 +71,11 @@ export default function OrderDetailsScreen() {
   }, [id]);
 
   useEffect(() => { load(); }, [load]);
+
+  const handleBankTransferSuccess = async () => {
+    await load();
+    Alert.alert("Payment Received!", "Your order payment has been confirmed and your order is now being processed.");
+  };
 
   const handleCancel = () => {
     if (!order) return;
@@ -155,6 +163,20 @@ export default function OrderDetailsScreen() {
             ))}
           </View>
         </View>
+
+        {/* Pending Payment Session */}
+        {["pending", "processing"].includes(order.status) && (
+          <View className="bg-amber-50/40 rounded-2xl p-5 mb-5 border border-amber-200" style={shadow.md}>
+            <Text className="text-sm font-bold text-amber-700 mb-3">Pending Payment Session</Text>
+            <BankTransferPanel
+              category="order"
+              orderId={order.id}
+              amount={order.total_amount}
+              email={user?.email ?? ""}
+              onSuccess={handleBankTransferSuccess}
+            />
+          </View>
+        )}
 
         {/* Timeline events (from API) */}
         {timeline.length > 0 && (

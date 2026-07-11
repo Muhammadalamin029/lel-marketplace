@@ -25,7 +25,7 @@ export type { AssetPayment } from "./sellerRequests";
 
 export type { LoginPayload, RegisterPayload, SellerRegisterPayload, ProfileUpdatePayload, UserProfile, CustomerProfileData, SellerProfileData, SellerType } from "./auth";
 export type { Product, Car, Property, ProductImage, CarUnit, PropertyUnit, SellerInfo } from "./products";
-export type { Order, OrderItem, OrderBuyer, OrderAddress, SellerGroup } from "./orders";
+export type { Order, OrderItem, OrderBuyer, OrderAddress, SellerGroup, BankTransferDetails } from "./orders";
 export type { Inspection, Agreement, AssetMini, UserMini, CompleteInspectionPayload } from "./inspections";
 export type { Address, AddressPayload } from "./addresses";
 export type { WishlistItem } from "./wishlist";

@@ -2,7 +2,7 @@ import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { useEffect, useState } from "react";
 import {
   View, Text, ScrollView, TouchableOpacity, StatusBar,
-  ActivityIndicator, Linking, Alert,
+  ActivityIndicator, Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -11,28 +11,25 @@ import { SectionHeader } from "@/components/SectionHeader";
 import { fmt } from "@/utils/format";
 import { shadow } from "@/constants/shadows";
 import {
-  MapPin, CreditCard, ChevronRight, CheckCircle, Package, Truck,
+  MapPin, CreditCard, Package, Truck,
 } from "lucide-react-native";
 import { useCartStore } from "@/store/cartStore";
 import { ordersApi } from "@/api/orders";
 import { addressesApi } from "@/api";
 import type { Address } from "@/api";
-import { useAuthStore } from "@/store/authStore";
 
-type Step = "review" | "processing" | "success";
+type Step = "review" | "processing";
 
 export default function CheckoutScreen() {
   useRequireAuth();
   const router = useRouter();
   const { pendingOrder, fetchPendingOrder, clearCart } = useCartStore();
-  const { user } = useAuthStore();
 
   const [step, setStep] = useState<Step>("review");
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [loadingAddresses, setLoadingAddresses] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [confirmedOrderId, setConfirmedOrderId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchPendingOrder();
@@ -63,26 +60,12 @@ export default function CheckoutScreen() {
     setStep("processing");
 
     try {
-      // 1. Process checkout — confirms address and reserves stock
+      // Process checkout — confirms address and reserves stock
       const confirmation = await ordersApi.processCheckout(selectedAddressId);
-      setConfirmedOrderId(confirmation.order_id);
-
-      // 2. Initialize Paystack payment
-      const payment = await ordersApi.initializePayment(
-        confirmation.order_id,
-        user?.email ?? "",
-        subtotal,
-        "lelmarketplace://payment-callback" // deep link; falls back gracefully
-      );
-
-      // 3. Open Paystack in browser
-      if (payment.authorization_url) {
-        await Linking.openURL(payment.authorization_url);
-      }
-
-      // 4. After returning from browser, show success (payment verification via webhook)
       await clearCart();
-      setStep("success");
+
+      // Bank transfer details are generated on the order-details screen
+      router.replace(`/order-details?id=${confirmation.order_id}` as any);
     } catch (e: any) {
       setStep("review");
       Alert.alert(
@@ -100,41 +83,10 @@ export default function CheckoutScreen() {
     return (
       <SafeAreaView className="flex-1 bg-gray-50 items-center justify-center gap-5">
         <ActivityIndicator size="large" color="#f59e0b" />
-        <Text className="text-base font-bold text-gray-900">Processing your order…</Text>
+        <Text className="text-base font-bold text-gray-900">Placing your order…</Text>
         <Text className="text-sm text-gray-500 text-center px-8">
-          You'll be redirected to Paystack to complete payment. Do not close the app.
+          You'll get your bank transfer details on the next screen.
         </Text>
-      </SafeAreaView>
-    );
-  }
-
-  if (step === "success") {
-    return (
-      <SafeAreaView className="flex-1 bg-gray-50 items-center justify-center px-8 gap-6">
-        <View className="w-24 h-24 rounded-full bg-green-50 items-center justify-center">
-          <CheckCircle size={48} color="#22c55e" />
-        </View>
-        <View className="items-center gap-2">
-          <Text className="text-2xl font-extrabold text-gray-900">Order Placed!</Text>
-          <Text className="text-sm text-gray-500 text-center leading-relaxed">
-            Your order has been confirmed. Complete payment on the Paystack page to finalise.
-          </Text>
-        </View>
-        <TouchableOpacity
-          onPress={() => confirmedOrderId
-            ? router.push(`/order-details?id=${confirmedOrderId}` as any)
-            : router.push("/orders")}
-          className="w-full bg-amber-400 py-4 rounded-2xl items-center"
-          style={shadow.btn}
-        >
-          <Text className="text-white font-bold">Track My Order</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => router.replace("/(tabs)")}
-          className="w-full bg-white border border-gray-200 py-4 rounded-2xl items-center"
-        >
-          <Text className="text-gray-700 font-semibold">Continue Shopping</Text>
-        </TouchableOpacity>
       </SafeAreaView>
     );
   }
@@ -257,7 +209,7 @@ export default function CheckoutScreen() {
                 <CreditCard size={18} color="#22c55e" />
               </View>
               <View className="flex-1">
-                <Text className="text-sm font-bold text-gray-900">Card / Bank Transfer</Text>
+                <Text className="text-sm font-bold text-gray-900">Bank Transfer</Text>
                 <Text className="text-xs text-gray-500">Secured by Paystack</Text>
               </View>
               <View className="w-2 h-2 rounded-full bg-green-400" />

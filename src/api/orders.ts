@@ -45,6 +45,17 @@ export interface SellerGroup {
   item_count: number;
 }
 
+/** Matches backend BankTransferDetails schema (POST /payments/initialize-bank-transfer response) */
+export interface BankTransferDetails {
+  account_number: string;
+  account_name: string;
+  bank_name: string;
+  amount: number;
+  reference: string;
+  expires_at?: string | null;
+  currency: string;
+}
+
 /** Matches backend OrderResponse schema */
 export interface Order {
   id: string;
@@ -118,6 +129,18 @@ export const ordersApi = {
   }> {
     const { data } = await api.post("/payments/initialize", { order_id, email, amount, callback_url });
     return data?.data ?? data;
+  },
+
+  /** POST /payments/initialize-bank-transfer — generates a one-time Pay-with-Transfer account number */
+  async initializeBankTransfer(params: {
+    category: "order" | "asset_deposit" | "asset_installment" | "full_pay";
+    order_id?: string;
+    agreement_id?: string;
+    amount: number;
+    email: string;
+  }): Promise<BankTransferDetails> {
+    const { data } = await api.post("/payments/initialize-bank-transfer", params);
+    return data?.data as BankTransferDetails;
   },
 
   /** POST /payments/verify */

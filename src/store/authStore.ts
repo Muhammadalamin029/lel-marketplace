@@ -6,6 +6,8 @@ import type {
   SellerProfileData,
   LoginPayload,
   RegisterPayload,
+  SellerRegisterPayload,
+  ProfileUpdatePayload,
 } from "@/api";
 
 type Profile = CustomerProfileData | SellerProfileData | null;
@@ -20,9 +22,10 @@ interface AuthState {
 
   login: (payload: LoginPayload) => Promise<void>;
   registerCustomer: (payload: RegisterPayload) => Promise<void>;
+  registerSeller: (payload: SellerRegisterPayload) => Promise<void>;
   logout: () => Promise<void>;
   fetchMe: () => Promise<void>;
-  updateProfile: (updates: Partial<CustomerProfileData>) => Promise<void>;
+  updateProfile: (updates: ProfileUpdatePayload) => Promise<void>;
   changePassword: (currentPw: string, newPw: string) => Promise<void>;
   clearError: () => void;
   rehydrate: () => Promise<void>;
@@ -48,8 +51,8 @@ export const useAuthStore = create<AuthState>((set, get) => {
         const token = await storage.getAccessToken();
         if (token) {
           const { user, profile } = await authApi.getMe();
-          // Only customers can use the app; verification is handled by layout redirects
-          if (user.role !== "customer") {
+          // Customers and sellers can use the app; verification is handled by layout redirects
+          if (user.role !== "customer" && user.role !== "seller") {
             await storage.clearTokens();
             set({ user: null, profile: null, isAuthenticated: false });
           } else {
@@ -71,10 +74,10 @@ export const useAuthStore = create<AuthState>((set, get) => {
       try {
         await authApi.login(payload);
         const { user, profile } = await authApi.getMe();
-        if (user.role !== "customer") {
+        if (user.role !== "customer" && user.role !== "seller") {
           await storage.clearTokens();
           set({ isLoading: false });
-          throw new Error("This app is for customers only.");
+          throw new Error("This app is for customers and sellers only.");
         }
         // Authenticated regardless of email verification — layouts handle the redirect
         set({ user, profile, isAuthenticated: true, isLoading: false });
@@ -89,6 +92,18 @@ export const useAuthStore = create<AuthState>((set, get) => {
       try {
         await authApi.registerCustomer(payload);
         // Don't set isAuthenticated — user must verify email first
+        set({ isLoading: false });
+      } catch (e) {
+        set({ isLoading: false, error: getApiError(e) });
+        throw e;
+      }
+    },
+
+    registerSeller: async (payload) => {
+      set({ isLoading: true, error: null });
+      try {
+        await authApi.registerSeller(payload);
+        // Don't set isAuthenticated — user must verify email first (backend already sent the code)
         set({ isLoading: false });
       } catch (e) {
         set({ isLoading: false, error: getApiError(e) });

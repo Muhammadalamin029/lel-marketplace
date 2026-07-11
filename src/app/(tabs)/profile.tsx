@@ -35,6 +35,7 @@ import { shadow } from "@/constants/shadows";
 import { useAuthStore } from "@/store/authStore";
 import { useEffect, useState } from "react";
 import { dashboardApi } from "@/api";
+import { SellerProfileView } from "@/components/SellerProfileView";
 
 type MenuItem = {
   icon: any;
@@ -236,6 +237,10 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { user, profile, logout } = useAuthStore();
 
+  if (user?.role === "seller") {
+    return <SellerProfileView />;
+  }
+
   // Derive display fields from the auth store
   const displayName =
     (profile as any)?.name ||
@@ -370,6 +375,18 @@ export default function ProfileScreen() {
 
 {/* Menu sections */}
         <View className="mx-5 gap-4">
+          <TouchableOpacity
+            onPress={() => router.push("/(auth)/register-seller" as any)}
+            className="bg-gray-900 rounded-2xl px-4 py-4 flex-row items-center gap-3"
+            style={shadow.md}
+          >
+            <View className="w-9 h-9 rounded-xl bg-amber-400 items-center justify-center">
+              <Store size={16} color="#111827" />
+            </View>
+            <Text className="text-sm font-semibold text-white flex-1">Become a Seller</Text>
+            <ChevronRight size={14} color="#9ca3af" />
+          </TouchableOpacity>
+
           {MENU_SECTIONS.map((section) => (
             <View key={section.title}>
               <Text className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">

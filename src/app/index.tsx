@@ -1,5 +1,6 @@
 import { Redirect } from "expo-router";
 import { useAuthStore } from "@/store/authStore";
+import { homeRouteForRole } from "@/utils/sellerType";
 
 /**
  * Entry point — runs after _layout.tsx has confirmed hasHydrated === true.
@@ -12,9 +13,10 @@ import { useAuthStore } from "@/store/authStore";
  */
 export default function Index() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const role = useAuthStore((s) => s.user?.role);
 
   if (isAuthenticated) {
-    return <Redirect href="/(tabs)" />;
+    return <Redirect href={homeRouteForRole(role) as any} />;
   }
 
   return <Redirect href="/onboarding" />;

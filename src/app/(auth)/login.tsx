@@ -8,6 +8,7 @@ import { Image } from "expo-image";
 import { Mail, Lock, Eye, EyeOff, AlertCircle } from "lucide-react-native";
 import { useAuthStore } from "@/store/authStore";
 import { authApi, getApiError } from "@/api";
+import { homeRouteForRole } from "@/utils/sellerType";
 
 export default function Login() {
   const router = useRouter();
@@ -30,7 +31,7 @@ export default function Login() {
         authApi.sendVerificationEmail(trimmedEmail).catch(() => {});
         router.replace(`/(auth)/verify-email?email=${encodeURIComponent(trimmedEmail)}` as any);
       } else {
-        router.replace("/(tabs)");
+        router.replace(homeRouteForRole(user.role) as any);
       }
     } catch (e) {
       setError(getApiError(e));

@@ -7,6 +7,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { Mail, CheckCircle, AlertCircle, RefreshCw } from "lucide-react-native";
 import { authApi, getApiError } from "@/api";
 import { useAuthStore } from "@/store/authStore";
+import { homeRouteForRole } from "@/utils/sellerType";
 
 const RESEND_COOLDOWN = 60;
 
@@ -62,7 +63,7 @@ export default function VerifyEmail() {
       setSuccess(true);
       setTimeout(async () => {
         await fetchMe();
-        router.replace("/(tabs)" as any);
+        router.replace(homeRouteForRole(useAuthStore.getState().user?.role) as any);
       }, 1800);
     } catch (e) {
       setError(getApiError(e));

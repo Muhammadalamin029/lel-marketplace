@@ -61,6 +61,17 @@ export default function RootLayout() {
       <Stack.Screen name="notifications" />
       <Stack.Screen name="edit-profile" />
       <Stack.Screen name="settings" />
+
+      {/* Seller */}
+      <Stack.Screen name="product-form" />
+      <Stack.Screen name="car-listing-form" />
+      <Stack.Screen name="property-listing-form" />
+      <Stack.Screen name="seller-order-details" />
+      <Stack.Screen name="seller-request-details" />
+      <Stack.Screen name="seller-kyc" />
+      <Stack.Screen name="seller-reviews" />
+      <Stack.Screen name="seller-analytics" />
+      <Stack.Screen name="seller-settings" />
     </Stack>
   );
 }

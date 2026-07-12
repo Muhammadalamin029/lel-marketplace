@@ -179,7 +179,7 @@ export default function AddressesScreen() {
         <SafeAreaView className="flex-1 bg-white">
           <KeyboardAvoidingView
             className="flex-1"
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            behavior="padding"
             keyboardVerticalOffset={Platform.OS === "ios" ? 12 : 0}
           >
             <View className="flex-row items-center justify-between px-5 pt-4 pb-4 border-b border-gray-100">

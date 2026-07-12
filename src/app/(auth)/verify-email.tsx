@@ -100,7 +100,7 @@ export default function VerifyEmail() {
   }
 
   return (
-    <KeyboardAvoidingView className="flex-1 bg-background" behavior={Platform.OS === "ios" ? "padding" : "height"}>
+    <KeyboardAvoidingView className="flex-1 bg-background" behavior="padding">
       <ScrollView contentContainerClassName="flex-grow justify-center items-center p-6" showsVerticalScrollIndicator={false}>
 
         <View className="w-16 h-16 rounded-full bg-blue-50 items-center justify-center mb-6">

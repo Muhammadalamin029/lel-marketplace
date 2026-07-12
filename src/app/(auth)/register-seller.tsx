@@ -72,7 +72,7 @@ export default function RegisterSellerScreen() {
   };
 
   return (
-    <KeyboardAvoidingView className="flex-1 bg-background" behavior={Platform.OS === "ios" ? "padding" : "height"}>
+    <KeyboardAvoidingView className="flex-1 bg-background" behavior="padding">
       <ScrollView contentContainerClassName="flex-grow justify-center items-center p-6" showsVerticalScrollIndicator={false}>
         <View className="mb-6 items-center">
           <Image source={require("../../../assets/images/logo.png")} style={{ width: 160, height: 54 }} contentFit="contain" />

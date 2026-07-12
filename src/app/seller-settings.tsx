@@ -50,7 +50,7 @@ export default function SellerSettingsScreen() {
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
       <ScreenHeader title="Business Settings" />
-      <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === "ios" ? "padding" : "height"}>
+      <KeyboardAvoidingView className="flex-1" behavior="padding">
         <ScrollView className="flex-1 px-5 pt-5" keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 40 }}>
           <View className="gap-5">
             <FormSection title="Business Logo">

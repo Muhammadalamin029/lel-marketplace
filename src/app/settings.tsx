@@ -2,7 +2,7 @@ import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { useState } from "react";
 import {
   View, Text, ScrollView, TouchableOpacity, Switch, StatusBar,
-  Alert, Modal, TextInput, ActivityIndicator,
+  Alert, Modal, TextInput, ActivityIndicator, KeyboardAvoidingView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -172,6 +172,7 @@ export default function SettingsScreen() {
             </TouchableOpacity>
           </View>
 
+          <KeyboardAvoidingView className="flex-1" behavior="padding">
           <ScrollView className="flex-1 px-5 pt-6" showsVerticalScrollIndicator={false}>
             <View className="gap-5 pb-10">
 
@@ -214,6 +215,7 @@ export default function SettingsScreen() {
 
             </View>
           </ScrollView>
+          </KeyboardAvoidingView>
         </SafeAreaView>
       </Modal>
     </SafeAreaView>

@@ -99,7 +99,7 @@ export default function Register() {
   return (
     <KeyboardAvoidingView
       className="flex-1 bg-background"
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior="padding"
     >
       <ScrollView
         contentContainerClassName="flex-grow justify-center items-center p-6"

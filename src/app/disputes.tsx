@@ -1,6 +1,6 @@
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { useEffect, useState } from "react";
-import { View, Text, ScrollView, TouchableOpacity, StatusBar, TextInput, Modal, ActivityIndicator, Alert } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, StatusBar, TextInput, Modal, ActivityIndicator, Alert, KeyboardAvoidingView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { EmptyState } from "@/components/EmptyState";
@@ -113,6 +113,7 @@ export default function DisputesScreen() {
             </TouchableOpacity>
           </View>
 
+          <KeyboardAvoidingView className="flex-1" behavior="padding">
           <ScrollView className="flex-1 px-5 pt-5" showsVerticalScrollIndicator={false}>
             <View className="gap-5 pb-10">
               {[
@@ -151,6 +152,7 @@ export default function DisputesScreen() {
               </TouchableOpacity>
             </View>
           </ScrollView>
+          </KeyboardAvoidingView>
         </SafeAreaView>
       </Modal>
     </SafeAreaView>

@@ -56,7 +56,7 @@ export default function ForgotPassword() {
   };
 
   return (
-    <KeyboardAvoidingView className="flex-1 bg-gray-50" behavior={Platform.OS === "ios" ? "padding" : "height"}>
+    <KeyboardAvoidingView className="flex-1 bg-gray-50" behavior="padding">
       {/* Header */}
       <View className="flex-row items-center px-5 pt-14 pb-4 bg-white border-b border-gray-100">
         <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center mr-3">

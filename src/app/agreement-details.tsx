@@ -2,7 +2,7 @@ import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { useCallback, useEffect, useState } from "react";
 import {
   View, Text, ScrollView, TouchableOpacity, StatusBar,
-  ActivityIndicator, Alert, Modal, TextInput, Linking,
+  ActivityIndicator, Alert, Modal, TextInput, Linking, KeyboardAvoidingView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -67,6 +67,7 @@ function PaymentModal({
           </TouchableOpacity>
         </View>
 
+        <KeyboardAvoidingView className="flex-1" behavior="padding">
         <ScrollView className="flex-1 px-5 pt-6" showsVerticalScrollIndicator={false}>
           <View className="gap-5 pb-10">
             {/* Balance info */}
@@ -154,6 +155,7 @@ function PaymentModal({
             </TouchableOpacity>
           </View>
         </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </Modal>
   );

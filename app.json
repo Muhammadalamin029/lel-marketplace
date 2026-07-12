@@ -18,7 +18,8 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.ameenumhusah.lelmarketplace"
+      "package": "com.ameenumhusah.lelmarketplace",
+      "softwareKeyboardLayoutMode": "resize"
     },
     "web": {
       "output": "static",

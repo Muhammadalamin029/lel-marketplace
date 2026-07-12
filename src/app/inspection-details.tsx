@@ -2,7 +2,7 @@ import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { useEffect, useState } from "react";
 import {
   View, Text, ScrollView, TouchableOpacity, StatusBar,
-  ActivityIndicator, Alert, Modal, TextInput,
+  ActivityIndicator, Alert, Modal, TextInput, KeyboardAvoidingView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -60,6 +60,7 @@ function FinalizeOfferModal({
           </TouchableOpacity>
         </View>
 
+        <KeyboardAvoidingView className="flex-1" behavior="padding">
         <ScrollView className="flex-1 px-5 pt-5" showsVerticalScrollIndicator={false}>
           <View className="gap-5 pb-10">
             <Text className="text-sm text-gray-600 leading-relaxed">
@@ -186,6 +187,7 @@ function FinalizeOfferModal({
             </TouchableOpacity>
           </View>
         </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </Modal>
   );

@@ -1,6 +1,6 @@
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { useEffect, useState } from "react";
-import { View, Text, ScrollView, TouchableOpacity, StatusBar, ActivityIndicator, Modal, TextInput, Alert } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, StatusBar, ActivityIndicator, Modal, TextInput, Alert, KeyboardAvoidingView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams } from "expo-router";
 import { ScreenHeader } from "@/components/ScreenHeader";
@@ -199,6 +199,7 @@ export default function MyReviewsScreen() {
             </TouchableOpacity>
           </View>
 
+          <KeyboardAvoidingView className="flex-1" behavior="padding">
           <ScrollView className="flex-1 px-5 pt-6" showsVerticalScrollIndicator={false}>
             <View className="gap-6 pb-10">
               <View className="items-center gap-3">
@@ -235,6 +236,7 @@ export default function MyReviewsScreen() {
               </TouchableOpacity>
             </View>
           </ScrollView>
+          </KeyboardAvoidingView>
         </SafeAreaView>
       </Modal>
 
@@ -247,6 +249,7 @@ export default function MyReviewsScreen() {
               <X size={18} color="#374151" />
             </TouchableOpacity>
           </View>
+          <KeyboardAvoidingView className="flex-1" behavior="padding">
           <ScrollView className="flex-1 px-5 pt-6" showsVerticalScrollIndicator={false}>
             <View className="gap-6 pb-10">
               {newProductName ? (
@@ -291,6 +294,7 @@ export default function MyReviewsScreen() {
               </TouchableOpacity>
             </View>
           </ScrollView>
+          </KeyboardAvoidingView>
         </SafeAreaView>
       </Modal>
     </SafeAreaView>

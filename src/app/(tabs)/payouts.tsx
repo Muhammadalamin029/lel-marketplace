@@ -195,7 +195,7 @@ function PayoutsScreenInner() {
       {/* Payout account modal */}
       <Modal visible={accountModalOpen} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setAccountModalOpen(false)}>
         <SafeAreaView className="flex-1 bg-white">
-          <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === "ios" ? "padding" : "height"}>
+          <KeyboardAvoidingView className="flex-1" behavior="padding">
             <View className="flex-row items-center justify-between px-5 pt-4 pb-4 border-b border-gray-100">
               <Text className="text-lg font-extrabold text-gray-900">Payout Account</Text>
               <TouchableOpacity onPress={() => setAccountModalOpen(false)} className="w-9 h-9 rounded-full bg-gray-100 items-center justify-center">
@@ -223,7 +223,7 @@ function PayoutsScreenInner() {
       {/* Request payout modal */}
       <Modal visible={payoutModalOpen} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setPayoutModalOpen(false)}>
         <SafeAreaView className="flex-1 bg-white">
-          <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === "ios" ? "padding" : "height"}>
+          <KeyboardAvoidingView className="flex-1" behavior="padding">
             <View className="flex-row items-center justify-between px-5 pt-4 pb-4 border-b border-gray-100">
               <Text className="text-lg font-extrabold text-gray-900">Request Payout</Text>
               <TouchableOpacity onPress={() => setPayoutModalOpen(false)} className="w-9 h-9 rounded-full bg-gray-100 items-center justify-center">

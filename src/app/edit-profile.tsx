@@ -1,6 +1,6 @@
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, ScrollView, StatusBar, ActivityIndicator, Alert } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, ScrollView, StatusBar, ActivityIndicator, Alert, KeyboardAvoidingView } from "react-native";
 import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -81,8 +81,9 @@ export default function EditProfileScreen() {
       <StatusBar barStyle="dark-content" />
       <ScreenHeader title="Edit Profile" />
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
-        <View className="px-5 pt-6 gap-6">
+      <KeyboardAvoidingView className="flex-1" behavior="padding">
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
+          <View className="px-5 pt-6 gap-6">
 
           {/* Avatar */}
           <View className="items-center">
@@ -154,8 +155,9 @@ export default function EditProfileScreen() {
             )}
           </TouchableOpacity>
 
-        </View>
-      </ScrollView>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

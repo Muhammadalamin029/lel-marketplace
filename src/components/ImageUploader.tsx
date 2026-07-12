@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { View, Text, TouchableOpacity, Image, ActivityIndicator, Alert } from "react-native";
 import * as ImagePicker from "expo-image-picker";
+import { File, UploadType } from "expo-file-system";
 import { ImagePlus, X } from "lucide-react-native";
 
 const CLOUDINARY_CLOUD_NAME = "da49y9eyl";
@@ -8,16 +9,26 @@ const CLOUDINARY_UPLOAD_PRESET = "alhaq_product_images";
 const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
 
 async function uploadOne(uri: string): Promise<string> {
-  const form = new FormData();
   const extension = uri.split(".").pop()?.split("?")[0]?.toLowerCase() || "jpg";
   const mimeType = extension === "png" ? "image/png" : extension === "heic" ? "image/heic" : "image/jpeg";
-  form.append("file", { uri, name: `upload.${extension}`, type: mimeType } as any);
-  form.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
-  form.append("folder", "alhaq/products");
 
-  const res = await fetch(CLOUDINARY_URL, { method: "POST", body: form });
-  const json = await res.json().catch(() => null);
-  if (!res.ok) throw new Error(json?.error?.message || `Upload failed (${res.status})`);
+  // Uploaded via expo-file-system's native multipart uploader (not fetch+FormData) —
+  // SDK 56's default fetch implementation doesn't support RN's { uri, name, type } file parts.
+  const file = new File(uri);
+  const result = await file.upload(CLOUDINARY_URL, {
+    uploadType: UploadType.MULTIPART,
+    fieldName: "file",
+    mimeType,
+    parameters: {
+      upload_preset: CLOUDINARY_UPLOAD_PRESET,
+      folder: "alhaq/products",
+    },
+  });
+
+  const json = JSON.parse(result.body || "null");
+  if (result.status < 200 || result.status >= 300) {
+    throw new Error(json?.error?.message || `Upload failed (${result.status})`);
+  }
   if (!json?.secure_url) throw new Error("Upload succeeded but no image URL was returned");
   return json.secure_url as string;
 }

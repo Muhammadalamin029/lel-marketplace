@@ -38,25 +38,16 @@ export interface OrderItem {
   product: OrderProduct;
 }
 
-export interface SellerGroup {
-  seller: { id: string; business_name: string } | null;
-  items: OrderItem[];
-  total_amount: number;
-  item_count: number;
-}
-
 /** Matches backend OrderResponse schema */
 export interface Order {
   id: string;
   total_amount: number;
   status: string;
-  seller_item_status: string | null;
   created_at: string;
   updated_at: string;
   buyer: OrderBuyer;
   delivery_addr: OrderAddress | null;
   order_items: OrderItem[];
-  seller_groups: SellerGroup[] | null;
 }
 
 export const ordersApi = {

@@ -8,19 +8,6 @@ export interface Category {
   created_at: string;
 }
 
-export interface PublicSeller {
-  id: string;
-  business_name: string;
-  description: string | null;
-  contact_email: string;
-  contact_phone: string | null;
-  website_url: string | null;
-  seller_type: string;
-  kyc_status: string;
-  logo_url: string | null;
-  created_at: string;
-}
-
 export const categoriesApi = {
   async list() {
     const { data } = await api.get("/categories/");
@@ -32,22 +19,5 @@ export const categoriesApi = {
       params: { category_id: categoryId, limit: 20, ...params },
     });
     return data as { data: any[]; pagination: any };
-  },
-};
-
-export const publicApi = {
-  async listSellers() {
-    const { data } = await api.get("/public/sellers");
-    return data?.sellers as PublicSeller[] ?? [];
-  },
-
-  async getSeller(id: string) {
-    const { data } = await api.get(`/public/sellers/${id}`);
-    return data?.seller as PublicSeller;
-  },
-
-  async getSellerInventory(id: string) {
-    const { data } = await api.get(`/public/sellers/${id}/inventory`);
-    return data;
   },
 };

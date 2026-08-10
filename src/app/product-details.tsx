@@ -98,7 +98,7 @@ function productToDisplay(p: Product): DisplayItem {
     description: p.description ?? null,
     images: p.images?.map((i) => i.image_url) ?? [],
     verified: p.status === "active",
-    sellerName: p.seller?.business_name ?? "Seller",
+    sellerName: "Verified Seller",
     specs: [
       { label: "Category", value: p.category?.name ?? "" },
       { label: "Stock",    value: String(p.stock_quantity) },

@@ -38,8 +38,6 @@ export default function RootLayout() {
       <Stack.Screen name="browse" />
       <Stack.Screen name="categories" />
       <Stack.Screen name="category-products" />
-      <Stack.Screen name="sellers" />
-      <Stack.Screen name="seller-details" />
       <Stack.Screen name="terms" />
       <Stack.Screen name="privacy" />
       <Stack.Screen name="about" />

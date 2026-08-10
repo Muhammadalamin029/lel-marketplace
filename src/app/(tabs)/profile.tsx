@@ -27,7 +27,6 @@ import {
   Edit,
   FileText,
   CreditCard,
-  Store,
   Grid3x3,
   Info,
 } from "lucide-react-native";
@@ -136,13 +135,6 @@ const MENU_SECTIONS: { title: string; items: MenuItem[] }[] = [
         color: "#22c55e",
         bg: "#f0fdf4",
         route: "/categories",
-      },
-      {
-        icon: Store,
-        label: "Browse Sellers",
-        color: "#6366f1",
-        bg: "#eef2ff",
-        route: "/sellers",
       },
     ],
   },

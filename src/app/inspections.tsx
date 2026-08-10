@@ -75,11 +75,6 @@ export default function InspectionsScreen() {
                         {new Date(insp.inspection_date).toLocaleDateString("en-NG", { weekday: "short", day: "numeric", month: "short", year: "numeric" })}
                       </Text>
                     </View>
-                    {insp.seller && (
-                      <View className="flex-row items-center gap-2">
-                        <Text className="text-xs text-gray-500">Seller: <Text className="font-semibold">{insp.seller.business_name}</Text></Text>
-                      </View>
-                    )}
                   </View>
 
                   <View className="flex-row items-center justify-end mt-3 gap-1">

@@ -1,7 +1,6 @@
 import { api } from "./client";
 
 export interface ProductImage { id: string; image_url: string }
-export interface SellerInfo { id: string; business_name: string }
 export interface CategoryInfo { id: string; name: string }
 
 /** Matches backend ProductResponse */
@@ -12,7 +11,6 @@ export interface Product {
   price: number;
   stock_quantity: number;
   status: string;
-  seller: SellerInfo;
   category: CategoryInfo;
   images: ProductImage[];
 }

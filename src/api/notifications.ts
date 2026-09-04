@@ -27,8 +27,9 @@ interface NotificationsResponse {
 
 export const notificationsApi = {
   async list(params: { page?: number; limit?: number; unread_only?: boolean } = {}) {
+    const { unread_only, ...rest } = params;
     const { data } = await api.get<NotificationsResponse>("/notifications/", {
-      params: { limit: 30, ...params },
+      params: { limit: 30, ...rest, ...(unread_only ? { is_read: false } : {}) },
     });
     return data; // { notifications, pagination, unread_count }
   },

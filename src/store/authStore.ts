@@ -3,12 +3,11 @@ import { authApi, storage, getApiError, authEventEmitter } from "@/api";
 import type {
   UserProfile,
   CustomerProfileData,
-  SellerProfileData,
   LoginPayload,
   RegisterPayload,
 } from "@/api";
 
-type Profile = CustomerProfileData | SellerProfileData | null;
+type Profile = CustomerProfileData | null;
 
 interface AuthState {
   user: UserProfile | null;

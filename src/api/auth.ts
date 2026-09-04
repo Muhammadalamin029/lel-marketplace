@@ -7,7 +7,7 @@ export interface TokenResponse { access_token: string; refresh_token: string }
 export interface UserProfile {
   id: string;
   email: string;
-  role: "customer" | "seller" | "admin";
+  role: "customer" | "admin";
   email_verified: boolean;
 }
 export interface CustomerProfileData {
@@ -15,16 +15,6 @@ export interface CustomerProfileData {
   phone?: string;
   bio?: string;
   avatar_url?: string;
-}
-export interface SellerProfileData {
-  business_name: string;
-  contact_email: string;
-  contact_phone?: string;
-  description?: string;
-  logo_url?: string;
-  website_url?: string;
-  kyc_status: "pending" | "approved" | "rejected";
-  available_balance: number;
 }
 
 export const authApi = {
@@ -45,7 +35,7 @@ export const authApi = {
     return data;
   },
 
-  async getMe(): Promise<{ user: UserProfile; profile: CustomerProfileData | SellerProfileData }> {
+  async getMe(): Promise<{ user: UserProfile; profile: CustomerProfileData }> {
     const { data } = await api.get("/auth/me");
     return data;
   },

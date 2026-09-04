@@ -14,7 +14,7 @@ export { categoriesApi } from "./public";
 export { dashboardApi } from "./dashboard";
 export type { CustomerStats } from "./dashboard";
 
-export type { LoginPayload, RegisterPayload, UserProfile, CustomerProfileData, SellerProfileData } from "./auth";
+export type { LoginPayload, RegisterPayload, UserProfile, CustomerProfileData } from "./auth";
 export type { Product, Car, Property, ProductImage, CarUnit, PropertyUnit } from "./products";
 export type { Order, OrderItem, OrderBuyer, OrderAddress } from "./orders";
 export type { Inspection, Agreement, AssetMini, UserMini, CompleteInspectionPayload } from "./inspections";

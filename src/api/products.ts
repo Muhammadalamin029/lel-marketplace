@@ -70,7 +70,10 @@ export interface ProductListParams {
 
 export const productsApi = {
   async list(params: ProductListParams = {}) {
-    const { data } = await api.get("/products/", { params: { limit: 20, ...params } });
+    const { search, ...rest } = params;
+    const { data } = await api.get("/products/", {
+      params: { limit: 20, ...rest, ...(search ? { search_query: search } : {}) },
+    });
     return data as { data: Product[]; pagination: any };
   },
 
@@ -85,7 +88,7 @@ export const productsApi = {
     min_year?: number; max_year?: number;
   } = {}) {
     const { data } = await api.get("/automotive/", { params: { limit: 20, status: "available", ...params } });
-    return data as { data: Car[]; pagination: any };
+    return data as { data: Car[] };
   },
 
   async getCarById(id: string) {
@@ -98,7 +101,7 @@ export const productsApi = {
     listing_type?: string; min_price?: number; max_price?: number;
   } = {}) {
     const { data } = await api.get("/properties/", { params: { limit: 20, status: "available", ...params } });
-    return data as { data: Property[]; pagination: any };
+    return data as { data: Property[] };
   },
 
   async getPropertyById(id: string) {

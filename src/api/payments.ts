@@ -7,7 +7,6 @@ export interface Payment {
   buyer_id: string;
   seller_id: string | null;
   seller_name: string | null;
-  seller_type: string | null;
   amount: number;
   status: string;
   payment_category: string;   // "order" | "asset_deposit" | "asset_installment" | "full_pay"

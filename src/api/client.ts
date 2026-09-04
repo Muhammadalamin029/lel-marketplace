@@ -108,6 +108,12 @@ export function getApiError(error: unknown): string {
       const msg = data.detail[0]?.msg;
       if (msg) return msg;
     }
+    // FastAPI 422s are wrapped in the backend's {success, message, data} envelope,
+    // with per-field errors nested at data.validation_errors[].msg.
+    const validationErrors = data?.data?.validation_errors;
+    if (Array.isArray(validationErrors) && validationErrors[0]?.msg) {
+      return validationErrors[0].msg as string;
+    }
     if (typeof data?.message === "string") return data.message;
     if (error.code === "ECONNABORTED") return "Request timed out. Check your connection.";
     if (!error.response) return "Could not reach the server. Check your internet connection.";

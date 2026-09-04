@@ -14,8 +14,9 @@ export const wishlistApi = {
   },
 
   async add(product_id: string) {
+    // Backend returns the created item directly (unwrapped), unlike other endpoints.
     const { data } = await api.post("/wishlist/", { product_id });
-    return data?.data as WishlistItem;
+    return data as WishlistItem;
   },
 
   async remove(product_id: string) {

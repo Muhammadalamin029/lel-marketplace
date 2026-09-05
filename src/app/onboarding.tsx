@@ -51,11 +51,11 @@ export default function Onboarding() {
     if (currentIndex < SLIDES.length - 1) {
       flatListRef.current?.scrollToIndex({ index: currentIndex + 1, animated: true });
     } else {
-      router.replace('/(auth)/login');
+      router.replace('/(tabs)');
     }
   };
 
-  const handleSkip = () => router.replace('/(auth)/login');
+  const handleSkip = () => router.replace('/(tabs)');
 
   const onViewableItemsChanged = useRef(({ viewableItems }: any) => {
     if (viewableItems[0]) setCurrentIndex(viewableItems[0].index);

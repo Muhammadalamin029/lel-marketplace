@@ -8,8 +8,10 @@ import { wishlistApi } from "@/api";
 import type { WishlistItem } from "@/api";
 import { fmt } from "@/utils/format";
 import { useCartStore } from "@/store/cartStore";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
 
 export default function WishlistScreen() {
+  useRequireAuth();
   const router = useRouter();
   const addToCart = useCartStore((s) => s.addItem);
 

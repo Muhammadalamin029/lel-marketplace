@@ -32,6 +32,7 @@ import {
 } from "lucide-react-native";
 import { shadow } from "@/constants/shadows";
 import { useAuthStore } from "@/store/authStore";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { useEffect, useState } from "react";
 import { dashboardApi } from "@/api";
 
@@ -225,6 +226,7 @@ function MenuItem({ item, onPress }: { item: MenuItem; onPress: () => void }) {
 }
 
 export default function ProfileScreen() {
+  useRequireAuth();
   const router = useRouter();
   const { user, profile, logout } = useAuthStore();
 

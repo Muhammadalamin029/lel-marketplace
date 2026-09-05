@@ -3,7 +3,7 @@ import {
   View, Text, TextInput, TouchableOpacity,
   KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator,
 } from "react-native";
-import { Link, useRouter } from "expo-router";
+import { Link, useRouter, useLocalSearchParams } from "expo-router";
 import { Image } from "expo-image";
 import { Mail, Lock, Eye, EyeOff, AlertCircle } from "lucide-react-native";
 import { useAuthStore } from "@/store/authStore";
@@ -11,6 +11,7 @@ import { authApi, getApiError } from "@/api";
 
 export default function Login() {
   const router = useRouter();
+  const { redirect } = useLocalSearchParams<{ redirect?: string }>();
   const { login, isLoading } = useAuthStore();
 
   const [email, setEmail] = useState("");
@@ -30,7 +31,7 @@ export default function Login() {
         authApi.sendVerificationEmail(trimmedEmail).catch(() => {});
         router.replace(`/(auth)/verify-email?email=${encodeURIComponent(trimmedEmail)}` as any);
       } else {
-        router.replace("/(tabs)");
+        router.replace((redirect as any) ?? "/(tabs)");
       }
     } catch (e) {
       setError(getApiError(e));

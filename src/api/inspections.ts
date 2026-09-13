@@ -57,11 +57,12 @@ export interface Agreement {
   asset: AssetMini | null;
 }
 
-/** Payload for POST /assets/inspections/{id}/complete */
+/** Payload for POST /assets/inspections/{id}/complete - must match backend's
+ * AssetInspectionComplete schema, which validates `payment_plan` (not `plan_type`). */
 export interface CompleteInspectionPayload {
   agreed_price: number;
   notes?: string;
-  plan_type: "structured" | "flexible";
+  payment_plan: "monthly" | "installment";
   duration_months?: number;
   monthly_installment?: number;
   unit_id?: string;

@@ -13,6 +13,7 @@ export { reviewsApi } from "./reviews";
 export { categoriesApi } from "./public";
 export { dashboardApi } from "./dashboard";
 export type { CustomerStats } from "./dashboard";
+export { financingApi } from "./financing";
 
 export type { LoginPayload, RegisterPayload, UserProfile, CustomerProfileData } from "./auth";
 export type { Product, Car, Property, ProductImage, CarUnit, PropertyUnit } from "./products";
@@ -25,3 +26,10 @@ export type { Notification } from "./notifications";
 export type { Payment } from "./payments";
 export type { Review, ReviewUser } from "./reviews";
 export type { Category } from "./public";
+export type {
+  FinancingDocumentRequirement,
+  FinancingApplication,
+  FinancingApplicationDocument,
+  FinancingApplicationStatus,
+  FinancingApplicationSubmitPayload,
+} from "./financing";

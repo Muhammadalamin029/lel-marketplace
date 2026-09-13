@@ -13,6 +13,7 @@ import { Car, Home, Calendar, AlertCircle, X, ChevronDown } from "lucide-react-n
 import { inspectionsApi } from "@/api";
 import type { Inspection, CompleteInspectionPayload } from "@/api/inspections";
 import { fmt } from "@/utils/format";
+import { useFinancingStore } from "@/store/financingStore";
 
 // ─── Finalize Offer Modal ──────────────────────────────────────────────────────
 
@@ -44,7 +45,9 @@ function FinalizeOfferModal({
     onSubmit({
       agreed_price: price,
       notes: notes.trim() || undefined,
-      plan_type: planType,
+      // Backend's payment_plan enum is monthly/full_payment/installment - this screen's
+      // structured/flexible choice maps to monthly/installment (no full-payment option here).
+      payment_plan: planType === "structured" ? "monthly" : "installment",
       duration_months: planType === "structured" ? durationNum : undefined,
       monthly_installment: planType === "structured" ? monthly : undefined,
     });
@@ -203,6 +206,9 @@ export default function InspectionDetailsScreen() {
   const [error, setError] = useState<string | null>(null);
   const [finalizeModalVisible, setFinalizeModalVisible] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { isEligible, myApplication, fetchMyApplication } = useFinancingStore();
+
+  useEffect(() => { fetchMyApplication(); }, [fetchMyApplication]);
 
   const load = async () => {
     if (!id) { setError("No inspection ID"); setLoading(false); return; }
@@ -220,6 +226,25 @@ export default function InspectionDetailsScreen() {
 
   const handleFinalize = async (payload: CompleteInspectionPayload) => {
     if (!insp) return;
+
+    // Both plan choices offered here (structured/flexible) map to monthly/installment,
+    // which require an approved financing application - there's no full-payment option
+    // in this flow. Backend enforces this too; this just avoids a round-trip.
+    if (!isEligible()) {
+      setFinalizeModalVisible(false);
+      Alert.alert(
+        "Financing Application Required",
+        myApplication
+          ? "Your financing eligibility isn't approved yet. Check your application status for details."
+          : "You need an approved financing application before finalizing a payment plan.",
+        [
+          { text: myApplication ? "View Status" : "Apply Now", onPress: () => router.push((myApplication ? "/my-financing-application" : "/financing-application") as any) },
+          { text: "Cancel", style: "cancel" },
+        ]
+      );
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       await inspectionsApi.completeInspection(insp.id, payload);

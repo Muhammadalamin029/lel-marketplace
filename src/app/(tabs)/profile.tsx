@@ -29,6 +29,7 @@ import {
   CreditCard,
   Grid3x3,
   Info,
+  Landmark,
 } from "lucide-react-native";
 import { shadow } from "@/constants/shadows";
 import { useAuthStore } from "@/store/authStore";
@@ -96,6 +97,13 @@ const MENU_SECTIONS: { title: string; items: MenuItem[] }[] = [
         color: "#8b5cf6",
         bg: "#f5f3ff",
         route: "/my-agreements",
+      },
+      {
+        icon: Landmark,
+        label: "Financing Application",
+        color: "#0891b2",
+        bg: "#ecfeff",
+        route: "/my-financing-application",
       },
       {
         icon: CreditCard,

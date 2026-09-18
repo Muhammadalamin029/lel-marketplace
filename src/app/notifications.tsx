@@ -1,37 +1,61 @@
 import { useRequireAuth } from "@/hooks/useRequireAuth";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { View, Text, ScrollView, TouchableOpacity, StatusBar, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { EmptyState } from "@/components/EmptyState";
-import { TabSelector } from "@/components/TabSelector";
-import { Bell, Package, CreditCard, Calendar, ShieldCheck } from "lucide-react-native";
-import { shadow } from "@/constants/shadows";
+import { Bell, Package, CreditCard, Home, Tag, ShieldCheck } from "lucide-react-native";
 import { formatDate } from "@/utils/format";
 import { notificationsApi } from "@/api";
 import type { Notification } from "@/api";
 
-const TABS = ["All", "Unread"] as const;
-type Tab = typeof TABS[number];
+type FilterKey = "all" | "unread" | "orders" | "payments" | "promotions";
+type Category = "Orders" | "Payments" | "Property updates" | "Promotions" | "Account";
 
-function getIcon(type: string) {
-  switch (type) {
-    case "order_confirmed":
-    case "order_shipped":
-    case "order_delivered":
-      return { Icon: Package, bg: "#eff6ff", color: "#3b82f6" };
-    case "payment_successful":
-    case "installment_paid":
-      return { Icon: CreditCard, bg: "#f0fdf4", color: "#22c55e" };
-    case "inspection_confirmed":
-    case "inspection_scheduled":
-      return { Icon: Calendar, bg: "#fffbeb", color: "#f59e0b" };
-    case "agreement_approved":
-    case "agreement_created":
-      return { Icon: ShieldCheck, bg: "#faf5ff", color: "#a855f7" };
-    default:
-      return { Icon: Bell, bg: "#f3f4f6", color: "#6b7280" };
+const FILTERS: { key: FilterKey; label: string }[] = [
+  { key: "all", label: "All" },
+  { key: "unread", label: "Unread" },
+  { key: "orders", label: "Orders" },
+  { key: "payments", label: "Payments" },
+  { key: "promotions", label: "Promotions" },
+];
+
+function getCategory(type: string): Category {
+  if (type.startsWith("order_")) return "Orders";
+  if (type.startsWith("payment_") || type.startsWith("installment_")) return "Payments";
+  if (type === "promotional_offer" || type === "wishlist_item_back_in_stock") return "Promotions";
+  if (
+    type === "car_approved" ||
+    type === "car_rejected" ||
+    type === "property_acquired" ||
+    type.startsWith("inspection_") ||
+    type.startsWith("agreement_")
+  ) {
+    return "Property updates";
   }
+  return "Account";
+}
+
+function getIcon(category: Category) {
+  switch (category) {
+    case "Orders":
+      return Package;
+    case "Payments":
+      return CreditCard;
+    case "Property updates":
+      return Home;
+    case "Promotions":
+      return Tag;
+    default:
+      return ShieldCheck;
+  }
+}
+
+function badgeStyle(category: Category) {
+  if (category === "Orders" || category === "Payments") {
+    return { bg: "bg-emerald-100", text: "text-emerald-700" };
+  }
+  return { bg: "bg-gray-100", text: "text-gray-500" };
 }
 
 function timeAgo(iso: string) {
@@ -45,7 +69,7 @@ function timeAgo(iso: string) {
 
 export default function NotificationsScreen() {
   useRequireAuth();
-  const [activeTab, setActiveTab] = useState<Tab>("All");
+  const [filter, setFilter] = useState<FilterKey>("all");
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -74,10 +98,27 @@ export default function NotificationsScreen() {
     try { await notificationsApi.markAllRead(); } catch { /* silent */ }
   };
 
-  const visible = activeTab === "Unread" ? notifications.filter((n) => !n.is_read) : notifications;
+  const visible = useMemo(
+    () =>
+      notifications.filter((n) => {
+        switch (filter) {
+          case "unread":
+            return !n.is_read;
+          case "orders":
+            return getCategory(n.type) === "Orders";
+          case "payments":
+            return getCategory(n.type) === "Payments";
+          case "promotions":
+            return getCategory(n.type) === "Promotions";
+          default:
+            return true;
+        }
+      }),
+    [notifications, filter],
+  );
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
+    <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
       <StatusBar barStyle="dark-content" />
       <ScreenHeader
         title="Notifications"
@@ -91,43 +132,73 @@ export default function NotificationsScreen() {
         }
       />
 
-      <View className="px-5 pt-4 pb-2">
-        <TabSelector tabs={TABS} activeTab={activeTab} onTabChange={setActiveTab} />
-      </View>
+      {/* Filter pills */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}
+        className="mb-3 flex-grow-0"
+      >
+        {FILTERS.map((f) => {
+          const active = f.key === filter;
+          return (
+            <TouchableOpacity
+              key={f.key}
+              onPress={() => setFilter(f.key)}
+              className={`px-4 py-2 rounded-full border ${
+                active ? "bg-orange-500 border-orange-500" : "bg-white border-gray-200"
+              }`}
+            >
+              <Text className={`text-sm font-medium ${active ? "text-white" : "text-gray-700"}`}>
+                {f.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
 
-      <ScrollView className="flex-1 px-5 pt-4" showsVerticalScrollIndicator={false}>
+      <ScrollView className="flex-1" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
         {loading ? (
           <View className="items-center justify-center pt-20">
             <ActivityIndicator size="large" color="#f59e0b" />
           </View>
         ) : visible.length === 0 ? (
-          <EmptyState Icon={Bell} title="No notifications" subtitle={activeTab === "Unread" ? "You're all caught up!" : "Nothing here yet."} />
+          <EmptyState
+            Icon={Bell}
+            title="No notifications"
+            subtitle={filter === "unread" ? "You're all caught up!" : "Nothing here yet."}
+          />
         ) : (
-          <View className="pb-10">
-            {visible.map((n) => {
-              const { Icon, bg, color } = getIcon(n.type);
-              return (
-                <TouchableOpacity
-                  key={n.id}
-                  onPress={() => markRead(n.id)}
-                  className={`flex-row gap-3 p-4 rounded-2xl mb-3 ${n.is_read ? "bg-white" : "bg-amber-50"}`}
-                  style={shadow.card}
-                >
-                  <View className="w-10 h-10 rounded-full items-center justify-center flex-shrink-0" style={{ backgroundColor: bg }}>
-                    <Icon size={18} color={color} />
-                  </View>
-                  <View className="flex-1">
-                    <View className="flex-row items-start justify-between gap-2">
-                      <Text className="text-sm font-bold text-gray-900 flex-1">{n.title}</Text>
-                      {!n.is_read && <View className="w-2 h-2 rounded-full bg-amber-400 mt-1 flex-shrink-0" />}
+          visible.map((n) => {
+            const category = getCategory(n.type);
+            const badge = badgeStyle(category);
+            const Icon = getIcon(category);
+            return (
+              <TouchableOpacity
+                key={n.id}
+                onPress={() => markRead(n.id)}
+                className={`flex-row px-4 py-4 border-b border-gray-100 ${
+                  n.is_read ? "bg-white" : "bg-emerald-50"
+                }`}
+              >
+                <View className="w-10 h-10 rounded-xl bg-white border border-gray-100 items-center justify-center mr-3">
+                  <Icon size={18} color="#374151" />
+                </View>
+                <View className="flex-1">
+                  <View className="flex-row items-center justify-between mb-1.5">
+                    <View className={`px-2 py-0.5 rounded-full ${badge.bg}`}>
+                      <Text className={`text-xs font-medium ${badge.text}`}>{category}</Text>
                     </View>
-                    <Text className="text-xs text-gray-500 mt-0.5 leading-relaxed" numberOfLines={2}>{n.message}</Text>
-                    <Text className="text-[10px] text-gray-400 mt-1.5 font-medium">{timeAgo(n.created_at)}</Text>
+                    <Text className="text-xs text-gray-400">{timeAgo(n.created_at)}</Text>
                   </View>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
+                  <Text className="text-[15px] font-semibold text-gray-900 mb-1">{n.title}</Text>
+                  <Text className="text-sm text-gray-500 leading-5" numberOfLines={2}>
+                    {n.message}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            );
+          })
         )}
       </ScrollView>
     </SafeAreaView>

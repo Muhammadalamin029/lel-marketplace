@@ -1,7 +1,5 @@
-import { Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { productsApi, type Order } from "@/api";
-import { useCartStore } from "@/store/cartStore";
 
 const GUEST_CART_KEY = "guest_cart";
 
@@ -84,30 +82,4 @@ export async function buildVirtualPendingOrder(items: GuestCartItem[]): Promise<
     total_amount,
     order_items,
   } as Order;
-}
-
-export async function mergeGuestCartIntoServer(): Promise<void> {
-  const items = await getGuestCart();
-  if (items.length === 0) return;
-
-  const { addItem, fetchPendingOrder } = useCartStore.getState();
-  const failures: string[] = [];
-
-  for (const item of items) {
-    try {
-      await addItem(item.product_id, item.quantity);
-    } catch {
-      failures.push(item.product_id);
-    }
-  }
-
-  await clearGuestCart();
-  await fetchPendingOrder();
-
-  if (failures.length > 0) {
-    Alert.alert(
-      "Some cart items could not be added",
-      `${failures.length} item(s) were unavailable and were not carried over.`,
-    );
-  }
 }

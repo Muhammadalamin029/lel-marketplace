@@ -9,12 +9,20 @@ export interface UserProfile {
   email: string;
   role: "customer" | "admin";
   email_verified: boolean;
+  created_at?: string;
+  updated_at?: string;
+  last_login?: string | null;
+  password_changed_at?: string;
 }
 export interface CustomerProfileData {
+  id?: string;
   name: string;
   phone?: string;
   bio?: string;
+  kyc_status?: string;
+  approval_date?: string | null;
   avatar_url?: string;
+  created_at?: string;
 }
 
 export const authApi = {
@@ -42,6 +50,11 @@ export const authApi = {
 
   async updateProfile(updates: Partial<CustomerProfileData>): Promise<void> {
     await api.put("/auth/me", updates);
+  },
+
+  async deleteAccount(): Promise<void> {
+    await api.delete("/auth/me");
+    await storage.clearTokens();
   },
 
   async changePassword(current_password: string, new_password: string): Promise<void> {

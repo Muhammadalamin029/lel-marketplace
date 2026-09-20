@@ -6,7 +6,7 @@ import {
   StatusBar,
   Alert,
 } from "react-native";
-import { Image } from "expo-image";
+import { Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import {
@@ -319,7 +319,7 @@ export default function ProfileScreen() {
                 <Image
                   source={{ uri: avatarUrl }}
                   style={{ width: 64, height: 64, borderRadius: 32 }}
-                  contentFit="cover"
+                  resizeMode="cover"
                 />
               ) : (
                 <View className="w-16 h-16 rounded-full bg-indigo-900 items-center justify-center">

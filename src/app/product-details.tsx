@@ -11,7 +11,7 @@ import {
 } from "lucide-react-native";
 import { fmt } from "@/utils/format";
 import { shadow } from "@/constants/shadows";
-import { productsApi, reviewsApi, api } from "@/api";
+import { productsApi, reviewsApi } from "@/api";
 import type { Car, Property, Product, Review } from "@/api";
 import { useCartStore } from "@/store/cartStore";
 import { InspectionModal } from "@/components/InspectionModal";
@@ -177,17 +177,31 @@ export default function ProductDetailsScreen() {
     const load = async () => {
       try {
         if (type === "vehicle") {
-          setItem(carToDisplay(await productsApi.getCarById(id)));
+          const [car, reviewsRes, statsRes] = await Promise.allSettled([
+            productsApi.getCarById(id),
+            reviewsApi.listForCar(id),
+            reviewsApi.statsForCar(id),
+          ]);
+          if (car.status === "fulfilled") setItem(carToDisplay(car.value));
+          if (reviewsRes.status === "fulfilled") setReviews(reviewsRes.value.data ?? []);
+          if (statsRes.status === "fulfilled") setReviewStats(statsRes.value);
         } else if (type === "real_estate") {
-          setItem(propertyToDisplay(await productsApi.getPropertyById(id)));
+          const [property, reviewsRes, statsRes] = await Promise.allSettled([
+            productsApi.getPropertyById(id),
+            reviewsApi.listForProperty(id),
+            reviewsApi.statsForProperty(id),
+          ]);
+          if (property.status === "fulfilled") setItem(propertyToDisplay(property.value));
+          if (reviewsRes.status === "fulfilled") setReviews(reviewsRes.value.data ?? []);
+          if (statsRes.status === "fulfilled") setReviewStats(statsRes.value);
         } else {
           const [prod, reviewsRes, statsRes] = await Promise.allSettled([
             productsApi.getById(id),
             reviewsApi.listForProduct(id),
-            api.get(`/reviews/product/${id}/stats`).then((r) => r.data?.data),
+            reviewsApi.statsForProduct(id),
           ]);
           if (prod.status === "fulfilled") setItem(productToDisplay(prod.value));
-          if (reviewsRes.status === "fulfilled") setReviews(reviewsRes.value ?? []);
+          if (reviewsRes.status === "fulfilled") setReviews(reviewsRes.value.data ?? []);
           if (statsRes.status === "fulfilled") setReviewStats(statsRes.value);
         }
       } catch (e: any) {

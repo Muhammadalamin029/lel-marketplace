@@ -3,6 +3,22 @@ import { storage } from "./storage";
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
 
+export interface ApiEnvelope<T> {
+  success?: boolean;
+  status?: boolean;
+  message?: string;
+  data?: T;
+  pagination?: Pagination;
+  meta?: Pagination;
+}
+
+export interface Pagination {
+  page: number;
+  limit: number;
+  total: number;
+  total_pages: number;
+}
+
 // ── Main axios instance ──────────────────────────────────────────────────────
 
 export const api = axios.create({
@@ -121,4 +137,28 @@ export function getApiError(error: unknown): string {
   }
   if (error instanceof Error) return error.message;
   return "Something went wrong. Please try again.";
+}
+
+export function unwrapData<T>(payload: ApiEnvelope<T> | T): T {
+  if (payload && typeof payload === "object" && "data" in payload) {
+    return (payload as ApiEnvelope<T>).data as T;
+  }
+  return payload as T;
+}
+
+export function unwrapList<T>(payload: ApiEnvelope<T[]> | T[]): T[] {
+  const data = unwrapData<T[]>(payload);
+  return Array.isArray(data) ? data : [];
+}
+
+export function getPagination(payload: ApiEnvelope<unknown>): Pagination {
+  return (
+    payload.pagination ??
+    payload.meta ?? {
+      page: 1,
+      limit: Array.isArray(payload.data) ? payload.data.length : 0,
+      total: Array.isArray(payload.data) ? payload.data.length : 0,
+      total_pages: 1,
+    }
+  );
 }

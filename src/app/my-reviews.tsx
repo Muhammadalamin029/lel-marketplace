@@ -57,7 +57,7 @@ export default function MyReviewsScreen() {
   const load = () => {
     setLoading(true);
     reviewsApi.listMyReviews()
-      .then(setReviews)
+      .then((res) => setReviews(res.data))
       .catch(() => {})
       .finally(() => setLoading(false));
   };
@@ -151,7 +151,7 @@ export default function MyReviewsScreen() {
                     <Package size={16} color="#6b7280" />
                   </View>
                   <Text className="text-sm font-bold text-gray-900 flex-1" numberOfLines={1}>
-                    {r.product_name ?? "Product"}
+                    {r.product_name ?? r.car_name ?? r.property_name ?? "Listing"}
                   </Text>
                 </View>
 

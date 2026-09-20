@@ -2,18 +2,27 @@ import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { useCallback, useEffect, useState } from "react";
 import {
   View, Text, ScrollView, TouchableOpacity, StatusBar,
-  ActivityIndicator, Alert, Modal, TextInput, Linking,
+  ActivityIndicator, Alert, Modal, TextInput,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { StatusBadge } from "@/components/StatusBadge";
 import { shadow } from "@/constants/shadows";
-import { Car, Home, Calendar, CreditCard, AlertCircle, X } from "lucide-react-native";
+import { Car, Home, Calendar, CreditCard, AlertCircle, X, Landmark } from "lucide-react-native";
 import { fmt } from "@/utils/format";
-import { inspectionsApi } from "@/api";
+import { inspectionsApi, paymentsApi } from "@/api";
 import type { Agreement } from "@/api";
 import { useAuthStore } from "@/store/authStore";
+
+type TransferDetails = {
+  account_number: string;
+  account_name: string;
+  bank_name: string;
+  amount: number;
+  reference: string;
+  expires_at?: string | null;
+};
 
 function progressPercent(agr: Agreement): number {
   if (!agr.total_price) return 0;
@@ -127,9 +136,9 @@ function PaymentModal({
             )}
 
             <View className="bg-blue-50 rounded-2xl p-4 border border-blue-100">
-              <Text className="text-sm font-bold text-blue-800 mb-1">Secured via Paystack</Text>
+              <Text className="text-sm font-bold text-blue-800 mb-1">Bank Transfer</Text>
               <Text className="text-sm text-blue-700 leading-relaxed">
-                You'll be redirected to Paystack to complete payment. Your balance updates automatically after verification.
+                We'll generate a dedicated transfer account. Your balance updates after payment verification.
               </Text>
             </View>
 
@@ -173,6 +182,7 @@ export default function AgreementDetailsScreen() {
   const [payModalVisible, setPayModalVisible] = useState(false);
   const [isPaying, setIsPaying] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [transfer, setTransfer] = useState<TransferDetails | null>(null);
 
   const load = useCallback(async () => {
     if (!id) { setError("No agreement ID"); setLoading(false); return; }
@@ -201,25 +211,39 @@ export default function AgreementDetailsScreen() {
     setIsPaying(true);
     try {
       const category = agr.status === "pending_deposit" ? "asset_deposit" : "asset_installment";
-      const callbackUrl = "lelmarketplace://payment-callback"; // deep link
-      const result = await inspectionsApi.initializeAgreementPayment(
-        agr.id,
+      const result = await paymentsApi.initializeBankTransfer({
+        agreement_id: agr.id,
         amount,
-        user.email,
+        email: user.email,
         category,
-        callbackUrl,
-      );
-      if (result.authorization_url) {
-        setPayModalVisible(false);
-        await Linking.openURL(result.authorization_url);
-        // Refresh after returning from browser
-        await load();
-      }
+      }) as TransferDetails;
+      setTransfer(result);
+      setPayModalVisible(false);
     } catch (e: any) {
       Alert.alert(
-        "Payment Failed",
-        e?.response?.data?.detail ?? e?.message ?? "Could not initialise payment. Please try again."
+        "Payment Details Failed",
+        e?.response?.data?.detail ?? e?.message ?? "Could not generate bank transfer details. Please try again."
       );
+    } finally {
+      setIsPaying(false);
+    }
+  };
+
+  const verifyTransfer = async () => {
+    if (!transfer?.reference) return;
+    setIsPaying(true);
+    try {
+      const result = await paymentsApi.verify(transfer.reference) as { status?: string };
+      const status = String(result?.status ?? "success").toLowerCase();
+      if (!["success", "paid", "completed"].includes(status)) {
+        Alert.alert("Payment not received yet", "We have not received your transfer yet. Please try again shortly after transferring.");
+        return;
+      }
+      setTransfer(null);
+      await load();
+      Alert.alert("Payment received", "Your agreement has been updated.");
+    } catch (e: any) {
+      Alert.alert("Verification failed", e?.response?.data?.detail ?? e?.message ?? "Please try again.");
     } finally {
       setIsPaying(false);
     }
@@ -430,6 +454,45 @@ export default function AgreementDetailsScreen() {
                 Pay Installment{agr.monthly_installment ? ` — ${fmt(agr.monthly_installment)}` : ""}
               </Text>
             </TouchableOpacity>
+          )}
+
+          {transfer && (
+            <View className="bg-white rounded-3xl p-5 gap-4" style={shadow.md}>
+              <View className="flex-row items-center gap-3">
+                <View className="w-10 h-10 rounded-full bg-amber-50 items-center justify-center">
+                  <Landmark size={18} color="#f59e0b" />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-sm font-bold text-gray-900">Bank Transfer Details</Text>
+                  <Text className="text-xs text-gray-500">Send the exact amount to this account.</Text>
+                </View>
+              </View>
+              {[
+                ["Bank", transfer.bank_name],
+                ["Account Number", transfer.account_number],
+                ["Account Name", transfer.account_name],
+                ["Amount", fmt(transfer.amount)],
+                ["Reference", transfer.reference],
+              ].map(([label, value]) => (
+                <View key={label} className="flex-row justify-between gap-4 border-b border-gray-100 pb-3">
+                  <Text className="text-sm text-gray-500">{label}</Text>
+                  <Text className="text-sm font-bold text-gray-900 flex-1 text-right">{value}</Text>
+                </View>
+              ))}
+              {transfer.expires_at && (
+                <Text className="text-xs text-amber-600">
+                  This transfer account expires at {new Date(transfer.expires_at).toLocaleString()}.
+                </Text>
+              )}
+              <TouchableOpacity
+                onPress={verifyTransfer}
+                disabled={isPaying}
+                className="bg-amber-400 py-4 rounded-2xl items-center"
+                style={shadow.btn}
+              >
+                {isPaying ? <ActivityIndicator color="#fff" /> : <Text className="text-white font-bold">I have sent the payment</Text>}
+              </TouchableOpacity>
+            </View>
           )}
 
           {/* Cancel agreement */}

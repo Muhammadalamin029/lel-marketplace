@@ -10,22 +10,22 @@ export { disputesApi } from "./disputes";
 export { notificationsApi } from "./notifications";
 export { paymentsApi } from "./payments";
 export { reviewsApi } from "./reviews";
-export { categoriesApi } from "./public";
+export { categoriesApi, publicApi } from "./public";
 export { dashboardApi } from "./dashboard";
 export type { CustomerStats } from "./dashboard";
 export { financingApi } from "./financing";
 
 export type { LoginPayload, RegisterPayload, UserProfile, CustomerProfileData } from "./auth";
 export type { Product, Car, Property, ProductImage, CarUnit, PropertyUnit } from "./products";
-export type { Order, OrderItem, OrderBuyer, OrderAddress } from "./orders";
+export type { Order, OrderItem, OrderBuyer, OrderAddress, CheckoutConfirmation, CheckoutSummary, InstallmentEligibility } from "./orders";
 export type { Inspection, Agreement, AssetMini, UserMini, CompleteInspectionPayload } from "./inspections";
 export type { Address, AddressPayload } from "./addresses";
 export type { WishlistItem } from "./wishlist";
 export type { Dispute } from "./disputes";
-export type { Notification } from "./notifications";
+export type { Notification, NotificationPreferences, NotificationStats } from "./notifications";
 export type { Payment } from "./payments";
 export type { Review, ReviewUser } from "./reviews";
-export type { Category } from "./public";
+export type { Category, DeliverySettings, DeliveryState, PromoBanner } from "./public";
 export type {
   FinancingDocumentRequirement,
   FinancingApplication,

@@ -1,4 +1,4 @@
-import { api } from "./client";
+import { api, getPagination, unwrapData, unwrapList, type Pagination } from "./client";
 
 export interface ProductImage { id: string; image_url: string }
 export interface CategoryInfo { id: string; name: string }
@@ -57,6 +57,12 @@ export interface Property {
   seller_id: string;
   images: ProductImage[];
   units: PropertyUnit[];
+  bedrooms?: number | null;
+  bathrooms?: number | null;
+  square_feet?: number | null;
+  amenities?: string[] | null;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 export interface ProductListParams {
@@ -68,18 +74,28 @@ export interface ProductListParams {
   max_price?: number;
 }
 
+export interface ListResponse<T> {
+  data: T[];
+  pagination: Pagination;
+}
+
+function listResponse<T>(payload: any): ListResponse<T> {
+  const data = unwrapList<T>(payload);
+  return { data, pagination: getPagination(payload) };
+}
+
 export const productsApi = {
   async list(params: ProductListParams = {}) {
     const { search, ...rest } = params;
     const { data } = await api.get("/products/", {
       params: { limit: 20, ...rest, ...(search ? { search_query: search } : {}) },
     });
-    return data as { data: Product[]; pagination: any };
+    return listResponse<Product>(data);
   },
 
   async getById(id: string) {
     const { data } = await api.get(`/products/${id}`);
-    return data?.data as Product;
+    return unwrapData<Product>(data);
   },
 
   async listCars(params: {
@@ -88,12 +104,12 @@ export const productsApi = {
     min_year?: number; max_year?: number;
   } = {}) {
     const { data } = await api.get("/automotive/", { params: { limit: 20, status: "available", ...params } });
-    return data as { data: Car[] };
+    return listResponse<Car>(data);
   },
 
   async getCarById(id: string) {
     const { data } = await api.get(`/automotive/${id}`);
-    return data?.data as Car;
+    return unwrapData<Car>(data);
   },
 
   async listProperties(params: {
@@ -101,11 +117,11 @@ export const productsApi = {
     listing_type?: string; min_price?: number; max_price?: number;
   } = {}) {
     const { data } = await api.get("/properties/", { params: { limit: 20, status: "available", ...params } });
-    return data as { data: Property[] };
+    return listResponse<Property>(data);
   },
 
   async getPropertyById(id: string) {
     const { data } = await api.get(`/properties/${id}`);
-    return data?.data as Property;
+    return unwrapData<Property>(data);
   },
 };

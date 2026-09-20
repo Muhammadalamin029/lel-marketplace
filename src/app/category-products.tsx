@@ -53,7 +53,7 @@ export default function CategoryProductsScreen() {
       const res = await categoriesApi.getProducts(id, { page: pageNum, limit: 20 });
       if (pageNum === 1) setProducts(res.data ?? []);
       else setProducts((prev) => [...prev, ...(res.data ?? [])]);
-      setHasMore(res.pagination?.has_next ?? false);
+      setHasMore((res.pagination?.page ?? pageNum) < (res.pagination?.total_pages ?? pageNum));
       setPage(pageNum);
     } catch { /* silent */ }
     finally { setLoading(false); }

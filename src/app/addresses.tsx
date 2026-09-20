@@ -8,8 +8,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { ArrowLeft, MapPin, Plus, CheckCircle, Edit2, Trash2, X, Star } from "lucide-react-native";
 import { shadow } from "@/constants/shadows";
-import { addressesApi, getApiError } from "@/api";
-import type { Address, AddressPayload } from "@/api";
+import { addressesApi, getApiError, publicApi } from "@/api";
+import type { Address, AddressPayload, DeliveryState } from "@/api";
 
 const BLANK: AddressPayload = { title: "", street_address: "", city: "", state_province: "", postal_code: "", country: "Nigeria" };
 
@@ -21,6 +21,7 @@ export default function AddressesScreen() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Address | null>(null);
   const [form, setForm] = useState<AddressPayload>(BLANK);
+  const [deliveryStates, setDeliveryStates] = useState<DeliveryState[]>([]);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -28,12 +29,21 @@ export default function AddressesScreen() {
       .then((data) => setAddresses(data ?? []))
       .catch(() => {})
       .finally(() => setLoading(false));
+    publicApi.deliveryStates().then(setDeliveryStates).catch(() => {});
   }, []);
 
   const openAdd = () => { setEditing(null); setForm(BLANK); setModalOpen(true); };
   const openEdit = (addr: Address) => {
     setEditing(addr);
-    setForm({ title: addr.title, street_address: addr.street_address, city: addr.city, state_province: addr.state_province, postal_code: addr.postal_code ?? "", country: addr.country });
+    setForm({
+      title: addr.title,
+      street_address: addr.street_address,
+      city: addr.city,
+      state_province: addr.state_province,
+      delivery_state_id: addr.delivery_state_id ?? null,
+      postal_code: addr.postal_code ?? "",
+      country: addr.country,
+    });
     setModalOpen(true);
   };
 
@@ -150,6 +160,11 @@ export default function AddressesScreen() {
                 <View className="pl-12">
                   <Text className="text-sm text-gray-600 mb-0.5">{addr.street_address}</Text>
                   <Text className="text-sm text-gray-500">{addr.city}, {addr.state_province}</Text>
+                  {addr.delivery_state && (
+                    <Text className="text-xs text-orange-500 mt-1">
+                      Delivery: {addr.delivery_state.state_name}
+                    </Text>
+                  )}
                   <Text className="text-sm text-gray-500">{addr.country}</Text>
                 </View>
               </View>
@@ -215,6 +230,32 @@ export default function AddressesScreen() {
                     />
                   </View>
                 ))}
+
+                {deliveryStates.length > 0 && (
+                  <View className="gap-2">
+                    <Text className="text-xs font-bold text-gray-500 uppercase tracking-wide">Delivery State</Text>
+                    <View className="flex-row flex-wrap gap-2">
+                      {deliveryStates.map((state) => {
+                        const active = form.delivery_state_id === state.id;
+                        return (
+                          <TouchableOpacity
+                            key={state.id}
+                            onPress={() => setForm((p) => ({
+                              ...p,
+                              delivery_state_id: state.id,
+                              state_province: state.state_name,
+                            }))}
+                            className={`px-3 py-2 rounded-full border ${active ? "bg-orange-500 border-orange-500" : "bg-white border-gray-200"}`}
+                          >
+                            <Text className={`text-xs font-bold ${active ? "text-white" : "text-gray-700"}`}>
+                              {state.state_name}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  </View>
+                )}
 
                 <TouchableOpacity
                   onPress={handleSave}

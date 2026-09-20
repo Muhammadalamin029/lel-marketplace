@@ -45,7 +45,7 @@ export default function InspectionsScreen() {
         ) : (
           <View className="gap-4 pb-10">
             {inspections.map((insp) => {
-              const isVehicle = insp.asset_type === "vehicle";
+              const isVehicle = insp.asset_type === "automotive";
               return (
                 <TouchableOpacity
                   key={insp.id}

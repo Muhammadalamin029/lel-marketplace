@@ -78,7 +78,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
         // Authenticated regardless of email verification — layouts handle the redirect
         set({ user, profile, isAuthenticated: true, isLoading: false });
 
-        const { mergeGuestCartIntoServer } = await import("@/lib/guestCart");
+        const { mergeGuestCartIntoServer } = await import("@/lib/mergeGuestCart");
         await mergeGuestCartIntoServer().catch(() => {});
       } catch (e) {
         set({ isLoading: false, error: getApiError(e) });

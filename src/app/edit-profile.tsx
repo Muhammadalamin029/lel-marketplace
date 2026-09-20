@@ -1,7 +1,6 @@
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, ScrollView, StatusBar, ActivityIndicator, Alert } from "react-native";
-import { Image } from "expo-image";
+import { View, Text, TextInput, TouchableOpacity, ScrollView, StatusBar, ActivityIndicator, Alert, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { ScreenHeader } from "@/components/ScreenHeader";
@@ -91,7 +90,7 @@ export default function EditProfileScreen() {
                 <Image
                   source={{ uri: avatarUri }}
                   style={{ width: 96, height: 96, borderRadius: 48 }}
-                  contentFit="cover"
+                  resizeMode="cover"
                 />
               ) : (
                 <View className="w-24 h-24 rounded-full bg-indigo-900 items-center justify-center">

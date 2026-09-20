@@ -25,6 +25,34 @@ interface NotificationsResponse {
   unread_count: number;
 }
 
+export interface NotificationPreferencesChannels {
+  order_updates: boolean;
+  payment_updates: boolean;
+  account_updates: boolean;
+  promotional_offers: boolean;
+  system_announcements: boolean;
+}
+
+export interface NotificationPreferences {
+  id: string;
+  user_id: string;
+  email_notifications: NotificationPreferencesChannels;
+  sms_notifications: NotificationPreferencesChannels;
+  push_notifications: NotificationPreferencesChannels;
+  in_app_notifications: NotificationPreferencesChannels;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface NotificationStats {
+  total_notifications: number;
+  unread_count: number;
+  read_count: number;
+  by_type: Record<string, number>;
+  by_priority: Record<string, number>;
+  recent_activity: Record<string, number>;
+}
+
 export const notificationsApi = {
   async list(params: { page?: number; limit?: number; unread_only?: boolean } = {}) {
     const { unread_only, ...rest } = params;
@@ -43,7 +71,29 @@ export const notificationsApi = {
   },
 
   async getStats() {
-    const { data } = await api.get("/notifications/stats");
-    return data as { unread_count: number; total_notifications: number };
+    const { data } = await api.get<NotificationStats>("/notifications/stats");
+    return data;
+  },
+
+  async getPreferences() {
+    const { data } = await api.get<NotificationPreferences>("/notifications/preferences");
+    return data;
+  },
+
+  async updatePreferences(payload: Partial<Pick<NotificationPreferences, "email_notifications" | "sms_notifications" | "push_notifications" | "in_app_notifications">>) {
+    const { data } = await api.patch<NotificationPreferences>("/notifications/preferences", payload);
+    return data;
+  },
+
+  async markManyRead(ids: string[]) {
+    await api.patch("/notifications/bulk-update", { notification_ids: ids, is_read: true });
+  },
+
+  async delete(id: string) {
+    await api.delete(`/notifications/${id}`);
+  },
+
+  async deleteMany(ids: string[]) {
+    await api.delete("/notifications/bulk-delete", { data: { notification_ids: ids } });
   },
 };

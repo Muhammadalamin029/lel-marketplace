@@ -1,89 +1,30 @@
-import { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  ActivityIndicator,
-} from 'react-native';
-import { Link, useRouter } from 'expo-router';
-import { Image } from 'expo-image';
-import { Mail, Phone, Lock, User, Eye, EyeOff, AlertCircle, CheckCircle2, XCircle } from 'lucide-react-native';
-import { useAuthStore } from '@/store/authStore';
-import { authApi, getApiError } from '@/api';
+import { useState } from "react";
+import { ActivityIndicator, Image, KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Link, useRouter } from "expo-router";
+import { AlertCircle, Check, Eye, EyeOff, Lock, Mail, Phone, User } from "lucide-react-native";
+import { authApi, getApiError } from "@/api";
+import { BRAND_ASSETS, COLORS } from "@/constants/brand";
+import { useAuthStore } from "@/store/authStore";
 
-// --- Password Policy Component ---
-function PasswordPolicy({ password }: { password: string }) {
-  const rules = [
-    { label: 'At least 8 characters', met: password.length >= 8 },
-    { label: 'One uppercase letter', met: /[A-Z]/.test(password) },
-    { label: 'One lowercase letter', met: /[a-z]/.test(password) },
-    { label: 'One number', met: /[0-9]/.test(password) },
-    { label: 'One special character', met: /[^A-Za-z0-9]/.test(password) },
-  ];
+type Form = { name: string; email: string; phone: string; password: string; confirmPassword: string };
 
-  return (
-    <View className="mt-2 flex flex-col gap-1">
-      {rules.map((rule) => (
-        <View key={rule.label} className="flex-row items-center gap-1.5">
-          {rule.met
-            ? <CheckCircle2 size={13} color="#22c55e" />
-            : <XCircle size={13} color="#9ca3af" />
-          }
-          <Text className={`text-xs ${rule.met ? 'text-green-500' : 'text-muted-foreground'}`}>
-            {rule.label}
-          </Text>
-        </View>
-      ))}
-    </View>
-  );
-}
-
-// --- Field Component ---
-function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
-  return (
-    <View className="flex flex-col gap-2">
-      <Text className="text-sm font-medium text-foreground">{label}</Text>
-      {children}
-      {error && <Text className="text-xs text-destructive">{error}</Text>}
-    </View>
-  );
-}
-
-// --- Main Register Screen ---
 export default function Register() {
   const router = useRouter();
   const { registerCustomer, isLoading } = useAuthStore();
-  const [form, setForm] = useState({ name: '', email: '', phone: '', password: '', confirmPassword: '' });
+  const [form, setForm] = useState<Form>({ name: "", email: "", phone: "", password: "", confirmPassword: "" });
+  const [accepted, setAccepted] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<Partial<typeof form>>({});
 
-  const set = (key: keyof typeof form) => (val: string) =>
-    setForm((prev) => ({ ...prev, [key]: val }));
-
-  const validate = () => {
-    const errs: Partial<typeof form> = {};
-    if (!form.name.trim()) errs.name = 'Full name is required';
-    if (!form.email.trim()) errs.email = 'Email is required';
-    else if (!/\S+@\S+\.\S+/.test(form.email)) errs.email = 'Enter a valid email';
-    if (!form.phone.trim()) errs.phone = 'Phone number is required';
-    if (!form.password) errs.password = 'Password is required';
-    if (!form.confirmPassword) errs.confirmPassword = 'Please confirm your password';
-    else if (form.password !== form.confirmPassword) errs.confirmPassword = 'Passwords do not match';
-    setFieldErrors(errs);
-    return Object.keys(errs).length === 0;
-  };
+  const update = (key: keyof Form) => (value: string) => setForm((prev) => ({ ...prev, [key]: value }));
 
   const handleRegister = async () => {
-    if (!validate()) return;
+    if (!accepted) return setError("Please agree to the Terms and Privacy Policy.");
+    if (!form.name.trim() || !form.email.trim() || !form.phone.trim() || !form.password) return setError("Please fill all required fields.");
+    if (form.password !== form.confirmPassword) return setError("Passwords do not match.");
     setError(null);
     try {
       await registerCustomer({ name: form.name.trim(), email: form.email.trim(), phone: form.phone.trim(), password: form.password });
-      // Send verification code then navigate to verification screen
       authApi.sendVerificationEmail(form.email.trim()).catch(() => {});
       router.replace(`/(auth)/verify-email?email=${encodeURIComponent(form.email.trim())}` as any);
     } catch (e) {
@@ -91,148 +32,90 @@ export default function Register() {
     }
   };
 
-  const allFilled =
-    !!form.name && !!form.email && !!form.phone && !!form.password && !!form.confirmPassword;
-  const passwordsMatch = form.password === form.confirmPassword;
-  const isDisabled = isLoading || !allFilled || !passwordsMatch || false;
+  const disabled = isLoading || !accepted || !form.name || !form.email || !form.phone || !form.password || form.password !== form.confirmPassword;
 
   return (
-    <KeyboardAvoidingView
-      className="flex-1 bg-background"
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <ScrollView
-        contentContainerClassName="flex-grow justify-center items-center p-6"
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Logo */}
-        <View className="mb-8 items-center">
-          <Image
-            source={require('../../../assets/images/logo.png')}
-            style={{ width: 180, height: 60 }}
-            contentFit="contain"
-          />
-        </View>
+    <KeyboardAvoidingView className="flex-1 bg-white" behavior={Platform.OS === "ios" ? "padding" : "height"}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 34 }}>
+        <View className="px-8 pt-12">
+          <Image source={BRAND_ASSETS.signup} style={{ width: "100%", height: 170, borderRadius: 10 }} resizeMode="cover" />
+          <Text className="text-3xl font-black text-gray-950 mt-7">Sign Up</Text>
+          <Text className="text-sm text-gray-400 mt-2 mb-6">Create an account to get started with LEL Store.</Text>
 
-        <View className="w-full max-w-[400px] bg-card rounded-xl p-6 shadow-sm border border-border">
-          <Text className="text-2xl font-semibold text-foreground text-center mb-1">Create Account</Text>
-          <Text className="text-sm text-muted-foreground text-center mb-6">Join our marketplace today</Text>
-
-          {/* Error Alert */}
           {error && (
-            <View className="flex-row items-center gap-2 bg-destructive/10 border border-destructive/30 rounded-lg p-3 mb-4">
+            <View className="flex-row items-center gap-2 bg-red-50 border border-red-100 rounded-xl p-3 mb-4">
               <AlertCircle size={16} color="#ef4444" />
-              <Text className="text-sm text-destructive flex-1">{error}</Text>
+              <Text className="text-sm text-red-600 flex-1">{error}</Text>
             </View>
           )}
 
-          <View className="flex flex-col gap-4">
-            {/* Full Name */}
-            <Field label="Full Name" error={fieldErrors.name}>
-              <View className="flex-row items-center border border-border rounded-lg bg-card px-3">
-                <User size={16} color="#9ca3af" />
-                <TextInput
-                  className="flex-1 p-3 text-sm text-foreground"
-                  placeholder="Enter your full name"
-                  placeholderTextColor="#9ca3af"
-                  value={form.name}
-                  onChangeText={set('name')}
-                  autoCapitalize="words"
-                />
-              </View>
-            </Field>
-
-            {/* Email */}
-            <Field label="Email" error={fieldErrors.email}>
-              <View className="flex-row items-center border border-border rounded-lg bg-card px-3">
-                <Mail size={16} color="#9ca3af" />
-                <TextInput
-                  className="flex-1 p-3 text-sm text-foreground"
-                  placeholder="Enter your email"
-                  placeholderTextColor="#9ca3af"
-                  value={form.email}
-                  onChangeText={set('email')}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                />
-              </View>
-            </Field>
-
-            {/* Phone */}
-            <Field label="Phone Number" error={fieldErrors.phone}>
-              <View className="flex-row items-center border border-border rounded-lg bg-card px-3">
-                <Phone size={16} color="#9ca3af" />
-                <TextInput
-                  className="flex-1 p-3 text-sm text-foreground"
-                  placeholder="Enter your phone number"
-                  placeholderTextColor="#9ca3af"
-                  value={form.phone}
-                  onChangeText={set('phone')}
-                  keyboardType="phone-pad"
-                />
-              </View>
-            </Field>
-
-            {/* Password */}
-            <Field label="Password" error={fieldErrors.password}>
-              <View className="flex-row items-center border border-border rounded-lg bg-card px-3">
-                <Lock size={16} color="#9ca3af" />
-                <TextInput
-                  className="flex-1 p-3 text-sm text-foreground"
-                  placeholder="Create a password"
-                  placeholderTextColor="#9ca3af"
-                  value={form.password}
-                  onChangeText={set('password')}
-                  secureTextEntry={!showPassword}
-                />
-                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} className="p-1">
-                  {showPassword ? <EyeOff size={16} color="#9ca3af" /> : <Eye size={16} color="#9ca3af" />}
-                </TouchableOpacity>
-              </View>
-              {form.password.length > 0 && <PasswordPolicy password={form.password} />}
-            </Field>
-
-            {/* Confirm Password */}
-            <Field label="Confirm Password" error={fieldErrors.confirmPassword}>
-              <View className="flex-row items-center border border-border rounded-lg bg-card px-3">
-                <Lock size={16} color="#9ca3af" />
-                <TextInput
-                  className="flex-1 p-3 text-sm text-foreground"
-                  placeholder="Confirm your password"
-                  placeholderTextColor="#9ca3af"
-                  value={form.confirmPassword}
-                  onChangeText={set('confirmPassword')}
-                  secureTextEntry
-                />
-              </View>
-            </Field>
-
-            {/* Submit */}
-            <TouchableOpacity
-              className={`rounded-lg p-3.5 items-center mt-2 flex-row justify-center gap-2 ${isDisabled ? 'bg-primary/50' : 'bg-primary'}`}
-              onPress={handleRegister}
-              disabled={isDisabled}
-            >
-              {isLoading && <ActivityIndicator size="small" color="#ffffff" />}
-              <Text className="text-primary-foreground text-sm font-semibold">
-                {isLoading ? 'Creating account...' : 'Create Account'}
-              </Text>
-            </TouchableOpacity>
+          <View className="gap-4">
+            <Field label="Full Name" icon={<User size={16} color="#9ca3af" />} value={form.name} onChangeText={update("name")} placeholder="Enter your full name" />
+            <Field label="Email" icon={<Mail size={16} color="#9ca3af" />} value={form.email} onChangeText={update("email")} placeholder="Enter your email" keyboardType="email-address" />
+            <Field label="Phone Number" icon={<Phone size={16} color="#9ca3af" />} value={form.phone} onChangeText={update("phone")} placeholder="Enter your phone number" keyboardType="phone-pad" />
+            <PasswordField label="Password" value={form.password} onChangeText={update("password")} show={showPassword} onToggle={() => setShowPassword((v) => !v)} />
+            <PasswordField label="Confirm Password" value={form.confirmPassword} onChangeText={update("confirmPassword")} show={showPassword} onToggle={() => setShowPassword((v) => !v)} />
           </View>
 
-          {/* Footer Links */}
-          <View className="mt-6 items-center">
-            <View className="flex-row items-center gap-1">
-              <Text className="text-muted-foreground text-sm">Already have an account?</Text>
-              <Link href="/(auth)/login" asChild>
-                <TouchableOpacity>
-                  <Text className="text-primary text-sm font-medium underline">Sign in</Text>
-                </TouchableOpacity>
-              </Link>
+          <TouchableOpacity onPress={() => setAccepted((v) => !v)} className="flex-row items-center gap-2 mt-5">
+            <View className="w-5 h-5 rounded border items-center justify-center" style={{ borderColor: accepted ? COLORS.primary : "#d1d5db", backgroundColor: accepted ? COLORS.primary : "#fff" }}>
+              {accepted && <Check size={13} color="#fff" />}
             </View>
+            <Text className="text-xs text-gray-500 flex-1">I agree to the <Text style={{ color: COLORS.primary }}>Terms and Conditions</Text> and <Text style={{ color: COLORS.primary }}>Privacy Policy</Text></Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity disabled={disabled} onPress={handleRegister} className="h-14 rounded-full items-center justify-center mt-6" style={{ backgroundColor: disabled ? "#ffb3a2" : COLORS.primary }}>
+            {isLoading ? <ActivityIndicator color="#fff" /> : <Text className="text-white text-sm font-black">Create Account</Text>}
+          </TouchableOpacity>
+
+          <View className="flex-row justify-center mt-6">
+            <Text className="text-xs text-gray-500">Already have an account? </Text>
+            <Link href="/(auth)/login" asChild>
+              <TouchableOpacity><Text style={{ color: COLORS.primary }} className="text-xs font-bold">Sign in.</Text></TouchableOpacity>
+            </Link>
           </View>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
+  );
+}
+
+function Field(props: {
+  label: string;
+  icon: React.ReactNode;
+  value: string;
+  onChangeText: (value: string) => void;
+  placeholder: string;
+  keyboardType?: "default" | "email-address" | "phone-pad";
+}) {
+  return (
+    <View className="gap-2">
+      <Text className="text-sm font-bold text-gray-900">{props.label}</Text>
+      <View className="h-14 bg-gray-50 rounded-sm flex-row items-center px-4">
+        {props.icon}
+        <TextInput className="flex-1 text-sm text-gray-950 px-3" placeholder={props.placeholder} placeholderTextColor="#bdbdbd" value={props.value} onChangeText={props.onChangeText} keyboardType={props.keyboardType ?? "default"} autoCapitalize="none" />
+      </View>
+    </View>
+  );
+}
+
+function PasswordField({ label, value, onChangeText, show, onToggle }: {
+  label: string;
+  value: string;
+  onChangeText: (value: string) => void;
+  show: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <View className="gap-2">
+      <Text className="text-sm font-bold text-gray-900">{label}</Text>
+      <View className="h-14 bg-gray-50 rounded-sm flex-row items-center px-4">
+        <Lock size={16} color="#9ca3af" />
+        <TextInput className="flex-1 text-sm text-gray-950 px-3" placeholder="Create your password" placeholderTextColor="#bdbdbd" value={value} onChangeText={onChangeText} secureTextEntry={!show} />
+        <TouchableOpacity onPress={onToggle}>
+          {show ? <EyeOff size={16} color="#9ca3af" /> : <Eye size={16} color="#9ca3af" />}
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 }

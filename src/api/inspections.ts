@@ -1,4 +1,4 @@
-import { api } from "./client";
+import { api, unwrapData } from "./client";
 
 /** Matches backend AssetMini schema */
 export interface AssetMini {
@@ -7,6 +7,7 @@ export interface AssetMini {
   title: string;
   price: number;
   min_deposit_percentage: number | null;
+  monthly_allowed?: boolean | null;
   image_url: string | null;
 }
 
@@ -62,7 +63,7 @@ export interface Agreement {
 export interface CompleteInspectionPayload {
   agreed_price: number;
   notes?: string;
-  payment_plan: "monthly" | "installment";
+  payment_plan: "monthly" | "full_payment" | "installment";
   duration_months?: number;
   monthly_installment?: number;
   unit_id?: string;
@@ -117,7 +118,25 @@ export const inspectionsApi = {
   /** POST /assets/agreements/{id}/cancel — customer cancels before deposit */
   async cancelAgreement(id: string) {
     const { data } = await api.post(`/assets/agreements/${id}/cancel`);
-    return data as Agreement;
+    return unwrapData<Agreement>(data);
+  },
+
+  async initiateMandate(agreementId: string, payload: { email: string; callback_url?: string }) {
+    const { data } = await api.post(`/assets/agreements/${agreementId}/mandate/initiate`, payload);
+    return data as { redirect_url: string; reference: string };
+  },
+
+  async getMandate(agreementId: string) {
+    const { data } = await api.get(`/assets/agreements/${agreementId}/mandate`);
+    return data as {
+      id: string;
+      agreement_id: string;
+      status: string;
+      bank_name?: string | null;
+      account_number_last4?: string | null;
+      authorized_at?: string | null;
+      created_at: string;
+    };
   },
 
   // ── Asset payments (deposit + installments) ─────────────────────────────────
@@ -138,12 +157,27 @@ export const inspectionsApi = {
       callback_url: callbackUrl,
       category,
     });
-    return data as { authorization_url: string; reference: string; access_code: string };
+    return unwrapData<{ authorization_url: string; reference: string; access_code: string }>(data);
+  },
+
+  async initializeAgreementBankTransfer(
+    agreementId: string,
+    amount: number,
+    email: string,
+    category: "asset_deposit" | "asset_installment"
+  ) {
+    const { data } = await api.post("/payments/initialize-bank-transfer", {
+      agreement_id: agreementId,
+      amount,
+      email,
+      category,
+    });
+    return unwrapData(data);
   },
 
   /** POST /payments/verify — verify after Paystack redirect */
   async verifyPayment(reference: string) {
     const { data } = await api.post("/payments/verify", { reference });
-    return data;
+    return unwrapData(data);
   },
 };

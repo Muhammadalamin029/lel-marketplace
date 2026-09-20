@@ -15,7 +15,7 @@ export interface PickedFile {
  * Direct unsigned upload from React Native. Browser `File` objects don't exist here,
  * so the FormData part is built from {uri, name, type} - the standard Expo/RN pattern.
  */
-export async function uploadDocumentToCloudinary(file: PickedFile, folder = "alhaq/financing-documents"): Promise<string> {
+export async function uploadDocumentToCloudinary(file: PickedFile, folder = "lelstore/financing-documents"): Promise<string> {
   const formData = new FormData();
   formData.append("file", {
     uri: file.uri,

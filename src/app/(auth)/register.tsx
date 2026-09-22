@@ -61,7 +61,16 @@ export default function Register() {
             <View className="w-5 h-5 rounded border items-center justify-center" style={{ borderColor: accepted ? COLORS.primary : "#d1d5db", backgroundColor: accepted ? COLORS.primary : "#fff" }}>
               {accepted && <Check size={13} color="#fff" />}
             </View>
-            <Text className="text-xs text-gray-500 flex-1">I agree to the <Text style={{ color: COLORS.primary }}>Terms and Conditions</Text> and <Text style={{ color: COLORS.primary }}>Privacy Policy</Text></Text>
+            <View className="flex-1 flex-row flex-wrap">
+              <Text className="text-xs text-gray-500">I agree to the </Text>
+              <TouchableOpacity onPress={() => router.push("/terms")} hitSlop={8}>
+                <Text style={{ color: COLORS.primary }} className="text-xs font-bold">Terms and Conditions</Text>
+              </TouchableOpacity>
+              <Text className="text-xs text-gray-500"> and </Text>
+              <TouchableOpacity onPress={() => router.push("/privacy")} hitSlop={8}>
+                <Text style={{ color: COLORS.primary }} className="text-xs font-bold">Privacy Policy</Text>
+              </TouchableOpacity>
+            </View>
           </TouchableOpacity>
 
           <TouchableOpacity disabled={disabled} onPress={handleRegister} className="h-14 rounded-full items-center justify-center mt-6" style={{ backgroundColor: disabled ? "#ffb3a2" : COLORS.primary }}>

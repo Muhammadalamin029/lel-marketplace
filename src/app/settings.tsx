@@ -1,5 +1,5 @@
 import { useRequireAuth } from "@/hooks/useRequireAuth";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   View, Text, ScrollView, TouchableOpacity, Switch, StatusBar,
   Alert, Modal, TextInput, ActivityIndicator,
@@ -10,21 +10,32 @@ import { ScreenHeader } from "@/components/ScreenHeader";
 import { shadow } from "@/constants/shadows";
 import { Bell, Lock, Globe, Trash2, ChevronRight, Shield, Eye, EyeOff, KeyRound, X } from "lucide-react-native";
 import { useAuthStore } from "@/store/authStore";
+import { authApi, notificationsApi } from "@/api";
+import type { NotificationPreferences } from "@/api";
 
 type ToggleSetting = { id: string; label: string; subtitle: string; value: boolean };
+type NotifDraft = {
+  email_order: boolean;
+  email_promo: boolean;
+  push_order: boolean;
+  push_promo: boolean;
+  inapp_order: boolean;
+  inapp_promo: boolean;
+};
 
 export default function SettingsScreen() {
   useRequireAuth();
   const router = useRouter();
-  const { changePassword } = useAuthStore();
+  const { changePassword, logout } = useAuthStore();
 
   const [settings, setSettings] = useState<ToggleSetting[]>([
-    { id: "push_orders", label: "Order Notifications", subtitle: "Updates on your orders", value: true },
-    { id: "push_promos",  label: "Promotions",          subtitle: "Deals and special offers", value: false },
-    { id: "email_updates",label: "Email Updates",        subtitle: "Summary emails from LEL Marketplace", value: true },
     { id: "dark_mode",    label: "Dark Mode",            subtitle: "Easier on the eyes at night", value: false },
     { id: "biometric",    label: "Biometric Login",      subtitle: "Use Face ID / fingerprint to sign in", value: false },
   ]);
+  const [notifPreferences, setNotifPreferences] = useState<NotificationPreferences | null>(null);
+  const [notifDraft, setNotifDraft] = useState<NotifDraft | null>(null);
+  const [savingNotif, setSavingNotif] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
 
   // Password change modal
   const [pwModalOpen, setPwModalOpen] = useState(false);
@@ -36,6 +47,22 @@ export default function SettingsScreen() {
   const [changingPw, setChangingPw] = useState(false);
 
   const resetPwForm = () => { setCurrentPw(""); setNewPw(""); setConfirmPw(""); };
+
+  useEffect(() => {
+    notificationsApi.getPreferences()
+      .then((prefs) => {
+        setNotifPreferences(prefs);
+        setNotifDraft({
+          email_order: prefs.email_notifications.order_updates,
+          email_promo: prefs.email_notifications.promotional_offers,
+          push_order: prefs.push_notifications.order_updates,
+          push_promo: prefs.push_notifications.promotional_offers,
+          inapp_order: prefs.in_app_notifications.order_updates,
+          inapp_promo: prefs.in_app_notifications.promotional_offers,
+        });
+      })
+      .catch(() => {});
+  }, []);
 
   const handleChangePassword = async () => {
     if (!currentPw) { Alert.alert("Required", "Please enter your current password."); return; }
@@ -58,9 +85,64 @@ export default function SettingsScreen() {
     setSettings((prev) => prev.map((s) => s.id === id ? { ...s, value: !s.value } : s));
 
   const SECTIONS = [
-    { title: "Notifications",          items: settings.slice(0, 3) },
-    { title: "Appearance & Security",  items: settings.slice(3) },
+    { title: "Appearance & Security",  items: settings },
   ];
+
+  const saveNotificationPreferences = async () => {
+    if (!notifDraft || !notifPreferences) return;
+    setSavingNotif(true);
+    try {
+      const next = await notificationsApi.updatePreferences({
+        email_notifications: {
+          ...notifPreferences.email_notifications,
+          order_updates: notifDraft.email_order,
+          promotional_offers: notifDraft.email_promo,
+        },
+        push_notifications: {
+          ...notifPreferences.push_notifications,
+          order_updates: notifDraft.push_order,
+          promotional_offers: notifDraft.push_promo,
+        },
+        in_app_notifications: {
+          ...notifPreferences.in_app_notifications,
+          order_updates: notifDraft.inapp_order,
+          promotional_offers: notifDraft.inapp_promo,
+        },
+      });
+      setNotifPreferences(next);
+      Alert.alert("Preferences saved", "Your notification preferences have been updated.");
+    } catch (e: any) {
+      Alert.alert("Save failed", e?.response?.data?.detail ?? e?.message ?? "Could not update notification preferences.");
+    } finally {
+      setSavingNotif(false);
+    }
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      "Delete Account",
+      "This permanently deletes your account and cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            setDeletingAccount(true);
+            try {
+              await authApi.deleteAccount();
+              await logout();
+              router.replace("/(auth)/login");
+            } catch (e: any) {
+              Alert.alert("Delete failed", e?.response?.data?.detail ?? e?.message ?? "Could not delete your account.");
+            } finally {
+              setDeletingAccount(false);
+            }
+          },
+        },
+      ],
+    );
+  };
 
   const ACTIONS = [
     { icon: Globe,  label: "Language",       value: "English", onPress: () => {} },
@@ -77,6 +159,43 @@ export default function SettingsScreen() {
         <View className="px-5 pt-5 gap-6">
 
           {/* Toggle sections */}
+          {notifDraft && (
+            <View>
+              <Text className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Notifications</Text>
+              <View className="bg-white rounded-2xl overflow-hidden" style={shadow.md}>
+                {[
+                  { key: "email_order", label: "Email order updates", subtitle: "Order status and delivery updates" },
+                  { key: "email_promo", label: "Email promotions", subtitle: "Sales and marketing emails" },
+                  { key: "push_order", label: "Push order updates", subtitle: "Push notifications for orders" },
+                  { key: "push_promo", label: "Push promotions", subtitle: "Push notifications for offers" },
+                  { key: "inapp_order", label: "In-app order updates", subtitle: "Order notifications inside the app" },
+                  { key: "inapp_promo", label: "In-app promotions", subtitle: "Offers and announcements inside the app" },
+                ].map((item, i) => (
+                  <View key={item.key} className={`flex-row items-center px-4 py-4 ${i < 5 ? "border-b border-gray-100" : ""}`}>
+                    <View className="flex-1">
+                      <Text className="text-sm font-semibold text-gray-900">{item.label}</Text>
+                      <Text className="text-xs text-gray-400 mt-0.5">{item.subtitle}</Text>
+                    </View>
+                    <Switch
+                      value={notifDraft[item.key as keyof NotifDraft]}
+                      onValueChange={(value) => setNotifDraft((prev) => prev ? { ...prev, [item.key]: value } : prev)}
+                      trackColor={{ false: "#e5e7eb", true: "#fbbf24" }}
+                      thumbColor="#fff"
+                    />
+                  </View>
+                ))}
+              </View>
+              <TouchableOpacity
+                onPress={saveNotificationPreferences}
+                disabled={savingNotif}
+                className="bg-amber-400 py-3.5 rounded-2xl items-center mt-3"
+                style={shadow.btn}
+              >
+                {savingNotif ? <ActivityIndicator color="#fff" /> : <Text className="text-white font-bold">Save preferences</Text>}
+              </TouchableOpacity>
+            </View>
+          )}
+
           {SECTIONS.map((section) => (
             <View key={section.title}>
               <Text className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">{section.title}</Text>
@@ -143,7 +262,8 @@ export default function SettingsScreen() {
           <View>
             <Text className="text-xs font-bold text-red-400 uppercase tracking-wider mb-3">Danger Zone</Text>
             <TouchableOpacity
-              onPress={() => Alert.alert("Coming Soon", "Account deletion requires email confirmation. Please contact support.")}
+              onPress={handleDeleteAccount}
+              disabled={deletingAccount}
               className="bg-white border border-red-100 rounded-2xl px-4 py-4 flex-row items-center gap-3"
               style={shadow.md}
             >
@@ -152,6 +272,7 @@ export default function SettingsScreen() {
                 <Text className="text-sm font-semibold text-red-600">Delete Account</Text>
                 <Text className="text-xs text-gray-400">This action is permanent and cannot be undone.</Text>
               </View>
+              {deletingAccount && <ActivityIndicator color="#ef4444" />}
             </TouchableOpacity>
           </View>
 

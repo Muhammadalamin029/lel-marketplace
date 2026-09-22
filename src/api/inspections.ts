@@ -69,6 +69,17 @@ export interface CompleteInspectionPayload {
   unit_id?: string;
 }
 
+export interface CreateAgreementPayload {
+  asset_type: "automotive" | "property";
+  asset_id: string;
+  unit_id?: string;
+  total_price: number;
+  deposit_paid: number;
+  payment_plan: "monthly" | "full_payment" | "installment";
+  duration_months?: number;
+  monthly_installment?: number;
+}
+
 export const inspectionsApi = {
   // ── Inspections ────────────────────────────────────────────────────────────
 
@@ -107,6 +118,12 @@ export const inspectionsApi = {
   async listAgreements() {
     const { data } = await api.get("/assets/agreements");
     return data as Agreement[];
+  },
+
+  /** POST /assets/agreements — direct asset purchase, used by FE PurchaseFlow */
+  async createAgreement(payload: CreateAgreementPayload) {
+    const { data } = await api.post("/assets/agreements", payload);
+    return unwrapData<Agreement>(data);
   },
 
   /** GET /assets/agreements/{id} — direct single-agreement fetch */

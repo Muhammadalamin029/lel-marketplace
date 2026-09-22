@@ -1,10 +1,10 @@
-import { api } from "./client";
+import { api, unwrapData, unwrapList } from "./client";
 
 export interface Dispute {
   id: string;
   title: string;
   reason: string;
-  status: "open" | "in_review" | "resolved" | "closed";
+  status: "open" | "under_review" | "in_review" | "resolved" | "closed";
   order_id?: string;
   agreement_id?: string;
   resolution_notes?: string;
@@ -14,11 +14,11 @@ export interface Dispute {
 export const disputesApi = {
   async list() {
     const { data } = await api.get("/disputes/");
-    return data?.data as Dispute[];
+    return unwrapList<Dispute>(data);
   },
 
   async create(payload: { title: string; reason: string; order_id?: string; agreement_id?: string }) {
     const { data } = await api.post("/disputes/", payload);
-    return data?.data as Dispute;
+    return unwrapData<Dispute>(data);
   },
 };

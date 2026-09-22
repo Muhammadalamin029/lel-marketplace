@@ -16,7 +16,7 @@ export default function DisputesScreen() {
   const [disputes, setDisputes] = useState<Dispute[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
-  const [form, setForm] = useState({ title: "", reason: "", orderId: "" });
+  const [form, setForm] = useState({ title: "", reason: "", refId: "" });
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -27,19 +27,22 @@ export default function DisputesScreen() {
   }, []);
 
   const handleSubmit = async () => {
-    if (!form.title.trim() || !form.reason.trim()) {
-      Alert.alert("Missing Fields", "Please fill in the title and reason.");
+    if (!form.title.trim() || !form.reason.trim() || !form.refId.trim()) {
+      Alert.alert("Missing Fields", "Please fill in the title, reference ID, and reason.");
       return;
     }
     setSubmitting(true);
     try {
+      const refId = form.refId.trim();
+      const isOrder = refId.toUpperCase().startsWith("ORD");
       const created = await disputesApi.create({
         title: form.title.trim(),
         reason: form.reason.trim(),
-        order_id: form.orderId.trim() || undefined,
+        order_id: isOrder ? refId : undefined,
+        agreement_id: !isOrder ? refId : undefined,
       });
       setDisputes((prev) => [created, ...prev]);
-      setForm({ title: "", reason: "", orderId: "" });
+      setForm({ title: "", reason: "", refId: "" });
       setModalOpen(false);
       Alert.alert("Submitted", "Your dispute has been received. Our team will review it within 2–3 business days.");
     } catch {
@@ -117,7 +120,7 @@ export default function DisputesScreen() {
             <View className="gap-5 pb-10">
               {[
                 { label: "Dispute Title *", key: "title", placeholder: "e.g. Item not as described", multi: false },
-                { label: "Order ID (optional)", key: "orderId", placeholder: "e.g. ORD-2024-0042", multi: false },
+                { label: "Order or Agreement ID *", key: "refId", placeholder: "e.g. ORD-2024-0042 or agreement UUID", multi: false },
                 { label: "Reason *", key: "reason", placeholder: "Describe the issue in detail…", multi: true },
               ].map(({ label, key, placeholder, multi }) => (
                 <View key={key} className="gap-2">

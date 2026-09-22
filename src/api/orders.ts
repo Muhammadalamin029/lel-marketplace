@@ -204,6 +204,11 @@ export const ordersApi = {
     return unwrapData<Order>(data);
   },
 
+  async trackOrder(orderId: string, email: string) {
+    const { data } = await api.get("/orders/track", { params: { order_id: orderId, email } });
+    return unwrapData<{ order_id: string; status: string }>(data);
+  },
+
   async getInstallment(id: string) {
     const { data } = await api.get(`/orders/${id}/installment`);
     return unwrapData<InstallmentEligibility>(data);

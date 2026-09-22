@@ -31,6 +31,7 @@ export interface Car {
   year: number;
   price: number;
   min_deposit_percentage: number;
+  monthly_allowed?: boolean;
   status: string;
   seller_id: string;
   units: CarUnit[];
@@ -53,6 +54,7 @@ export interface Property {
   price: number;
   listing_type: "sale" | "rental" | "professional";
   min_deposit_percentage: number;
+  monthly_allowed?: boolean;
   status: string;
   seller_id: string;
   images: ProductImage[];

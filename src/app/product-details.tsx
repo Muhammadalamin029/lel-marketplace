@@ -492,49 +492,71 @@ export default function ProductDetailsScreen() {
 
         {/* Vehicles: Book Inspection + Contact Seller */}
         {item.type === "vehicle" && (
-          <View className="flex-row gap-3">
+          <View className="gap-3">
             <TouchableOpacity
-              onPress={() => item.available ? setInspectionModalVisible(true) : null}
+              onPress={() => item.available ? router.push(`/asset-purchase?id=${item.id}&type=automotive` as any) : null}
               disabled={!item.available}
-              className={`flex-1 border-2 rounded-2xl py-4 items-center justify-center ${item.available ? "border-amber-400" : "border-gray-300 bg-gray-50"}`}
-              style={item.available ? { shadowColor: "#f59e0b", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 6, elevation: 3 } : undefined}
+              className={`rounded-2xl py-4 items-center justify-center ${item.available ? "bg-amber-400" : "bg-gray-200"}`}
+              style={item.available ? shadow.btn : undefined}
             >
-              <Text className={`text-sm font-bold ${item.available ? "text-amber-500" : "text-gray-400"}`}>
-                {item.available ? "Book Inspection" : "Unavailable"}
+              <Text className={`text-base font-bold ${item.available ? "text-white" : "text-gray-400"}`}>
+                {item.available ? "Buy Now" : "Unavailable"}
               </Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              onPress={handleContact}
-              className="flex-1 bg-gray-900 rounded-2xl py-4 items-center justify-center flex-row gap-2"
-              style={shadow.md}
-            >
-              <Phone size={15} color="#fff" />
-              <Text className="text-white text-sm font-bold">Contact Seller</Text>
-            </TouchableOpacity>
+            <View className="flex-row gap-3">
+              <TouchableOpacity
+                onPress={() => item.available ? setInspectionModalVisible(true) : null}
+                disabled={!item.available}
+                className={`flex-1 border-2 rounded-2xl py-3.5 items-center justify-center ${item.available ? "border-amber-400" : "border-gray-300 bg-gray-50"}`}
+              >
+                <Text className={`text-sm font-bold ${item.available ? "text-amber-500" : "text-gray-400"}`}>
+                  Book Inspection
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleContact}
+                className="flex-1 bg-gray-900 rounded-2xl py-3.5 items-center justify-center flex-row gap-2"
+                style={shadow.md}
+              >
+                <Phone size={15} color="#fff" />
+                <Text className="text-white text-sm font-bold">Contact Seller</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         )}
 
         {/* Properties: Schedule Viewing + Chat with Agent */}
         {item.type === "real_estate" && (
-          <View className="flex-row gap-3">
+          <View className="gap-3">
             <TouchableOpacity
-              onPress={() => item.available ? setInspectionModalVisible(true) : null}
+              onPress={() => item.available ? router.push(`/asset-purchase?id=${item.id}&type=property` as any) : null}
               disabled={!item.available}
-              className={`flex-1 border-2 rounded-2xl py-4 items-center justify-center ${item.available ? "border-amber-400" : "border-gray-300 bg-gray-50"}`}
-              style={item.available ? { shadowColor: "#f59e0b", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 6, elevation: 3 } : undefined}
+              className={`rounded-2xl py-4 items-center justify-center ${item.available ? "bg-amber-400" : "bg-gray-200"}`}
+              style={item.available ? shadow.btn : undefined}
             >
-              <Text className={`text-sm font-bold ${item.available ? "text-amber-500" : "text-gray-400"}`}>
-                {item.available ? "Schedule Viewing" : "Unavailable"}
+              <Text className={`text-base font-bold ${item.available ? "text-white" : "text-gray-400"}`}>
+                {item.available ? "Buy Now" : "Unavailable"}
               </Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              onPress={handleContact}
-              className="flex-1 bg-gray-900 rounded-2xl py-4 items-center justify-center flex-row gap-2"
-              style={shadow.md}
-            >
-              <MessageCircle size={15} color="#fff" />
-              <Text className="text-white text-sm font-bold">Chat with Agent</Text>
-            </TouchableOpacity>
+            <View className="flex-row gap-3">
+              <TouchableOpacity
+                onPress={() => item.available ? setInspectionModalVisible(true) : null}
+                disabled={!item.available}
+                className={`flex-1 border-2 rounded-2xl py-3.5 items-center justify-center ${item.available ? "border-amber-400" : "border-gray-300 bg-gray-50"}`}
+              >
+                <Text className={`text-sm font-bold ${item.available ? "text-amber-500" : "text-gray-400"}`}>
+                  Schedule Viewing
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleContact}
+                className="flex-1 bg-gray-900 rounded-2xl py-3.5 items-center justify-center flex-row gap-2"
+                style={shadow.md}
+              >
+                <MessageCircle size={15} color="#fff" />
+                <Text className="text-white text-sm font-bold">Chat with Agent</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         )}
       </View>

@@ -85,6 +85,13 @@ const MENU_SECTIONS: { title: string; items: MenuItem[] }[] = [
         route: "/orders",
       },
       {
+        icon: Package,
+        label: "Track Order",
+        color: "#0ea5e9",
+        bg: "#f0f9ff",
+        route: "/track-order",
+      },
+      {
         icon: Shield,
         label: "My Inspections",
         color: "#0ea5e9",

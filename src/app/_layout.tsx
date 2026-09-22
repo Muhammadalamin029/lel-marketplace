@@ -47,6 +47,7 @@ export default function RootLayout() {
 
       {/* Public browsing — no auth required */}
       <Stack.Screen name="product-details" />
+      <Stack.Screen name="asset-purchase" />
       <Stack.Screen name="browse" />
       <Stack.Screen name="categories" />
       <Stack.Screen name="category-products" />
@@ -54,6 +55,7 @@ export default function RootLayout() {
       <Stack.Screen name="privacy" />
       <Stack.Screen name="about" />
       <Stack.Screen name="help" />
+      <Stack.Screen name="track-order" />
 
       {/* Private — require auth (each screen checks via useRequireAuth) */}
       <Stack.Screen name="checkout" />

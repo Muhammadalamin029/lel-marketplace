@@ -8,6 +8,24 @@ import { useAuthStore } from "@/store/authStore";
 
 type Form = { name: string; email: string; phone: string; password: string; confirmPassword: string };
 
+const PHONE_FORMAT_HINT = "Use international format with country code, no spaces. Example: +2348012345678.";
+const PASSWORD_POLICY_HINT = '8-128 characters with uppercase, lowercase, number, and special character (!@#$%^&*(),.?":{}|<>).';
+const PHONE_REGEX = /^[+]?[1-9]\d{0,15}$/;
+const SPECIAL_CHAR_REGEX = /[!@#$%^&*(),.?":{}|<>]/;
+const WEAK_PASSWORDS = new Set([
+  "password",
+  "123456",
+  "qwerty",
+  "abc123",
+  "admin",
+  "letmein",
+  "welcome",
+  "monkey",
+  "1234567890",
+  "password123",
+  "admin123",
+]);
+
 export default function Register() {
   const router = useRouter();
   const { registerCustomer, isLoading } = useAuthStore();
@@ -19,14 +37,21 @@ export default function Register() {
   const update = (key: keyof Form) => (value: string) => setForm((prev) => ({ ...prev, [key]: value }));
 
   const handleRegister = async () => {
+    const name = form.name.trim();
+    const email = form.email.trim();
+    const phone = form.phone.trim();
+
     if (!accepted) return setError("Please agree to the Terms and Privacy Policy.");
-    if (!form.name.trim() || !form.email.trim() || !form.phone.trim() || !form.password) return setError("Please fill all required fields.");
+    if (!name || !email || !phone || !form.password) return setError("Please fill all required fields.");
+    if (!PHONE_REGEX.test(phone)) return setError("Please enter a valid phone number in international format, e.g. +2348012345678.");
+    const passwordError = getPasswordPolicyError(form.password);
+    if (passwordError) return setError(passwordError);
     if (form.password !== form.confirmPassword) return setError("Passwords do not match.");
     setError(null);
     try {
-      await registerCustomer({ name: form.name.trim(), email: form.email.trim(), phone: form.phone.trim(), password: form.password });
-      authApi.sendVerificationEmail(form.email.trim()).catch(() => {});
-      router.replace(`/(auth)/verify-email?email=${encodeURIComponent(form.email.trim())}` as any);
+      await registerCustomer({ name, email, phone, password: form.password });
+      authApi.sendVerificationEmail(email).catch(() => {});
+      router.replace(`/(auth)/verify-email?email=${encodeURIComponent(email)}` as any);
     } catch (e) {
       setError(getApiError(e));
     }
@@ -52,8 +77,8 @@ export default function Register() {
           <View className="gap-4">
             <Field label="Full Name" icon={<User size={16} color="#9ca3af" />} value={form.name} onChangeText={update("name")} placeholder="Enter your full name" />
             <Field label="Email" icon={<Mail size={16} color="#9ca3af" />} value={form.email} onChangeText={update("email")} placeholder="Enter your email" keyboardType="email-address" />
-            <Field label="Phone Number" icon={<Phone size={16} color="#9ca3af" />} value={form.phone} onChangeText={update("phone")} placeholder="Enter your phone number" keyboardType="phone-pad" />
-            <PasswordField label="Password" value={form.password} onChangeText={update("password")} show={showPassword} onToggle={() => setShowPassword((v) => !v)} />
+            <Field label="Phone Number" icon={<Phone size={16} color="#9ca3af" />} value={form.phone} onChangeText={update("phone")} placeholder="Enter your phone number" keyboardType="phone-pad" helper={PHONE_FORMAT_HINT} />
+            <PasswordField label="Password" value={form.password} onChangeText={update("password")} show={showPassword} onToggle={() => setShowPassword((v) => !v)} helper={PASSWORD_POLICY_HINT} />
             <PasswordField label="Confirm Password" value={form.confirmPassword} onChangeText={update("confirmPassword")} show={showPassword} onToggle={() => setShowPassword((v) => !v)} />
           </View>
 
@@ -89,6 +114,17 @@ export default function Register() {
   );
 }
 
+function getPasswordPolicyError(password: string) {
+  if (password.length < 8) return "Password must be at least 8 characters long";
+  if (password.length > 128) return "Password must be no more than 128 characters long";
+  if (!/[A-Z]/.test(password)) return "Password must contain at least one uppercase letter";
+  if (!/[a-z]/.test(password)) return "Password must contain at least one lowercase letter";
+  if (!/\d/.test(password)) return "Password must contain at least one number";
+  if (!SPECIAL_CHAR_REGEX.test(password)) return 'Password must contain at least one special character (!@#$%^&*(),.?":{}|<>)';
+  if (WEAK_PASSWORDS.has(password.toLowerCase())) return "Password is too common and easily guessed";
+  return null;
+}
+
 function Field(props: {
   label: string;
   icon: React.ReactNode;
@@ -96,6 +132,7 @@ function Field(props: {
   onChangeText: (value: string) => void;
   placeholder: string;
   keyboardType?: "default" | "email-address" | "phone-pad";
+  helper?: string;
 }) {
   return (
     <View className="gap-2">
@@ -104,16 +141,18 @@ function Field(props: {
         {props.icon}
         <TextInput className="flex-1 text-sm text-gray-950 px-3" placeholder={props.placeholder} placeholderTextColor="#bdbdbd" value={props.value} onChangeText={props.onChangeText} keyboardType={props.keyboardType ?? "default"} autoCapitalize="none" />
       </View>
+      {props.helper && <Text className="text-xs leading-5 text-gray-500">{props.helper}</Text>}
     </View>
   );
 }
 
-function PasswordField({ label, value, onChangeText, show, onToggle }: {
+function PasswordField({ label, value, onChangeText, show, onToggle, helper }: {
   label: string;
   value: string;
   onChangeText: (value: string) => void;
   show: boolean;
   onToggle: () => void;
+  helper?: string;
 }) {
   return (
     <View className="gap-2">
@@ -125,6 +164,7 @@ function PasswordField({ label, value, onChangeText, show, onToggle }: {
           {show ? <EyeOff size={16} color="#9ca3af" /> : <Eye size={16} color="#9ca3af" />}
         </TouchableOpacity>
       </View>
+      {helper && <Text className="text-xs leading-5 text-gray-500">{helper}</Text>}
     </View>
   );
 }

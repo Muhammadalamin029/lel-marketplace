@@ -81,6 +81,8 @@ export const useAuthStore = create<AuthState>((set, get) => {
 
         const { mergeGuestCartIntoServer } = await import("@/lib/mergeGuestCart");
         await mergeGuestCartIntoServer().catch(() => {});
+        const { registerForPushNotifications } = await import("@/lib/pushNotifications");
+        registerForPushNotifications().catch(() => {});
       } catch (e) {
         set({ isLoading: false, error: getApiError(e) });
         throw e;
@@ -102,6 +104,8 @@ export const useAuthStore = create<AuthState>((set, get) => {
 
         const { mergeGuestCartIntoServer } = await import("@/lib/mergeGuestCart");
         await mergeGuestCartIntoServer().catch(() => {});
+        const { registerForPushNotifications } = await import("@/lib/pushNotifications");
+        registerForPushNotifications().catch(() => {});
       } catch (e) {
         set({ isLoading: false, error: getApiError(e) });
         throw e;
@@ -120,6 +124,8 @@ export const useAuthStore = create<AuthState>((set, get) => {
     },
 
     logout: async () => {
+      const { unregisterPushToken } = await import("@/lib/pushNotifications");
+      await unregisterPushToken().catch(() => {});
       await authApi.logout();
       set({ user: null, profile: null, isAuthenticated: false, error: null });
     },

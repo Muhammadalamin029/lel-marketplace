@@ -19,6 +19,7 @@ import {
 } from "@expo-google-fonts/manrope";
 import { BRAND, COLORS } from "@/constants/brand";
 import { useAuthStore } from "@/store/authStore";
+import { registerForPushNotifications, setupNotificationHandlers } from "@/lib/pushNotifications";
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -40,6 +41,20 @@ export default function RootLayout() {
   useEffect(() => {
     rehydrate();
   }, [rehydrate]);
+
+  // Push: foreground presentation + tap-to-route handlers (once per launch).
+  useEffect(() => {
+    const teardown = setupNotificationHandlers();
+    return teardown;
+  }, []);
+
+  // Push: register the device token once a session exists.
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  useEffect(() => {
+    if (hasHydrated && isAuthenticated) {
+      registerForPushNotifications();
+    }
+  }, [hasHydrated, isAuthenticated]);
 
   useEffect(() => {
     if (hasHydrated && fontsLoaded) {

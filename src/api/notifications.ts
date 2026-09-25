@@ -96,4 +96,14 @@ export const notificationsApi = {
   async deleteMany(ids: string[]) {
     await api.delete("/notifications/bulk-delete", { data: { notification_ids: ids } });
   },
+
+  /** POST /notifications/push-token — register this device for push. */
+  async registerPushToken(expo_push_token: string, platform: "ios" | "android") {
+    await api.post("/notifications/push-token", { expo_push_token, platform });
+  },
+
+  /** DELETE /notifications/push-token — deregister on logout. */
+  async removePushToken(expo_push_token: string) {
+    await api.delete("/notifications/push-token", { params: { expo_push_token } });
+  },
 };

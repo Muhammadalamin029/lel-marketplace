@@ -32,6 +32,17 @@ export interface PromoBanner {
   [key: string]: unknown;
 }
 
+export interface CampaignBanner {
+  id: string;
+  title: string;
+  subtitle?: string | null;
+  image_url: string;
+  cta_text?: string | null;
+  cta_link?: string | null;
+  display_order: number;
+  is_active: boolean;
+}
+
 export const categoriesApi = {
   async list() {
     const { data } = await api.get("/categories/");
@@ -73,6 +84,12 @@ export const publicApi = {
     const { data } = await api.get("/public/promo-banner");
     return unwrapData<PromoBanner>(data);
   },
+
+  /** GET /public/campaign-banners — admin-managed carousel slides (after the bundled slide #1). */
+  async campaignBanners() {
+    const { data } = await api.get("/public/campaign-banners");
+    return unwrapList<CampaignBanner>(data);
+  },
 };
 
 export type LegalSlug = "terms" | "privacy";
@@ -87,8 +104,7 @@ export interface LegalDocumentResponse {
 }
 
 /** GET /public/legal/{slug} — same source web Terms/Privacy pages render. */
-export const legalApi = {
-  async get(slug: LegalSlug): Promise<LegalDocumentResponse> {
+export const legalApi = {  async get(slug: LegalSlug): Promise<LegalDocumentResponse> {
     const { data } = await api.get(`/public/legal/${slug}`);
     return (data?.data ?? data) as LegalDocumentResponse;
   },

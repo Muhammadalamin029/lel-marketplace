@@ -26,7 +26,7 @@ export type { Dispute } from "./disputes";
 export type { Notification, NotificationPreferences, NotificationStats } from "./notifications";
 export type { Payment } from "./payments";
 export type { Review, ReviewUser } from "./reviews";
-export type { Category, DeliverySettings, DeliveryState, PromoBanner } from "./public";
+export type { Category, DeliverySettings, DeliveryState, PromoBanner, CampaignBanner } from "./public";
 export type {
   FinancingDocumentRequirement,
   FinancingApplication,

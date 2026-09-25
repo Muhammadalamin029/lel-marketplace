@@ -11,7 +11,7 @@ import type { ProductCardItem } from "@/components/ProductCard";
 import { SearchBar } from "@/components/SearchBar";
 import { BRAND_ASSETS, COLORS } from "@/constants/brand";
 import { productsApi, publicApi, categoriesApi, notificationsApi } from "@/api";
-import type { Car as CarType, Property, Product, PromoBanner, Category } from "@/api";
+import type { Car as CarType, Property, Product, CampaignBanner, Category } from "@/api";
 import { fmt } from "@/utils/format";
 import { useAuthStore } from "@/store/authStore";
 
@@ -22,35 +22,29 @@ const { width: SCREEN_W } = Dimensions.get("window");
 const GRID_GAP = 12;
 const GRID_TILE_W = (SCREEN_W - 40 - GRID_GAP) / 2;
 
+// Slide #1 is always the bundled campaign image; the rest are served by the
+// backend (Admin Settings → Campaigns) so admins can upload and control them.
+const FIRST_SLIDE_IMAGE = require("../../../assets/images/campaign/1.jpg");
+
+interface CarouselSlide {
+  key: string;
+  localImage?: number;
+  remoteImage?: string;
+  link?: string | null;
+}
+
 // ─── Promo carousel ────────────────────────────────────────────────────────────
 
-function PromoCarousel({ promo, onCta }: { promo: PromoBanner | null; onCta: () => void }) {
+function PromoCarousel({ campaigns, onOpenLink }: { campaigns: CampaignBanner[]; onOpenLink: (link?: string | null) => void }) {
   const [page, setPage] = useState(0);
-  const slides: { title: string; subtitle: string; cta: string; image?: string; bg: string }[] = [];
-
-  if (promo?.enabled && promo?.title) {
-    slides.push({
-      title: String(promo.title),
-      subtitle: promo.subtitle ? String(promo.subtitle) : "Top deals on vehicles & property",
-      cta: promo.cta_text ? String(promo.cta_text) : "Browse Deals",
-      image: promo.image_url ? String(promo.image_url) : undefined,
-      bg: "#1e1b4b",
-    });
-  }
-  slides.push(
-    {
-      title: "Upgrade Your Tech Game",
-      subtitle: "Top deals on gadgets & electronics",
-      cta: "Shop Now",
-      bg: "#ea580c",
-    },
-    {
-      title: "Drive Home Your Dream Car",
-      subtitle: "Inspected vehicles, financing available",
-      cta: "View Autos",
-      bg: "#1e1b4b",
-    },
-  );
+  const slides: CarouselSlide[] = [
+    { key: "local-campaign-1", localImage: FIRST_SLIDE_IMAGE, link: "/browse" },
+    ...campaigns.map((c) => ({
+      key: c.id,
+      remoteImage: c.image_url,
+      link: c.cta_link,
+    })),
+  ];
 
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const x = e.nativeEvent.contentOffset.x;
@@ -67,52 +61,35 @@ function PromoCarousel({ promo, onCta }: { promo: PromoBanner | null; onCta: () 
         scrollEventThrottle={16}
       >
         {slides.map((s, i) => (
-          <View
-            key={i}
-            className="rounded-2xl overflow-hidden flex-row"
-            style={{ width: SCREEN_W - 40, height: 150, backgroundColor: s.bg }}
+          <TouchableOpacity
+            key={s.key}
+            activeOpacity={0.9}
+            onPress={() => onOpenLink(s.link)}
+            className="rounded-2xl overflow-hidden bg-gray-100"
+            style={{ width: SCREEN_W - 40, height: 150 }}
           >
-            <View className="flex-1 p-5 justify-center gap-1.5">
-              <View className="bg-white/20 self-start px-2 py-0.5 rounded-md">
-                <Text className="text-white text-[10px] font-grotesk-extrabold tracking-wide">LEL STORE</Text>
-              </View>
-              <Text className="text-white text-xl font-grotesk-extrabold leading-tight" numberOfLines={2}>
-                {s.title}
-              </Text>
-              <Text className="font-grotesk text-white text-xs" style={{ opacity: 0.85 }} numberOfLines={1}>
-                {s.subtitle}
-              </Text>
-              <TouchableOpacity onPress={onCta} className="bg-white self-start px-3.5 py-1.5 rounded-xl mt-1">
-                <Text className="text-gray-900 text-xs font-grotesk-bold">{s.cta}</Text>
-              </TouchableOpacity>
-            </View>
-            {s.image ? (
-              <Image source={{ uri: s.image }} style={{ width: 130, height: 150 }} resizeMode="cover" />
-            ) : (
-              <View className="items-center justify-center" style={{ width: 130 }}>
-                <View
-                  className="w-24 h-24 rounded-full items-center justify-center"
-                  style={{ backgroundColor: "rgba(255,255,255,0.15)" }}
-                >
-                  <Text className="text-white text-3xl font-grotesk-extrabold">%</Text>
-                </View>
-              </View>
-            )}
-          </View>
+            {s.localImage ? (
+              <Image source={s.localImage} style={{ width: "100%", height: "100%" }} resizeMode="cover" />
+            ) : s.remoteImage ? (
+              <Image source={{ uri: s.remoteImage }} style={{ width: "100%", height: "100%" }} resizeMode="cover" />
+            ) : null}
+          </TouchableOpacity>
         ))}
       </ScrollView>
-      <View className="flex-row justify-center gap-1.5 mt-2.5">
-        {slides.map((_, i) => (
-          <View
-            key={i}
-            className="rounded-full"
-            style={{
-              width: i === page ? 18 : 6, height: 6,
-              backgroundColor: i === page ? COLORS.primary : "#e5e7eb",
-            }}
-          />
-        ))}
-      </View>
+      {slides.length > 1 && (
+        <View className="flex-row justify-center gap-1.5 mt-2.5">
+          {slides.map((s, i) => (
+            <View
+              key={s.key}
+              className="rounded-full"
+              style={{
+                width: i === page ? 18 : 6, height: 6,
+                backgroundColor: i === page ? COLORS.primary : "#e5e7eb",
+              }}
+            />
+          ))}
+        </View>
+      )}
     </View>
   );
 }
@@ -134,7 +111,7 @@ export default function HomeScreen() {
   const [autos, setAutos] = useState<ProductCardItem[]>([]);
   const [properties, setProperties] = useState<ProductCardItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [promo, setPromo] = useState<PromoBanner | null>(null);
+  const [campaigns, setCampaigns] = useState<CampaignBanner[]>([]);
   const [unread, setUnread] = useState(0);
   const [loading, setLoading] = useState(true);
 
@@ -144,12 +121,12 @@ export default function HomeScreen() {
   const loadListings = useCallback(async () => {
     setLoading(true);
     try {
-      const [carsRes, propsRes, productsRes, catsRes, promoRes, notifRes] = await Promise.allSettled([
+      const [carsRes, propsRes, productsRes, catsRes, campaignsRes, notifRes] = await Promise.allSettled([
         productsApi.listCars({ limit: 8 }),
         productsApi.listProperties({ limit: 8 }),
         productsApi.list({ limit: 8 }),
         categoriesApi.list(),
-        publicApi.promoBanner(),
+        publicApi.campaignBanners(),
         notificationsApi.list({ limit: 1 }),
       ]);
 
@@ -199,7 +176,7 @@ export default function HomeScreen() {
       }
       setHotSales(items.slice(0, 6));
       if (catsRes.status === "fulfilled") setCategories(catsRes.value.slice(0, 8));
-      if (promoRes.status === "fulfilled") setPromo(promoRes.value);
+      if (campaignsRes.status === "fulfilled") setCampaigns(campaignsRes.value ?? []);
       if (notifRes.status === "fulfilled") setUnread(notifRes.value.unread_count ?? 0);
     } catch { /* silent */ }
     finally { setLoading(false); }
@@ -212,13 +189,16 @@ export default function HomeScreen() {
     else router.push("/browse");
   };
 
-  const handlePromoCta = () => {
-    const link = promo?.cta_link;
-    if (link && /^https?:\/\//.test(String(link))) {
-      Linking.openURL(String(link)).catch(() => router.push("/browse"));
+  const handleSlideLink = (link?: string | null) => {
+    if (!link) {
+      router.push("/browse");
       return;
     }
-    router.push("/browse");
+    if (/^https?:\/\//.test(link)) {
+      Linking.openURL(link).catch(() => router.push("/browse"));
+      return;
+    }
+    router.push(link as any);
   };
 
   const goToItem = (item: ProductCardItem) => {
@@ -284,7 +264,7 @@ export default function HomeScreen() {
 
         {/* ── Promo carousel ── */}
         <View className="px-5">
-          <PromoCarousel promo={promo} onCta={handlePromoCta} />
+          <PromoCarousel campaigns={campaigns} onOpenLink={handleSlideLink} />
         </View>
 
         {/* ── Categories ── */}

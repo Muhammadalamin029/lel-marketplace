@@ -8,15 +8,17 @@
     "scheme": "lelmarketplace",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/images/app-icon.png"
+      "icon": "./assets/images/app-icon.png",
+      "bundleIdentifier": "com.lelstore.app"
     },
     "android": {
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#ff4b26",
         "foregroundImage": "./assets/images/app-icon.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.ameenumhusah.lelmarketplace"
+      "package": "com.lelstore.app"
     },
     "web": {
       "output": "static",

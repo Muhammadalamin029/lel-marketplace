@@ -67,8 +67,18 @@ export async function registerForPushNotifications(): Promise<string | null> {
     Constants.easConfig?.projectId;
   if (!projectId) return null;
 
-  const { data: token } = await Notifications.getExpoPushTokenAsync({ projectId });
-  if (!token || token === lastRegisteredToken) return token ?? null;
+  // getExpoPushTokenAsync throws (uncaught) when native push isn't
+  // configured — e.g. Android without google-services.json (FCM) or iOS
+  // without APNs credentials. Push is optional: fail soft, never crash.
+  let token: string | null = null;
+  try {
+    const res = await Notifications.getExpoPushTokenAsync({ projectId });
+    token = res.data ?? null;
+  } catch (e) {
+    if (__DEV__) console.warn("[push] token unavailable:", (e as Error)?.message ?? e);
+    return null;
+  }
+  if (!token || token === lastRegisteredToken) return token;
 
   try {
     await notificationsApi.registerPushToken(token, Platform.OS === "ios" ? "ios" : "android");

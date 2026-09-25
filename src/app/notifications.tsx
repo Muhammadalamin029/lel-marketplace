@@ -1,10 +1,11 @@
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { View, Text, ScrollView, TouchableOpacity, StatusBar, ActivityIndicator } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, StatusBar, ActivityIndicator, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { EmptyState } from "@/components/EmptyState";
 import { Bell, Package, CreditCard, Home, Tag, ShieldCheck } from "lucide-react-native";
+import { COLORS } from "@/constants/brand";
 import { formatDate } from "@/utils/format";
 import { notificationsApi } from "@/api";
 import type { Notification } from "@/api";
@@ -52,10 +53,9 @@ function getIcon(category: Category) {
 }
 
 function badgeStyle(category: Category) {
-  if (category === "Orders" || category === "Payments") {
-    return { bg: "bg-emerald-100", text: "text-emerald-700" };
-  }
-  return { bg: "bg-gray-100", text: "text-gray-500" };
+  if (category === "Orders") return { bg: "#f0fdf4", text: "#16a34a" };
+  if (category === "Payments") return { bg: "#eff6ff", text: "#2563eb" };
+  return { bg: "#f3f4f6", text: "#6b7280" };
 }
 
 function timeAgo(iso: string) {
@@ -98,6 +98,22 @@ export default function NotificationsScreen() {
     try { await notificationsApi.markAllRead(); } catch { /* silent */ }
   };
 
+  /** Long-press to delete (web parity — single + bulk delete exist server-side). */
+  const deleteOne = (id: string, wasUnread: boolean) => {
+    Alert.alert("Delete notification?", "This cannot be undone.", [
+      { text: "Keep", style: "cancel" },
+      {
+        text: "Delete", style: "destructive",
+        onPress: async () => {
+          setNotifications((prev) => prev.filter((n) => n.id !== id));
+          if (wasUnread) setUnreadCount((c) => Math.max(0, c - 1));
+          try { await notificationsApi.delete(id); }
+          catch { load(); }
+        },
+      },
+    ]);
+  };
+
   const visible = useMemo(
     () =>
       notifications.filter((n) => {
@@ -122,11 +138,11 @@ export default function NotificationsScreen() {
       <StatusBar barStyle="dark-content" />
       <ScreenHeader
         title="Notifications"
-        subtitle={unreadCount > 0 ? `${unreadCount} unread` : "All caught up"}
+        hideBack
         rightSlot={
           unreadCount > 0 ? (
-            <TouchableOpacity onPress={markAllRead} className="px-3 py-1 bg-amber-50 rounded-full">
-              <Text className="text-xs font-semibold text-amber-600">Mark all read</Text>
+            <TouchableOpacity onPress={markAllRead}>
+              <Text className="text-xs font-grotesk-semibold text-gray-900">Mark all Read</Text>
             </TouchableOpacity>
           ) : undefined
         }
@@ -136,7 +152,7 @@ export default function NotificationsScreen() {
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}
+        contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}
         className="mb-3 flex-grow-0"
       >
         {FILTERS.map((f) => {
@@ -145,11 +161,10 @@ export default function NotificationsScreen() {
             <TouchableOpacity
               key={f.key}
               onPress={() => setFilter(f.key)}
-              className={`px-4 py-2 rounded-full border ${
-                active ? "bg-orange-500 border-orange-500" : "bg-white border-gray-200"
-              }`}
+              className="px-4 py-2 rounded-lg"
+              style={{ backgroundColor: active ? COLORS.primary : "#f3f4f6" }}
             >
-              <Text className={`text-sm font-medium ${active ? "text-white" : "text-gray-700"}`}>
+              <Text className="text-xs font-grotesk-semibold" style={{ color: active ? "#fff" : "#4b5563" }}>
                 {f.label}
               </Text>
             </TouchableOpacity>
@@ -160,7 +175,7 @@ export default function NotificationsScreen() {
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
         {loading ? (
           <View className="items-center justify-center pt-20">
-            <ActivityIndicator size="large" color="#f59e0b" />
+            <ActivityIndicator size="large" color="#ff4b26" />
           </View>
         ) : visible.length === 0 ? (
           <EmptyState
@@ -169,7 +184,8 @@ export default function NotificationsScreen() {
             subtitle={filter === "unread" ? "You're all caught up!" : "Nothing here yet."}
           />
         ) : (
-          visible.map((n) => {
+          <>
+          {visible.map((n) => {
             const category = getCategory(n.type);
             const badge = badgeStyle(category);
             const Icon = getIcon(category);
@@ -177,28 +193,34 @@ export default function NotificationsScreen() {
               <TouchableOpacity
                 key={n.id}
                 onPress={() => markRead(n.id)}
-                className={`flex-row px-4 py-4 border-b border-gray-100 ${
-                  n.is_read ? "bg-white" : "bg-emerald-50"
-                }`}
+                onLongPress={() => deleteOne(n.id, !n.is_read)}
+                delayLongPress={500}
+                className="px-5 py-4 border-b border-gray-50"
               >
-                <View className="w-10 h-10 rounded-xl bg-white border border-gray-100 items-center justify-center mr-3">
-                  <Icon size={18} color="#374151" />
-                </View>
-                <View className="flex-1">
-                  <View className="flex-row items-center justify-between mb-1.5">
-                    <View className={`px-2 py-0.5 rounded-full ${badge.bg}`}>
-                      <Text className={`text-xs font-medium ${badge.text}`}>{category}</Text>
-                    </View>
-                    <Text className="text-xs text-gray-400">{timeAgo(n.created_at)}</Text>
+                <View className="flex-row items-start gap-3">
+                  <View className="w-10 h-10 rounded-xl bg-gray-50 items-center justify-center">
+                    <Icon size={18} color="#374151" />
                   </View>
-                  <Text className="text-[15px] font-semibold text-gray-900 mb-1">{n.title}</Text>
-                  <Text className="text-sm text-gray-500 leading-5" numberOfLines={2}>
-                    {n.message}
-                  </Text>
+                  <View className="flex-1 min-w-0">
+                    <View className="flex-row items-center justify-between mb-1">
+                      <View className="px-2 py-0.5 rounded-md" style={{ backgroundColor: badge.bg }}>
+                        <Text className="text-[10px] font-grotesk-semibold" style={{ color: badge.text }}>{category}</Text>
+                      </View>
+                      <Text className="font-manrope text-[11px] text-gray-400">{timeAgo(n.created_at)}</Text>
+                    </View>
+                    <Text className="text-[13px] font-grotesk-bold text-gray-900 mb-0.5">{n.title}</Text>
+                    <Text className="font-manrope text-xs text-gray-400 leading-relaxed" numberOfLines={2}>
+                      {n.message}
+                    </Text>
+                    {!n.is_read && (
+                      <View className="w-2 h-2 rounded-full mt-1.5" style={{ backgroundColor: COLORS.primary }} />
+                    )}
+                  </View>
                 </View>
               </TouchableOpacity>
             );
-          })
+          })}
+          </>
         )}
       </ScrollView>
     </SafeAreaView>

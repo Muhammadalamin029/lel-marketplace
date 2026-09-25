@@ -26,7 +26,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 const CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
   order:              { bg: "#eff6ff", text: "#3b82f6" },
   asset_deposit:      { bg: "#faf5ff", text: "#8b5cf6" },
-  asset_installment:  { bg: "#fffbeb", text: "#f59e0b" },
+  asset_installment:  { bg: "#fffbeb", text: "#ff4b26" },
   full_pay:           { bg: "#f0fdf4", text: "#22c55e" },
 };
 
@@ -61,10 +61,10 @@ export default function MyPaymentsScreen() {
 
       {/* Summary card */}
       {!loading && payments.length > 0 && (
-        <View className="mx-5 mt-4 mb-2 bg-amber-400 rounded-2xl p-4 flex-row items-center justify-between" style={shadow.btn}>
+        <View className="mx-5 mt-4 mb-2 bg-[#ff4b26] rounded-2xl p-4 flex-row items-center justify-between" style={shadow.btn}>
           <View>
-            <Text className="text-xs text-white/70 font-medium">Total Spent</Text>
-            <Text className="text-xl font-extrabold text-white">{fmt(totalSpent)}</Text>
+            <Text className="text-xs text-white/70 font-grotesk-medium">Total Spent</Text>
+            <Text className="text-xl font-grotesk-extrabold text-white">{fmt(totalSpent)}</Text>
           </View>
           <View className="w-10 h-10 rounded-full bg-white/20 items-center justify-center">
             <CreditCard size={20} color="#fff" />
@@ -79,8 +79,8 @@ export default function MyPaymentsScreen() {
       <ScrollView className="flex-1 px-5 pt-3" showsVerticalScrollIndicator={false}>
         {loading ? (
           <View className="items-center justify-center pt-20">
-            <ActivityIndicator size="large" color="#f59e0b" />
-            <Text className="text-sm text-gray-400 mt-3">Loading payments…</Text>
+            <ActivityIndicator size="large" color="#ff4b26" />
+            <Text className="font-manrope text-sm text-gray-400 mt-3">Loading payments…</Text>
           </View>
         ) : error ? (
           <EmptyState Icon={CreditCard} title="Could not load payments" subtitle={error} />
@@ -103,17 +103,17 @@ export default function MyPaymentsScreen() {
                   </View>
 
                   <View className="flex-1 min-w-0">
-                    <Text className="text-sm font-bold text-gray-900">
+                    <Text className="text-sm font-grotesk-bold text-gray-900">
                       {CATEGORY_LABELS[p.payment_category] ?? p.payment_category}
                     </Text>
-                    <Text className="text-xs text-gray-400 mt-0.5" numberOfLines={1}>
+                    <Text className="font-manrope text-xs text-gray-400 mt-0.5" numberOfLines={1}>
                       {p.seller_name ? `To: ${p.seller_name}` : `Ref: ${p.transaction_id.slice(0, 14)}…`}
                     </Text>
-                    <Text className="text-[10px] text-gray-400 mt-0.5">{formatDate(p.created_at)}</Text>
+                    <Text className="font-manrope text-[10px] text-gray-400 mt-0.5">{formatDate(p.created_at)}</Text>
                   </View>
 
                   <View className="items-end gap-1.5">
-                    <Text className="text-base font-extrabold text-gray-900">{fmt(p.amount)}</Text>
+                    <Text className="text-base font-grotesk-extrabold text-gray-900">{fmt(p.amount)}</Text>
                     <StatusBadge status={p.status} />
                   </View>
 

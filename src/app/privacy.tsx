@@ -1,6 +1,7 @@
-import { ScrollView, View, Text, StatusBar } from "react-native";
+import { ScrollView, Text, StatusBar } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ScreenHeader } from "@/components/ScreenHeader";
+import { LegalDocument } from "@/components/LegalDocument";
 
 const SECTIONS = [
   {
@@ -41,22 +42,13 @@ export default function PrivacyScreen() {
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
 
-        <View className="bg-blue-50 border border-blue-100 rounded-2xl p-4 mb-5">
-          <Text className="text-xs text-blue-700 font-semibold text-center">
-            Last updated: January 2026 · We respect your privacy and are committed to protecting your personal data.
-          </Text>
-        </View>
+        <LegalDocument
+          slug="privacy"
+          fallback={SECTIONS}
+          fallbackLabel="Last updated: January 2026 · We respect your privacy and are committed to protecting your personal data."
+        />
 
-        <View className="gap-5">
-          {SECTIONS.map((s) => (
-            <View key={s.title} className="bg-white rounded-2xl p-5">
-              <Text className="text-sm font-extrabold text-gray-900 mb-2">{s.title}</Text>
-              <Text className="text-sm text-gray-600 leading-relaxed">{s.body}</Text>
-            </View>
-          ))}
-        </View>
-
-        <Text className="text-xs text-gray-400 text-center mt-6">
+        <Text className="font-manrope text-xs text-gray-400 text-center mt-6">
           For privacy requests, contact privacy@lel-marketplace.com
         </Text>
       </ScrollView>

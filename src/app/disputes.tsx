@@ -18,6 +18,7 @@ export default function DisputesScreen() {
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState({ title: "", reason: "", refId: "" });
   const [submitting, setSubmitting] = useState(false);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   useEffect(() => {
     disputesApi.list()
@@ -59,7 +60,7 @@ export default function DisputesScreen() {
         title="My Disputes"
         subtitle="Open issues & resolutions"
         rightSlot={
-          <TouchableOpacity onPress={() => setModalOpen(true)} className="w-9 h-9 bg-amber-400 rounded-full items-center justify-center" style={shadow.md}>
+          <TouchableOpacity onPress={() => setModalOpen(true)} className="w-9 h-9 bg-[#ff4b26] rounded-full items-center justify-center" style={shadow.md}>
             <Plus size={18} color="#fff" />
           </TouchableOpacity>
         }
@@ -68,41 +69,58 @@ export default function DisputesScreen() {
       <ScrollView className="flex-1 px-5 pt-4" showsVerticalScrollIndicator={false}>
         {loading ? (
           <View className="items-center justify-center pt-20">
-            <ActivityIndicator size="large" color="#f59e0b" />
+            <ActivityIndicator size="large" color="#ff4b26" />
           </View>
         ) : disputes.length === 0 ? (
           <EmptyState Icon={AlertCircle} title="No disputes" subtitle="You haven't opened any disputes yet." />
         ) : (
           <View className="gap-4 pb-10">
-            {disputes.map((d) => (
+            {disputes.map((d) => {
+              const expanded = expandedId === d.id;
+              return (
               <View key={d.id} className="bg-white rounded-3xl p-5" style={shadow.card}>
                 <View className="flex-row items-start justify-between gap-3 mb-3">
                   <View className="flex-1">
-                    <Text className="text-sm font-extrabold text-gray-900">{d.title}</Text>
-                    <Text className="text-[10px] text-gray-400 mt-0.5">
+                    <Text className="text-sm font-grotesk-extrabold text-gray-900">{d.title}</Text>
+                    <Text className="font-manrope text-[10px] text-gray-400 mt-0.5">
                       {d.order_id ? `Order: ${d.order_id.slice(-8).toUpperCase()} · ` : ""}
+                      {d.agreement_id ? `Agreement: ${d.agreement_id.slice(-8).toUpperCase()} · ` : ""}
                       {formatDate(d.created_at)}
                     </Text>
                   </View>
                   <StatusBadge status={d.status} />
                 </View>
 
+                {expanded && (
+                  <View className="bg-gray-50 rounded-xl p-3 mb-3 border border-gray-100">
+                    <Text className="text-[10px] font-grotesk-bold text-gray-400 uppercase tracking-wide mb-1">Your Report</Text>
+                    <Text className="font-grotesk text-xs text-gray-700 leading-relaxed">{d.reason}</Text>
+                  </View>
+                )}
+
                 {d.resolution_notes && (
                   <View className="bg-green-50 rounded-xl p-3 mb-3 border border-green-100">
                     <View className="flex-row items-center gap-2 mb-1">
                       <MessageCircle size={12} color="#16a34a" />
-                      <Text className="text-[10px] font-bold text-green-700 uppercase tracking-wide">Resolution</Text>
+                      <Text className="text-[10px] font-grotesk-bold text-green-700 uppercase tracking-wide">Resolution</Text>
                     </View>
-                    <Text className="text-xs text-green-800 leading-relaxed">{d.resolution_notes}</Text>
+                    <Text className="font-grotesk text-xs text-green-800 leading-relaxed">{d.resolution_notes}</Text>
                   </View>
                 )}
 
-                <View className="flex-row items-center justify-end gap-1">
-                  <Text className="text-xs font-bold text-indigo-600">View Details</Text>
-                  <ChevronRight size={14} color="#4f46e5" />
-                </View>
+                <TouchableOpacity
+                  onPress={() => setExpandedId(expanded ? null : d.id)}
+                  className="flex-row items-center justify-end gap-1"
+                >
+                  <Text className="text-xs font-grotesk-bold text-indigo-600">{expanded ? "Show Less" : "View Details"}</Text>
+                  <ChevronRight
+                    size={14} color="#4f46e5"
+                    style={{ transform: [{ rotate: expanded ? "90deg" : "0deg" }] }}
+                  />
+                </TouchableOpacity>
               </View>
-            ))}
+              );
+            })}
           </View>
         )}
       </ScrollView>
@@ -110,7 +128,7 @@ export default function DisputesScreen() {
       <Modal visible={modalOpen} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setModalOpen(false)}>
         <SafeAreaView className="flex-1 bg-white">
           <View className="flex-row items-center justify-between px-5 pt-4 pb-4 border-b border-gray-100">
-            <Text className="text-lg font-extrabold text-gray-900">Open a Dispute</Text>
+            <Text className="text-lg font-grotesk-extrabold text-gray-900">Open a Dispute</Text>
             <TouchableOpacity onPress={() => setModalOpen(false)} className="w-9 h-9 rounded-full bg-gray-100 items-center justify-center">
               <X size={18} color="#374151" />
             </TouchableOpacity>
@@ -124,7 +142,7 @@ export default function DisputesScreen() {
                 { label: "Reason *", key: "reason", placeholder: "Describe the issue in detail…", multi: true },
               ].map(({ label, key, placeholder, multi }) => (
                 <View key={key} className="gap-2">
-                  <Text className="text-sm font-semibold text-gray-700">{label}</Text>
+                  <Text className="text-sm font-grotesk-semibold text-gray-700">{label}</Text>
                   <TextInput
                     className="border border-gray-200 rounded-xl bg-gray-50 px-4 py-3 text-sm text-gray-900"
                     placeholder={placeholder}
@@ -138,8 +156,8 @@ export default function DisputesScreen() {
                 </View>
               ))}
 
-              <View className="bg-amber-50 rounded-xl p-4 border border-amber-100">
-                <Text className="text-xs text-amber-800 leading-relaxed">
+              <View className="bg-[#fff0e9] rounded-xl p-4 border border-[#ffd9c7]">
+                <Text className="font-grotesk text-xs text-[#a5310f] leading-relaxed">
                   Our team will review your dispute within 2–3 business days. Provide as much detail as possible.
                 </Text>
               </View>
@@ -147,10 +165,10 @@ export default function DisputesScreen() {
               <TouchableOpacity
                 onPress={handleSubmit}
                 disabled={submitting}
-                className="bg-amber-400 py-4 rounded-2xl items-center"
+                className="bg-[#ff4b26] py-4 rounded-2xl items-center"
                 style={shadow.btn}
               >
-                {submitting ? <ActivityIndicator color="#fff" /> : <Text className="text-white font-bold">Submit Dispute</Text>}
+                {submitting ? <ActivityIndicator color="#fff" /> : <Text className="text-white font-grotesk-bold">Submit Dispute</Text>}
               </TouchableOpacity>
             </View>
           </ScrollView>

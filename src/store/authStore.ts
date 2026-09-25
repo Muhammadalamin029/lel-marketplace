@@ -18,6 +18,7 @@ interface AuthState {
   error: string | null;
 
   login: (payload: LoginPayload) => Promise<void>;
+  loginWithGoogle: (idToken: string) => Promise<void>;
   registerCustomer: (payload: RegisterPayload) => Promise<void>;
   logout: () => Promise<void>;
   fetchMe: () => Promise<void>;
@@ -86,8 +87,28 @@ export const useAuthStore = create<AuthState>((set, get) => {
       }
     },
 
-    registerCustomer: async (payload) => {
+    loginWithGoogle: async (idToken) => {
       set({ isLoading: true, error: null });
+      try {
+        await authApi.googleLogin(idToken);
+        const { user, profile } = await authApi.getMe();
+        if (user.role !== "customer") {
+          await storage.clearTokens();
+          set({ isLoading: false });
+          throw new Error("This app is for customers only.");
+        }
+        // Google emails are pre-verified — no verification redirect needed
+        set({ user, profile, isAuthenticated: true, isLoading: false });
+
+        const { mergeGuestCartIntoServer } = await import("@/lib/mergeGuestCart");
+        await mergeGuestCartIntoServer().catch(() => {});
+      } catch (e) {
+        set({ isLoading: false, error: getApiError(e) });
+        throw e;
+      }
+    },
+
+    registerCustomer: async (payload) => {      set({ isLoading: true, error: null });
       try {
         await authApi.registerCustomer(payload);
         // Don't set isAuthenticated — user must verify email first

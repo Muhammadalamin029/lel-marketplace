@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
-import { View, Text, ScrollView, TouchableOpacity, StatusBar, ActivityIndicator, TextInput } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, StatusBar, ActivityIndicator, TextInput, Dimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { EmptyState } from "@/components/EmptyState";
-import { shadow } from "@/constants/shadows";
 import { Grid3x3, Search, ChevronRight, Package } from "lucide-react-native";
 import { categoriesApi } from "@/api";
 import type { Category } from "@/api";
@@ -15,8 +14,14 @@ const CATEGORY_COLORS = [
 ];
 const CATEGORY_ACCENT = [
   "#ea580c", "#3b82f6", "#22c55e", "#8b5cf6",
-  "#ef4444", "#0284c7", "#f59e0b", "#7c3aed",
+  "#ef4444", "#0284c7", "#ff4b26", "#7c3aed",
 ];
+
+// Exact pixel width: % widths + gap overflow 100% on some iOS measures and
+// collapse the grid to one (huge) column. Content = screen - 40px padding.
+const SCREEN_W = Dimensions.get("window").width;
+const CARD_GAP = 16;
+const CARD_W = (SCREEN_W - 40 - CARD_GAP) / 2;
 
 export default function CategoriesScreen() {
   const router = useRouter();
@@ -56,13 +61,13 @@ export default function CategoriesScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
         {loading ? (
           <View className="items-center justify-center pt-20 gap-3">
-            <ActivityIndicator size="large" color="#f59e0b" />
-            <Text className="text-sm text-gray-400">Loading categories…</Text>
+            <ActivityIndicator size="large" color="#ff4b26" />
+            <Text className="font-manrope text-sm text-gray-400">Loading categories…</Text>
           </View>
         ) : filtered.length === 0 ? (
           <EmptyState Icon={Grid3x3} title="No categories found" subtitle="Try a different search." />
         ) : (
-          <View className="flex-row flex-wrap gap-4">
+          <View className="flex-row flex-wrap" style={{ gap: CARD_GAP }}>
             {filtered.map((cat, i) => {
               const bg = CATEGORY_COLORS[i % CATEGORY_COLORS.length];
               const accent = CATEGORY_ACCENT[i % CATEGORY_ACCENT.length];
@@ -70,8 +75,8 @@ export default function CategoriesScreen() {
                 <TouchableOpacity
                   key={cat.id}
                   onPress={() => router.push(`/category-products?id=${cat.id}&name=${encodeURIComponent(cat.name)}` as any)}
-                  className="bg-white rounded-2xl p-4 overflow-hidden"
-                  style={[shadow.md, { width: "47%" }]}
+                  className="bg-white rounded-2xl p-4 overflow-hidden border border-gray-100"
+                  style={{ width: CARD_W }}
                   activeOpacity={0.85}
                 >
                   {/* Colour accent bar */}
@@ -81,11 +86,11 @@ export default function CategoriesScreen() {
                     <Package size={24} color={accent} strokeWidth={1.5} />
                   </View>
 
-                  <Text className="text-sm font-extrabold text-gray-900" numberOfLines={1}>{cat.name}</Text>
-                  <Text className="text-xs text-gray-400 mt-0.5">{cat.product_count ?? 0} products</Text>
+                  <Text className="text-sm font-grotesk-extrabold text-gray-900" numberOfLines={1}>{cat.name}</Text>
+                  <Text className="font-manrope text-xs text-gray-400 mt-0.5">{cat.product_count ?? 0} products</Text>
 
                   <View className="flex-row items-center gap-1 mt-3">
-                    <Text className="text-[10px] font-bold uppercase tracking-wide" style={{ color: accent }}>Browse</Text>
+                    <Text className="text-[10px] font-grotesk-bold uppercase tracking-wide" style={{ color: accent }}>Browse</Text>
                     <ChevronRight size={10} color={accent} />
                   </View>
                 </TouchableOpacity>

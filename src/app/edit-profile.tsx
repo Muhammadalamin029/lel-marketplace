@@ -94,10 +94,10 @@ export default function EditProfileScreen() {
                 />
               ) : (
                 <View className="w-24 h-24 rounded-full bg-indigo-900 items-center justify-center">
-                  <Text className="text-white text-3xl font-bold">{displayInitial}</Text>
+                  <Text className="text-white text-3xl font-grotesk-bold">{displayInitial}</Text>
                 </View>
               )}
-              <View className="absolute bottom-0 right-0 w-8 h-8 bg-amber-400 rounded-full items-center justify-center" style={shadow.md}>
+              <View className="absolute bottom-0 right-0 w-8 h-8 bg-[#ff4b26] rounded-full items-center justify-center" style={shadow.md}>
                 {uploadingAvatar ? (
                   <ActivityIndicator size="small" color="#fff" />
                 ) : (
@@ -105,7 +105,7 @@ export default function EditProfileScreen() {
                 )}
               </View>
             </TouchableOpacity>
-            <Text className="text-xs text-gray-400 mt-2">Tap to change photo</Text>
+            <Text className="font-manrope text-xs text-gray-400 mt-2">Tap to change photo</Text>
           </View>
 
           {/* Fields */}
@@ -115,7 +115,7 @@ export default function EditProfileScreen() {
               const isEmail = field.key === "email";
               return (
                 <View key={field.key} className={`px-4 py-4 ${i < FIELDS.length - 1 ? "border-b border-gray-100" : ""}`}>
-                  <Text className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">{field.label}</Text>
+                  <Text className="text-xs font-grotesk-bold text-gray-400 uppercase tracking-wide mb-2">{field.label}</Text>
                   <View className="flex-row items-start gap-3">
                     <Icon size={16} color={isEmail ? "#d1d5db" : "#9ca3af"} style={{ marginTop: field.multiline ? 2 : 0 }} />
                     <TextInput
@@ -132,7 +132,7 @@ export default function EditProfileScreen() {
                     />
                   </View>
                   {isEmail && (
-                    <Text className="text-[10px] text-gray-400 mt-1 pl-7">Email cannot be changed here</Text>
+                    <Text className="font-manrope text-[10px] text-gray-400 mt-1 pl-7">Email cannot be changed here</Text>
                   )}
                 </View>
               );
@@ -143,13 +143,13 @@ export default function EditProfileScreen() {
           <TouchableOpacity
             onPress={handleSave}
             disabled={isLoading}
-            className="bg-amber-400 py-4 rounded-2xl flex-row items-center justify-center gap-2"
+            className="bg-[#ff4b26] py-4 rounded-2xl flex-row items-center justify-center gap-2"
             style={shadow.btn}
           >
             {isLoading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <><CheckCircle size={16} color="#fff" /><Text className="text-white font-bold">Save Changes</Text></>
+              <><CheckCircle size={16} color="#fff" /><Text className="text-white font-grotesk-bold">Save Changes</Text></>
             )}
           </TouchableOpacity>
 

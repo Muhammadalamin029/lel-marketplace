@@ -56,13 +56,12 @@ export default function ForgotPassword() {
   };
 
   return (
-    <KeyboardAvoidingView className="flex-1 bg-gray-50" behavior={Platform.OS === "ios" ? "padding" : "height"}>
+    <KeyboardAvoidingView className="flex-1 bg-white" behavior={Platform.OS === "ios" ? "padding" : "height"}>
       {/* Header */}
-      <View className="flex-row items-center px-5 pt-14 pb-4 bg-white border-b border-gray-100">
-        <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center mr-3">
-          <ArrowLeft size={18} color="#111827" />
+      <View className="px-5 pt-14 pb-2">
+        <TouchableOpacity onPress={() => router.back()} hitSlop={12} className="self-start p-1 -ml-1">
+          <ArrowLeft size={22} color="#111827" />
         </TouchableOpacity>
-        <Text className="text-lg font-extrabold text-gray-900">Reset Password</Text>
       </View>
 
       <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
@@ -73,10 +72,10 @@ export default function ForgotPassword() {
             {(["email", "code", "password", "done"] as Step[]).map((s, i) => (
               <View key={s} className="flex-row items-center">
                 <View className={`w-7 h-7 rounded-full items-center justify-center ${
-                  step === s ? "bg-amber-400" :
+                  step === s ? "bg-[#ff4b26]" :
                   ["email","code","password","done"].indexOf(step) > i ? "bg-green-500" : "bg-gray-200"
                 }`}>
-                  <Text className="text-white text-xs font-bold">{i + 1}</Text>
+                  <Text className="text-white text-xs font-grotesk-bold">{i + 1}</Text>
                 </View>
                 {i < 3 && <View className={`w-8 h-0.5 mx-1 ${["email","code","password","done"].indexOf(step) > i ? "bg-green-500" : "bg-gray-200"}`} />}
               </View>
@@ -86,7 +85,7 @@ export default function ForgotPassword() {
           {error && (
             <View className="flex-row items-center gap-2 bg-red-50 border border-red-200 rounded-xl p-3 mb-4">
               <AlertCircle size={16} color="#ef4444" />
-              <Text className="text-sm text-red-600 flex-1">{error}</Text>
+              <Text className="font-grotesk text-sm text-red-600 flex-1">{error}</Text>
             </View>
           )}
 
@@ -94,12 +93,12 @@ export default function ForgotPassword() {
           {step === "email" && (
             <View className="gap-5">
               <View>
-                <Text className="text-2xl font-extrabold text-gray-900 mb-2">Forgot password?</Text>
-                <Text className="text-sm text-gray-500 leading-relaxed">Enter your email address and we'll send you a reset code.</Text>
+                <Text className="text-2xl font-grotesk-extrabold text-gray-900 mb-2">Forgot password?</Text>
+                <Text className="font-manrope text-sm text-gray-500 leading-relaxed">Enter your email address and we'll send you a reset code.</Text>
               </View>
               <View className="gap-2">
-                <Text className="text-sm font-semibold text-gray-700">Email Address</Text>
-                <View className="flex-row items-center border border-gray-200 rounded-xl bg-white px-3">
+                <Text className="text-sm font-grotesk-semibold text-gray-700">Email Address</Text>
+                <View className="flex-row items-center rounded-lg bg-[#f5f5f5] px-3">
                   <Mail size={16} color="#9ca3af" />
                   <TextInput
                     className="flex-1 py-3.5 px-2 text-sm text-gray-900"
@@ -115,9 +114,9 @@ export default function ForgotPassword() {
               <TouchableOpacity
                 onPress={handleSendCode}
                 disabled={!email.trim() || isLoading}
-                className={`py-4 rounded-2xl items-center ${!email.trim() || isLoading ? "bg-amber-200" : "bg-amber-400"}`}
+                className={`py-4 rounded-xl items-center ${!email.trim() || isLoading ? "bg-[#ffb59f]" : "bg-[#ff4b26]"}`}
               >
-                {isLoading ? <ActivityIndicator color="#fff" /> : <Text className="text-white font-bold">Send Reset Code</Text>}
+                {isLoading ? <ActivityIndicator color="#fff" /> : <Text className="text-white font-grotesk-bold">Send Reset Code</Text>}
               </TouchableOpacity>
             </View>
           )}
@@ -126,13 +125,13 @@ export default function ForgotPassword() {
           {step === "code" && (
             <View className="gap-5">
               <View>
-                <Text className="text-2xl font-extrabold text-gray-900 mb-2">Check your email</Text>
-                <Text className="text-sm text-gray-500 leading-relaxed">We sent a 6-digit code to <Text className="font-semibold text-gray-700">{email}</Text>.</Text>
+                <Text className="text-2xl font-grotesk-extrabold text-gray-900 mb-2">Check your email</Text>
+                <Text className="text-sm text-gray-500 leading-relaxed">We sent a 6-digit code to <Text className="font-grotesk-semibold text-gray-700">{email}</Text>.</Text>
               </View>
               <View className="gap-2">
-                <Text className="text-sm font-semibold text-gray-700">Reset Code</Text>
+                <Text className="text-sm font-grotesk-semibold text-gray-700">Reset Code</Text>
                 <TextInput
-                  className="border border-gray-200 rounded-xl bg-white px-4 py-3.5 text-2xl text-center font-mono tracking-[12px] text-gray-900"
+                  className="rounded-lg bg-[#f5f5f5] px-4 py-3.5 text-2xl text-center font-mono tracking-[12px] text-gray-900"
                   placeholder="------"
                   placeholderTextColor="#d1d5db"
                   value={code}
@@ -144,12 +143,12 @@ export default function ForgotPassword() {
               <TouchableOpacity
                 onPress={handleVerifyCode}
                 disabled={code.length < 6 || isLoading}
-                className={`py-4 rounded-2xl items-center ${code.length < 6 || isLoading ? "bg-amber-200" : "bg-amber-400"}`}
+                className={`py-4 rounded-xl items-center ${code.length < 6 || isLoading ? "bg-[#ffb59f]" : "bg-[#ff4b26]"}`}
               >
-                {isLoading ? <ActivityIndicator color="#fff" /> : <Text className="text-white font-bold">Verify Code</Text>}
+                {isLoading ? <ActivityIndicator color="#fff" /> : <Text className="text-white font-grotesk-bold">Verify Code</Text>}
               </TouchableOpacity>
               <TouchableOpacity onPress={handleSendCode} className="items-center">
-                <Text className="text-sm text-amber-500 font-semibold">Resend code</Text>
+                <Text className="text-sm text-[#ff4b26] font-grotesk-semibold">Resend code</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -158,17 +157,17 @@ export default function ForgotPassword() {
           {step === "password" && (
             <View className="gap-5">
               <View>
-                <Text className="text-2xl font-extrabold text-gray-900 mb-2">Create new password</Text>
-                <Text className="text-sm text-gray-500">Choose a strong password for your account.</Text>
+                <Text className="text-2xl font-grotesk-extrabold text-gray-900 mb-2">Create new password</Text>
+                <Text className="font-manrope text-sm text-gray-500">Choose a strong password for your account.</Text>
               </View>
               {[
                 { label: "New Password", value: newPassword, set: setNewPassword },
                 { label: "Confirm Password", value: confirmPassword, set: setConfirmPassword },
               ].map(({ label, value, set }) => (
                 <View key={label} className="gap-2">
-                  <Text className="text-sm font-semibold text-gray-700">{label}</Text>
+                  <Text className="text-sm font-grotesk-semibold text-gray-700">{label}</Text>
                   <TextInput
-                    className="border border-gray-200 rounded-xl bg-white px-4 py-3.5 text-sm text-gray-900"
+                    className="rounded-lg bg-[#f5f5f5] px-4 py-3.5 text-sm text-gray-900"
                     placeholder={`Enter ${label.toLowerCase()}`}
                     placeholderTextColor="#9ca3af"
                     value={value}
@@ -180,9 +179,9 @@ export default function ForgotPassword() {
               <TouchableOpacity
                 onPress={handleResetPassword}
                 disabled={!newPassword || !confirmPassword || isLoading}
-                className={`py-4 rounded-2xl items-center ${!newPassword || !confirmPassword || isLoading ? "bg-amber-200" : "bg-amber-400"}`}
+                className={`py-4 rounded-xl items-center ${!newPassword || !confirmPassword || isLoading ? "bg-[#ffb59f]" : "bg-[#ff4b26]"}`}
               >
-                {isLoading ? <ActivityIndicator color="#fff" /> : <Text className="text-white font-bold">Reset Password</Text>}
+                {isLoading ? <ActivityIndicator color="#fff" /> : <Text className="text-white font-grotesk-bold">Reset Password</Text>}
               </TouchableOpacity>
             </View>
           )}
@@ -194,14 +193,14 @@ export default function ForgotPassword() {
                 <CheckCircle size={40} color="#22c55e" />
               </View>
               <View className="items-center gap-2">
-                <Text className="text-2xl font-extrabold text-gray-900">Password reset!</Text>
-                <Text className="text-sm text-gray-500 text-center">Your password has been updated. You can now sign in with your new password.</Text>
+                <Text className="text-2xl font-grotesk-extrabold text-gray-900">Password reset!</Text>
+                <Text className="font-manrope text-sm text-gray-500 text-center">Your password has been updated. You can now sign in with your new password.</Text>
               </View>
               <TouchableOpacity
                 onPress={() => router.replace("/(auth)/login")}
-                className="w-full bg-amber-400 py-4 rounded-2xl items-center"
+                className="w-full bg-[#ff4b26] py-4 rounded-xl items-center"
               >
-                <Text className="text-white font-bold">Back to Sign In</Text>
+                <Text className="text-white font-grotesk-bold">Back to Sign In</Text>
               </TouchableOpacity>
             </View>
           )}

@@ -1,100 +1,207 @@
 import { useEffect, useState, useCallback } from "react";
-import { View, Text, TouchableOpacity, TextInput, ScrollView, ActivityIndicator } from "react-native";
+import {
+  View, Text, TouchableOpacity, ScrollView, ActivityIndicator,
+  Linking, Image, Dimensions, NativeSyntheticEvent, NativeScrollEvent,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { Search, Bell, Tag, Car, Home } from "lucide-react-native";
-import { SectionHeader } from "@/components/SectionHeader";
+import { Bell, ArrowRight } from "lucide-react-native";
 import { ProductCard } from "@/components/ProductCard";
 import type { ProductCardItem } from "@/components/ProductCard";
-import { shadow } from "@/constants/shadows";
-import { productsApi } from "@/api";
-import type { Car as CarType, Property, Product } from "@/api";
+import { SearchBar } from "@/components/SearchBar";
+import { BRAND_ASSETS, COLORS } from "@/constants/brand";
+import { productsApi, publicApi, categoriesApi, notificationsApi } from "@/api";
+import type { Car as CarType, Property, Product, PromoBanner, Category } from "@/api";
 import { fmt } from "@/utils/format";
 import { useAuthStore } from "@/store/authStore";
 
-// ─── Category pill ──────────────────────────────────────────────────────────────
+const { width: SCREEN_W } = Dimensions.get("window");
 
-const CATEGORIES = [
-  { id: "vehicle",     label: "Vehicles",    Icon: Car  },
-  { id: "real_estate", label: "Real Estate", Icon: Home },
-  { id: "product",     label: "Deals",       Icon: Tag  },
-];
+// Exact grid math: % widths + gap can exceed 100% on iOS text/measure
+// rounding and collapse a 2-col grid into one (oversized) column.
+const GRID_GAP = 12;
+const GRID_TILE_W = (SCREEN_W - 40 - GRID_GAP) / 2;
 
-function CategoryPill({ label, Icon, active, onPress }: { label: string; Icon: any; active: boolean; onPress: () => void }) {
+// ─── Promo carousel ────────────────────────────────────────────────────────────
+
+function PromoCarousel({ promo, onCta }: { promo: PromoBanner | null; onCta: () => void }) {
+  const [page, setPage] = useState(0);
+  const slides: { title: string; subtitle: string; cta: string; image?: string; bg: string }[] = [];
+
+  if (promo?.enabled && promo?.title) {
+    slides.push({
+      title: String(promo.title),
+      subtitle: promo.subtitle ? String(promo.subtitle) : "Top deals on vehicles & property",
+      cta: promo.cta_text ? String(promo.cta_text) : "Browse Deals",
+      image: promo.image_url ? String(promo.image_url) : undefined,
+      bg: "#1e1b4b",
+    });
+  }
+  slides.push(
+    {
+      title: "Upgrade Your Tech Game",
+      subtitle: "Top deals on gadgets & electronics",
+      cta: "Shop Now",
+      bg: "#ea580c",
+    },
+    {
+      title: "Drive Home Your Dream Car",
+      subtitle: "Inspected vehicles, financing available",
+      cta: "View Autos",
+      bg: "#1e1b4b",
+    },
+  );
+
+  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const x = e.nativeEvent.contentOffset.x;
+    setPage(Math.round(x / (SCREEN_W - 40)));
+  };
+
   return (
-    <TouchableOpacity
-      onPress={onPress}
-      className={`flex-row items-center gap-1.5 px-4 py-2 rounded-full border-2 ${active ? "bg-amber-400 border-amber-400" : "bg-white border-gray-200"}`}
-    >
-      <Icon size={14} color={active ? "#fff" : "#6b7280"} />
-      <Text className={`font-semibold text-sm ${active ? "text-white" : "text-gray-700"}`}>{label}</Text>
-    </TouchableOpacity>
+    <View>
+      <ScrollView
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+      >
+        {slides.map((s, i) => (
+          <View
+            key={i}
+            className="rounded-2xl overflow-hidden flex-row"
+            style={{ width: SCREEN_W - 40, height: 150, backgroundColor: s.bg }}
+          >
+            <View className="flex-1 p-5 justify-center gap-1.5">
+              <View className="bg-white/20 self-start px-2 py-0.5 rounded-md">
+                <Text className="text-white text-[10px] font-grotesk-extrabold tracking-wide">LEL STORE</Text>
+              </View>
+              <Text className="text-white text-xl font-grotesk-extrabold leading-tight" numberOfLines={2}>
+                {s.title}
+              </Text>
+              <Text className="font-grotesk text-white text-xs" style={{ opacity: 0.85 }} numberOfLines={1}>
+                {s.subtitle}
+              </Text>
+              <TouchableOpacity onPress={onCta} className="bg-white self-start px-3.5 py-1.5 rounded-xl mt-1">
+                <Text className="text-gray-900 text-xs font-grotesk-bold">{s.cta}</Text>
+              </TouchableOpacity>
+            </View>
+            {s.image ? (
+              <Image source={{ uri: s.image }} style={{ width: 130, height: 150 }} resizeMode="cover" />
+            ) : (
+              <View className="items-center justify-center" style={{ width: 130 }}>
+                <View
+                  className="w-24 h-24 rounded-full items-center justify-center"
+                  style={{ backgroundColor: "rgba(255,255,255,0.15)" }}
+                >
+                  <Text className="text-white text-3xl font-grotesk-extrabold">%</Text>
+                </View>
+              </View>
+            )}
+          </View>
+        ))}
+      </ScrollView>
+      <View className="flex-row justify-center gap-1.5 mt-2.5">
+        {slides.map((_, i) => (
+          <View
+            key={i}
+            className="rounded-full"
+            style={{
+              width: i === page ? 18 : 6, height: 6,
+              backgroundColor: i === page ? COLORS.primary : "#e5e7eb",
+            }}
+          />
+        ))}
+      </View>
+    </View>
   );
 }
 
 // ─── Home Screen ───────────────────────────────────────────────────────────────
 
+const CATEGORY_TILES = [
+  { key: "products", label: "Products", image: BRAND_ASSETS.gadgets },
+  { key: "real-estate", label: "Real Estate", image: BRAND_ASSETS.property },
+  { key: "autos", label: "Autos", image: BRAND_ASSETS.car },
+  { key: "electronics", label: "Electronics", image: BRAND_ASSETS.hero },
+];
+
 export default function HomeScreen() {
   const router = useRouter();
   const { user, profile } = useAuthStore();
-  const [activeCategory, setActiveCategory] = useState("vehicle");
   const [search, setSearch] = useState("");
   const [hotSales, setHotSales] = useState<ProductCardItem[]>([]);
-  const [recent, setRecent] = useState<ProductCardItem[]>([]);
+  const [autos, setAutos] = useState<ProductCardItem[]>([]);
+  const [properties, setProperties] = useState<ProductCardItem[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [promo, setPromo] = useState<PromoBanner | null>(null);
+  const [unread, setUnread] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  const displayName = (profile as any)?.name || (profile as any)?.business_name || user?.email?.split("@")[0] || "there";
+  const displayName = (profile as any)?.name || user?.email?.split("@")[0] || "there";
+  const avatarUrl = (profile as any)?.avatar_url as string | undefined;
 
   const loadListings = useCallback(async () => {
     setLoading(true);
     try {
-      // Fetch all three types in parallel — any failure is silent
-      const [carsRes, propsRes, productsRes] = await Promise.allSettled([
-        productsApi.listCars({ limit: 6 }),
-        productsApi.listProperties({ limit: 4 }),
-        productsApi.list({ limit: 6 }),
+      const [carsRes, propsRes, productsRes, catsRes, promoRes, notifRes] = await Promise.allSettled([
+        productsApi.listCars({ limit: 8 }),
+        productsApi.listProperties({ limit: 8 }),
+        productsApi.list({ limit: 8 }),
+        categoriesApi.list(),
+        publicApi.promoBanner(),
+        notificationsApi.list({ limit: 1 }),
       ]);
 
-      const items: ProductCardItem[] = [];
-
       if (carsRes.status === "fulfilled") {
-        carsRes.value.data.forEach((c: CarType) => items.push({
+        setAutos(carsRes.value.data.map((c: CarType) => ({
           id: c.id,
-          name: `${c.brand} ${c.model} ${c.year}`,
+          name: `${c.brand} ${c.model}`,
           price: fmt(c.price),
-          type: "vehicle",
+          type: "vehicle" as const,
           imageUrl: c.images?.[0]?.image_url ?? null,
-          tag: "Verified",
-          tagColor: "#ea580c",
-        }));
+          tag: String(c.year),
+          subtitle: c.units?.[0]?.mileage != null ? `${Number(c.units[0].mileage).toLocaleString()}KM` : undefined,
+        })));
       }
       if (propsRes.status === "fulfilled") {
-        propsRes.value.data.forEach((p: Property) => items.push({
+        setProperties(propsRes.value.data.map((p: Property) => ({
           id: p.id,
           name: p.title,
           price: fmt(p.price),
-          type: "real_estate",
+          type: "real_estate" as const,
           imageUrl: p.images?.[0]?.image_url ?? null,
-          tag: p.listing_type,
-          tagColor: "#0284c7",
+          tag: p.listing_type === "rental" ? "For Rent" : "For Sale",
+          subtitle: p.location,
+        })));
+      }
+      const items: ProductCardItem[] = [];
+      if (carsRes.status === "fulfilled") {
+        carsRes.value.data.slice(0, 2).forEach((c: CarType) => items.push({
+          id: c.id,
+          name: `${c.brand} ${c.model}`,
+          price: fmt(c.price),
+          type: "vehicle",
+          imageUrl: c.images?.[0]?.image_url ?? null,
+          tag: String(c.year),
+          subtitle: c.units?.[0]?.mileage != null ? `${Number(c.units[0].mileage).toLocaleString()}KM` : undefined,
         }));
       }
       if (productsRes.status === "fulfilled") {
-        productsRes.value.data.forEach((p: Product) => items.push({
+        productsRes.value.data.slice(0, 4).forEach((p: Product) => items.push({
           id: p.id,
           name: p.name,
           price: fmt(p.price),
           type: "product",
           imageUrl: p.images?.[0]?.image_url ?? null,
-          tag: p.category?.name,
+          subtitle: p.category?.name,
         }));
       }
-
-      // Shuffle so all three types mix in the listings
-      const shuffled = items.sort(() => Math.random() - 0.5);
-      setHotSales(shuffled.slice(0, 6));
-      setRecent(shuffled.slice(6, 12));
-    } catch { /* silent — show empty states */ }
+      setHotSales(items.slice(0, 6));
+      if (catsRes.status === "fulfilled") setCategories(catsRes.value.slice(0, 8));
+      if (promoRes.status === "fulfilled") setPromo(promoRes.value);
+      if (notifRes.status === "fulfilled") setUnread(notifRes.value.unread_count ?? 0);
+    } catch { /* silent */ }
     finally { setLoading(false); }
   }, []);
 
@@ -105,123 +212,182 @@ export default function HomeScreen() {
     else router.push("/browse");
   };
 
+  const handlePromoCta = () => {
+    const link = promo?.cta_link;
+    if (link && /^https?:\/\//.test(String(link))) {
+      Linking.openURL(String(link)).catch(() => router.push("/browse"));
+      return;
+    }
+    router.push("/browse");
+  };
+
   const goToItem = (item: ProductCardItem) => {
     router.push(`/product-details?id=${item.id}&type=${item.type}` as any);
   };
 
+  const goCategory = (tileKey: string) => {
+    if (tileKey === "autos") {
+      router.push("/browse" as any);
+    } else if (tileKey === "real-estate") {
+      router.push("/browse" as any);
+    } else {
+      const match = categories.find((c) => c.name.toLowerCase().includes(tileKey.split("-")[0]));
+      if (match) router.push(`/category-products?id=${match.id}&name=${encodeURIComponent(match.name)}` as any);
+      else router.push("/browse" as any);
+    }
+  };
+
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
+    <SafeAreaView className="flex-1 bg-white">
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
-        <View className="pb-6">
-
-          {/* ── Header ── */}
-          <View className="flex-row items-center justify-between px-5 pt-4 pb-3 bg-white">
-            <View>
-              <Text className="text-xs text-gray-400 font-medium">Welcome back, {displayName} 👋</Text>
-              <Text className="text-xl font-extrabold text-gray-900 tracking-tight">
-                LEL <Text className="text-amber-400">Marketplace</Text>
-              </Text>
-            </View>
-            <TouchableOpacity className="relative" onPress={() => router.push("/notifications")}>
-              <View className="w-11 h-11 rounded-full bg-gray-100 items-center justify-center">
-                <Bell size={20} color="#374151" strokeWidth={1.8} />
-              </View>
-            </TouchableOpacity>
-          </View>
-
-          {/* ── Search Bar ── */}
-          <View className="px-5 py-3 bg-white">
-            <TouchableOpacity
-              onPress={handleSearch}
-              className="flex-row items-center gap-2.5 bg-gray-100 rounded-xl px-3.5 py-2.5"
-              activeOpacity={0.8}
-            >
-              <Search size={18} color="#9ca3af" />
-              <TextInput
-                placeholder="Search vehicles, properties..."
-                value={search}
-                onChangeText={setSearch}
-                onSubmitEditing={handleSearch}
-                placeholderTextColor="#9ca3af"
-                className="flex-1 bg-transparent text-sm text-gray-900"
-              />
-            </TouchableOpacity>
-          </View>
-
-          {/* ── Promo Banner ── */}
-          <View className="px-5 py-3">
-            <View className="relative rounded-2xl overflow-hidden h-40 flex-row" style={{ backgroundColor: "#1e1b4b" }}>
-              <View className="flex-1 p-5 justify-center gap-1.5">
-                <View className="bg-amber-400 self-start px-2 py-0.5 rounded-md">
-                  <Text className="text-white text-[10px] font-extrabold tracking-wide">EXCLUSIVE</Text>
-                </View>
-                <Text className="text-amber-400 text-2xl font-black leading-tight">LEL{"\n"}Marketplace</Text>
-                <Text className="text-white text-xs" style={{ opacity: 0.85 }}>Top deals on vehicles & property</Text>
-                <TouchableOpacity onPress={() => router.push("/browse")} className="bg-amber-400 self-start px-3.5 py-1.5 rounded-xl mt-1">
-                  <Text className="text-white text-xs font-bold">Browse Deals</Text>
-                </TouchableOpacity>
-              </View>
-              <View className="w-32 items-center justify-center gap-2.5">
-                <View className="w-16 h-16 rounded-full items-center justify-center" style={{ backgroundColor: "rgba(245,158,11,0.2)" }}>
-                  <Car size={36} color="#f59e0b" strokeWidth={1.5} />
-                </View>
-                <View className="w-12 h-12 rounded-full items-center justify-center" style={{ backgroundColor: "rgba(255,255,255,0.1)" }}>
-                  <Home size={24} color="#fff" strokeWidth={1.5} />
-                </View>
-              </View>
-              <View className="absolute -right-8 -bottom-8 w-32 h-32 rounded-full" style={{ backgroundColor: "rgba(245,158,11,0.1)" }} />
-            </View>
-          </View>
-
-          {/* ── Categories ── */}
-          <View className="pl-5 mb-1">
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <View className="flex-row gap-2.5 pr-5">
-                {CATEGORIES.map((cat) => (
-                  <CategoryPill
-                    key={cat.id}
-                    label={cat.label}
-                    Icon={cat.Icon}
-                    active={activeCategory === cat.id}
-                    onPress={() => setActiveCategory(cat.id)}
-                  />
-                ))}
-              </View>
-            </ScrollView>
-          </View>
-
-          {/* ── Hot Sales ── */}
-          <View className="mt-5">
-            <View className="px-5">
-              <SectionHeader title="Hot Listings" onSeeAll={() => router.push("/browse")} />
-            </View>
-            {loading ? (
-              <View className="items-center py-8">
-                <ActivityIndicator color="#f59e0b" />
-              </View>
-            ) : hotSales.length === 0 ? (
-              <Text className="text-sm text-gray-400 text-center py-6">No listings available</Text>
+        {/* ── Header ── */}
+        <View className="flex-row items-center justify-between px-5 pt-4 pb-3">
+          <View className="flex-row items-center gap-3">
+            {avatarUrl ? (
+              <Image source={{ uri: avatarUrl }} className="w-10 h-10 rounded-full" />
             ) : (
-              <View className="gap-3.5 px-5">
-                {hotSales.map((item) => (
-                  <ProductCard key={item.id} item={item} onPress={() => goToItem(item)} variant="horizontal" />
-                ))}
+              <View
+                className="w-10 h-10 rounded-full items-center justify-center"
+                style={{ backgroundColor: COLORS.primarySoft }}
+              >
+                <Text className="text-sm font-grotesk-extrabold" style={{ color: COLORS.primary }}>
+                  {displayName.charAt(0).toUpperCase()}
+                </Text>
               </View>
             )}
+            <View>
+              <Text className="font-manrope text-xs text-gray-400">Welcome Back.</Text>
+              <Text className="font-grotesk-extrabold text-gray-900" style={{ fontSize: 16 }} numberOfLines={1}>
+                {displayName}
+              </Text>
+            </View>
           </View>
-
-          {/* ── Recent ── */}
-          {recent.length > 0 && (
-            <View className="mt-7 px-5">
-              <SectionHeader title="More Listings" onSeeAll={() => router.push("/browse")} />
-              <View className="gap-3.5">
-                {recent.map((item) => (
-                  <ProductCard key={item.id} item={item} onPress={() => goToItem(item)} variant="horizontal" />
-                ))}
+          <TouchableOpacity onPress={() => router.push("/notifications")} className="relative p-1">
+            <Bell size={22} color="#111827" strokeWidth={1.8} />
+            {unread > 0 && (
+              <View
+                className="absolute top-0 right-0 rounded-full items-center justify-center"
+                style={{ backgroundColor: COLORS.primary, minWidth: 16, height: 16, paddingHorizontal: 3 }}
+              >
+                <Text className="text-white font-grotesk-extrabold" style={{ fontSize: 9 }}>
+                  {unread > 9 ? "9+" : unread}
+                </Text>
               </View>
+            )}
+          </TouchableOpacity>
+        </View>
+
+        {/* ── Search ── */}
+        <View className="px-5 pb-3">
+          <SearchBar value={search} onChangeText={setSearch} onSubmit={handleSearch} onFilterPress={handleSearch} />
+        </View>
+
+        {/* ── Promo carousel ── */}
+        <View className="px-5">
+          <PromoCarousel promo={promo} onCta={handlePromoCta} />
+        </View>
+
+        {/* ── Categories ── */}
+        <View className="mt-5">
+          <Text className="font-grotesk-extrabold text-gray-900 px-5 mb-3" style={{ fontSize: 16 }}>Categories</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, gap: 14 }}>
+            {CATEGORY_TILES.map((t) => (
+              <TouchableOpacity
+                key={t.key}
+                onPress={() => goCategory(t.key)}
+                className="items-center"
+                style={{ width: 76 }}
+              >
+                <Image source={t.image} style={{ width: 60, height: 60, borderRadius: 14 }} resizeMode="cover" />
+                <Text
+                  className="font-grotesk text-gray-600 text-center"
+                  style={{ fontSize: 10, lineHeight: 14, height: 14, marginTop: 6 }}
+                  numberOfLines={1}
+                >
+                  {t.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+
+        {/* ── Recommended ── */}
+        <View className="mt-6 px-5">
+          <View className="flex-row items-center justify-between mb-3">
+            <Text className="font-grotesk-extrabold text-gray-900" style={{ fontSize: 16 }}>Recommended</Text>
+            <TouchableOpacity onPress={() => router.push("/browse")} className="flex-row items-center gap-1">
+              <Text className="font-manrope text-xs text-gray-400">See more</Text>
+              <ArrowRight size={13} color="#9ca3af" />
+            </TouchableOpacity>
+          </View>
+          {loading ? (
+            <ActivityIndicator color={COLORS.primary} />
+          ) : (
+            <View className="flex-row flex-wrap" style={{ gap: GRID_GAP }}>
+              {hotSales.map((item) => (
+                <View key={`${item.type}-${item.id}`} style={{ width: GRID_TILE_W }}>
+                  <ProductCard item={item} onPress={() => goToItem(item)} variant="vertical" />
+                </View>
+              ))}
             </View>
           )}
+        </View>
 
+        {/* ── Find your next Auto ── */}
+        <View className="mt-6">
+          <View className="flex-row items-center justify-between px-5 mb-1">
+            <Text className="font-grotesk-extrabold text-gray-900" style={{ fontSize: 16 }}>Find your next Auto</Text>
+            <TouchableOpacity onPress={() => router.push("/browse")} className="flex-row items-center gap-1">
+              <Text className="font-manrope text-xs text-gray-400">See more</Text>
+              <ArrowRight size={13} color="#9ca3af" />
+            </TouchableOpacity>
+          </View>
+          <Text className="font-manrope text-[11px] text-gray-400 px-5 mb-3">
+            Inspected vehicles, duty paid, financing available
+          </Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, gap: 12 }}>
+            {autos.map((item) => (
+              <ProductCard key={item.id} item={item} onPress={() => goToItem(item)} variant="rail" width={170} />
+            ))}
+          </ScrollView>
+        </View>
+
+        {/* ── Find your next Property ── */}
+        <View className="mt-6">
+          <View className="flex-row items-center justify-between px-5 mb-1">
+            <Text className="font-grotesk-extrabold text-gray-900" style={{ fontSize: 16 }}>Find your next Property</Text>
+            <TouchableOpacity onPress={() => router.push("/browse")} className="flex-row items-center gap-1">
+              <Text className="font-manrope text-xs text-gray-400">See more</Text>
+              <ArrowRight size={13} color="#9ca3af" />
+            </TouchableOpacity>
+          </View>
+          <Text className="font-manrope text-[11px] text-gray-400 px-5 mb-3">
+            Inspected properties, financing available
+          </Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, gap: 12 }}>
+            {properties.map((item) => (
+              <ProductCard key={item.id} item={item} onPress={() => goToItem(item)} variant="rail" width={170} />
+            ))}
+          </ScrollView>
+        </View>
+
+        {/* ── Monthly Plans ── */}
+        <View className="mt-6 px-5">
+          <View className="bg-white border border-gray-100 rounded-2xl p-5">
+            <Text className="font-manrope text-[11px] text-gray-400 mb-1">Monthly Plans</Text>
+            <Text className="text-base font-grotesk-extrabold text-gray-900 leading-snug">
+              Pay monthly, stay stocked and covered.
+            </Text>
+            <Text className="font-manrope text-xs text-gray-500 leading-relaxed mt-1.5">
+              Spread payments on vehicles and properties with approved financing. Pause or cancel anytime.
+            </Text>
+            <TouchableOpacity
+              onPress={() => router.push("/financing-application")}
+              className="rounded-full border border-gray-300 py-3 items-center mt-4"
+            >
+              <Text className="text-xs font-grotesk-bold text-gray-900">View Plans</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>

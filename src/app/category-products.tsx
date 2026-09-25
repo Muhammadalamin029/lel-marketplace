@@ -27,11 +27,11 @@ function ProductCard({ product, onPress }: { product: Product; onPress: () => vo
         </View>
       )}
       <View className="p-3 gap-1">
-        <Text className="text-sm font-bold text-gray-900" numberOfLines={2}>{product.name}</Text>
-        <Text className="text-sm font-extrabold text-amber-400">{fmt(product.price)}</Text>
+        <Text className="text-sm font-grotesk-bold text-gray-900" numberOfLines={2}>{product.name}</Text>
+        <Text className="text-sm font-grotesk-extrabold text-[#ff4b26]">{fmt(product.price)}</Text>
         <View className="flex-row items-center gap-1 mt-0.5">
-          <Star size={11} color="#f59e0b" fill="#f59e0b" />
-          <Text className="text-[10px] text-gray-400">Verified seller</Text>
+          <Star size={11} color="#ff4b26" fill="#ff4b26" />
+          <Text className="font-manrope text-[10px] text-gray-400">Verified seller</Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -69,8 +69,8 @@ export default function CategoryProductsScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
         {loading && page === 1 ? (
           <View className="items-center justify-center pt-20 gap-3">
-            <ActivityIndicator size="large" color="#f59e0b" />
-            <Text className="text-sm text-gray-400">Loading products…</Text>
+            <ActivityIndicator size="large" color="#ff4b26" />
+            <Text className="font-manrope text-sm text-gray-400">Loading products…</Text>
           </View>
         ) : products.length === 0 ? (
           <EmptyState Icon={Package} title="No products found" subtitle={`No products in ${decodeURIComponent(name ?? "this category")} yet.`} />
@@ -94,8 +94,8 @@ export default function CategoryProductsScreen() {
                 style={shadow.sm}
               >
                 {loading
-                  ? <ActivityIndicator color="#f59e0b" />
-                  : <Text className="text-sm font-bold text-gray-700">Load More</Text>}
+                  ? <ActivityIndicator color="#ff4b26" />
+                  : <Text className="text-sm font-grotesk-bold text-gray-700">Load More</Text>}
               </TouchableOpacity>
             )}
           </>

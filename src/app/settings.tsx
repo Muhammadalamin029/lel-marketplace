@@ -161,7 +161,7 @@ export default function SettingsScreen() {
           {/* Toggle sections */}
           {notifDraft && (
             <View>
-              <Text className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Notifications</Text>
+              <Text className="text-xs font-grotesk-bold text-gray-400 uppercase tracking-wider mb-3">Notifications</Text>
               <View className="bg-white rounded-2xl overflow-hidden" style={shadow.md}>
                 {[
                   { key: "email_order", label: "Email order updates", subtitle: "Order status and delivery updates" },
@@ -173,8 +173,8 @@ export default function SettingsScreen() {
                 ].map((item, i) => (
                   <View key={item.key} className={`flex-row items-center px-4 py-4 ${i < 5 ? "border-b border-gray-100" : ""}`}>
                     <View className="flex-1">
-                      <Text className="text-sm font-semibold text-gray-900">{item.label}</Text>
-                      <Text className="text-xs text-gray-400 mt-0.5">{item.subtitle}</Text>
+                      <Text className="text-sm font-grotesk-semibold text-gray-900">{item.label}</Text>
+                      <Text className="font-manrope text-xs text-gray-400 mt-0.5">{item.subtitle}</Text>
                     </View>
                     <Switch
                       value={notifDraft[item.key as keyof NotifDraft]}
@@ -188,23 +188,23 @@ export default function SettingsScreen() {
               <TouchableOpacity
                 onPress={saveNotificationPreferences}
                 disabled={savingNotif}
-                className="bg-amber-400 py-3.5 rounded-2xl items-center mt-3"
+                className="bg-[#ff4b26] py-3.5 rounded-2xl items-center mt-3"
                 style={shadow.btn}
               >
-                {savingNotif ? <ActivityIndicator color="#fff" /> : <Text className="text-white font-bold">Save preferences</Text>}
+                {savingNotif ? <ActivityIndicator color="#fff" /> : <Text className="text-white font-grotesk-bold">Save preferences</Text>}
               </TouchableOpacity>
             </View>
           )}
 
           {SECTIONS.map((section) => (
             <View key={section.title}>
-              <Text className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">{section.title}</Text>
+              <Text className="text-xs font-grotesk-bold text-gray-400 uppercase tracking-wider mb-3">{section.title}</Text>
               <View className="bg-white rounded-2xl overflow-hidden" style={shadow.md}>
                 {section.items.map((item, i) => (
                   <View key={item.id} className={`flex-row items-center px-4 py-4 ${i < section.items.length - 1 ? "border-b border-gray-100" : ""}`}>
                     <View className="flex-1">
-                      <Text className="text-sm font-semibold text-gray-900">{item.label}</Text>
-                      <Text className="text-xs text-gray-400 mt-0.5">{item.subtitle}</Text>
+                      <Text className="text-sm font-grotesk-semibold text-gray-900">{item.label}</Text>
+                      <Text className="font-manrope text-xs text-gray-400 mt-0.5">{item.subtitle}</Text>
                     </View>
                     <Switch
                       value={item.value}
@@ -220,7 +220,7 @@ export default function SettingsScreen() {
 
           {/* Account Security */}
           <View>
-            <Text className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Account Security</Text>
+            <Text className="text-xs font-grotesk-bold text-gray-400 uppercase tracking-wider mb-3">Account Security</Text>
             <View className="bg-white rounded-2xl overflow-hidden" style={shadow.md}>
               <TouchableOpacity
                 onPress={() => setPwModalOpen(true)}
@@ -228,8 +228,8 @@ export default function SettingsScreen() {
               >
                 <KeyRound size={18} color="#6b7280" style={{ marginRight: 12 }} />
                 <View className="flex-1">
-                  <Text className="text-sm font-semibold text-gray-900">Change Password</Text>
-                  <Text className="text-xs text-gray-400 mt-0.5">Update your account password</Text>
+                  <Text className="text-sm font-grotesk-semibold text-gray-900">Change Password</Text>
+                  <Text className="font-manrope text-xs text-gray-400 mt-0.5">Update your account password</Text>
                 </View>
                 <ChevronRight size={16} color="#d1d5db" />
               </TouchableOpacity>
@@ -238,7 +238,7 @@ export default function SettingsScreen() {
 
           {/* General */}
           <View>
-            <Text className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">General</Text>
+            <Text className="text-xs font-grotesk-bold text-gray-400 uppercase tracking-wider mb-3">General</Text>
             <View className="bg-white rounded-2xl overflow-hidden" style={shadow.md}>
               {ACTIONS.map((action, i) => {
                 const Icon = action.icon;
@@ -249,8 +249,8 @@ export default function SettingsScreen() {
                     className={`flex-row items-center px-4 py-4 ${i < ACTIONS.length - 1 ? "border-b border-gray-100" : ""}`}
                   >
                     <Icon size={18} color="#6b7280" style={{ marginRight: 12 }} />
-                    <Text className="text-sm font-semibold text-gray-900 flex-1">{action.label}</Text>
-                    {action.value && <Text className="text-sm text-gray-400 mr-2">{action.value}</Text>}
+                    <Text className="text-sm font-grotesk-semibold text-gray-900 flex-1">{action.label}</Text>
+                    {action.value && <Text className="font-manrope text-sm text-gray-400 mr-2">{action.value}</Text>}
                     <ChevronRight size={16} color="#d1d5db" />
                   </TouchableOpacity>
                 );
@@ -260,7 +260,7 @@ export default function SettingsScreen() {
 
           {/* Danger zone */}
           <View>
-            <Text className="text-xs font-bold text-red-400 uppercase tracking-wider mb-3">Danger Zone</Text>
+            <Text className="text-xs font-grotesk-bold text-red-400 uppercase tracking-wider mb-3">Danger Zone</Text>
             <TouchableOpacity
               onPress={handleDeleteAccount}
               disabled={deletingAccount}
@@ -269,15 +269,15 @@ export default function SettingsScreen() {
             >
               <Trash2 size={18} color="#ef4444" />
               <View className="flex-1">
-                <Text className="text-sm font-semibold text-red-600">Delete Account</Text>
-                <Text className="text-xs text-gray-400">This action is permanent and cannot be undone.</Text>
+                <Text className="text-sm font-grotesk-semibold text-red-600">Delete Account</Text>
+                <Text className="font-manrope text-xs text-gray-400">This action is permanent and cannot be undone.</Text>
               </View>
               {deletingAccount && <ActivityIndicator color="#ef4444" />}
             </TouchableOpacity>
           </View>
 
           <View className="items-center">
-            <Text className="text-xs text-gray-300">LEL Marketplace · v1.0.0</Text>
+            <Text className="font-manrope text-xs text-gray-300">LEL Marketplace · v1.0.0</Text>
           </View>
 
         </View>
@@ -287,7 +287,7 @@ export default function SettingsScreen() {
       <Modal visible={pwModalOpen} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setPwModalOpen(false)}>
         <SafeAreaView className="flex-1 bg-white">
           <View className="flex-row items-center justify-between px-5 pt-4 pb-4 border-b border-gray-100">
-            <Text className="text-lg font-extrabold text-gray-900">Change Password</Text>
+            <Text className="text-lg font-grotesk-extrabold text-gray-900">Change Password</Text>
             <TouchableOpacity onPress={() => { setPwModalOpen(false); resetPwForm(); }} className="w-9 h-9 rounded-full bg-gray-100 items-center justify-center">
               <X size={18} color="#374151" />
             </TouchableOpacity>
@@ -302,7 +302,7 @@ export default function SettingsScreen() {
                 { label: "Confirm New Password", value: confirmPw, set: setConfirmPw, show: showNew, toggle: () => setShowNew(!showNew) },
               ].map(({ label, value, set, show, toggle }) => (
                 <View key={label} className="gap-2">
-                  <Text className="text-sm font-bold text-gray-700">{label}</Text>
+                  <Text className="text-sm font-grotesk-bold text-gray-700">{label}</Text>
                   <View className="flex-row items-center border border-gray-200 rounded-xl bg-gray-50 px-4">
                     <TextInput
                       className="flex-1 py-3.5 text-sm text-gray-900"
@@ -321,16 +321,16 @@ export default function SettingsScreen() {
               ))}
 
               {newPw.length > 0 && newPw.length < 8 && (
-                <Text className="text-xs text-red-500">Password must be at least 8 characters.</Text>
+                <Text className="font-grotesk text-xs text-red-500">Password must be at least 8 characters.</Text>
               )}
 
               <TouchableOpacity
                 onPress={handleChangePassword}
                 disabled={changingPw}
-                className="bg-amber-400 py-4 rounded-2xl items-center"
+                className="bg-[#ff4b26] py-4 rounded-2xl items-center"
                 style={shadow.btn}
               >
-                {changingPw ? <ActivityIndicator color="#fff" /> : <Text className="text-white font-bold">Update Password</Text>}
+                {changingPw ? <ActivityIndicator color="#fff" /> : <Text className="text-white font-grotesk-bold">Update Password</Text>}
               </TouchableOpacity>
 
             </View>

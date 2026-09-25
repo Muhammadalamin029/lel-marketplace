@@ -1,242 +1,57 @@
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StatusBar,
-  Alert,
-} from "react-native";
-import { Image } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, StatusBar, Alert, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import {
-  User,
-  MapPin,
-  Shield,
-  Package,
-  Heart,
-  Bell,
-  Settings,
-  HelpCircle,
-  LogOut,
-  ShoppingBag,
-  Star,
-  ChevronRight,
-  AlertCircle,
-  CheckCircle,
-  Edit,
-  FileText,
-  CreditCard,
-  Grid3x3,
-  Info,
-  Landmark,
+  User, MapPin, ShieldCheck, Package, Heart, Bell, Settings,
+  HelpCircle, LogOut, Star, ChevronRight, CheckCircle, FileText,
+  CreditCard, Grid3x3, Info, Landmark, AlertCircle, ClipboardList, Truck,
 } from "lucide-react-native";
-import { shadow } from "@/constants/shadows";
+import { COLORS } from "@/constants/brand";
 import { useAuthStore } from "@/store/authStore";
+import { useCartStore } from "@/store/cartStore";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { useEffect, useState } from "react";
-import { dashboardApi } from "@/api";
+import { dashboardApi, notificationsApi, financingApi } from "@/api";
 
 type MenuItem = {
   icon: any;
   label: string;
-  color: string;
-  bg: string;
   route?: string;
-  badge?: string;
-  danger?: boolean;
+  meta?: string;
 };
 
-const MENU_SECTIONS: { title: string; items: MenuItem[] }[] = [
-  {
-    title: "Account",
-    items: [
-      {
-        icon: User,
-        label: "Personal Information",
-        color: "#3b82f6",
-        bg: "#eff6ff",
-        route: "/edit-profile",
-      },
-      {
-        icon: MapPin,
-        label: "Saved Addresses",
-        color: "#10b981",
-        bg: "#f0fdf4",
-        route: "/addresses",
-      },
-      {
-        icon: Shield,
-        label: "Verification & KYC",
-        color: "#f59e0b",
-        bg: "#fffbeb",
-        badge: "Verified",
-      },
-    ],
-  },
-  {
-    title: "Activity",
-    items: [
-      {
-        icon: Package,
-        label: "My Orders",
-        color: "#f59e0b",
-        bg: "#fffbeb",
-        route: "/orders",
-      },
-      {
-        icon: Package,
-        label: "Track Order",
-        color: "#0ea5e9",
-        bg: "#f0f9ff",
-        route: "/track-order",
-      },
-      {
-        icon: Shield,
-        label: "My Inspections",
-        color: "#0ea5e9",
-        bg: "#f0f9ff",
-        route: "/inspections",
-      },
-      {
-        icon: FileText,
-        label: "My Agreements",
-        color: "#8b5cf6",
-        bg: "#f5f3ff",
-        route: "/my-agreements",
-      },
-      {
-        icon: Landmark,
-        label: "Financing Application",
-        color: "#0891b2",
-        bg: "#ecfeff",
-        route: "/my-financing-application",
-      },
-      {
-        icon: CreditCard,
-        label: "My Payments",
-        color: "#f59e0b",
-        bg: "#fffbeb",
-        route: "/my-payments",
-      },
-      {
-        icon: Star,
-        label: "My Reviews",
-        color: "#f59e0b",
-        bg: "#fffbeb",
-        route: "/my-reviews",
-      },
-      {
-        icon: AlertCircle,
-        label: "My Disputes",
-        color: "#ef4444",
-        bg: "#fef2f2",
-        route: "/disputes",
-      },
-      {
-        icon: Heart,
-        label: "Wishlist",
-        color: "#ef4444",
-        bg: "#fef2f2",
-        route: "/(tabs)/wishlist",
-      },
-    ],
-  },
-  {
-    title: "Discover",
-    items: [
-      {
-        icon: Grid3x3,
-        label: "Categories",
-        color: "#22c55e",
-        bg: "#f0fdf4",
-        route: "/categories",
-      },
-    ],
-  },
-  {
-    title: "Preferences",
-    items: [
-      {
-        icon: Bell,
-        label: "Notifications",
-        color: "#8b5cf6",
-        bg: "#f5f3ff",
-        route: "/notifications",
-      },
-      {
-        icon: Settings,
-        label: "App Settings",
-        color: "#6b7280",
-        bg: "#f9fafb",
-        route: "/settings",
-      },
-    ],
-  },
-  {
-    title: "Support & Legal",
-    items: [
-      {
-        icon: HelpCircle,
-        label: "Help & Support",
-        color: "#0ea5e9",
-        bg: "#f0f9ff",
-        route: "/help",
-      },
-      {
-        icon: FileText,
-        label: "Terms of Service",
-        color: "#6b7280",
-        bg: "#f9fafb",
-        route: "/terms",
-      },
-      {
-        icon: Shield,
-        label: "Privacy Policy",
-        color: "#6b7280",
-        bg: "#f9fafb",
-        route: "/privacy",
-      },
-      {
-        icon: Info,
-        label: "About LEL Marketplace",
-        color: "#6b7280",
-        bg: "#f9fafb",
-        route: "/about",
-      },
-    ],
-  },
-];
+const ROW_ICON_BG = "#fdf6ec";
 
-function MenuItem({ item, onPress }: { item: MenuItem; onPress: () => void }) {
+function MenuRow({ item, onPress, last }: { item: MenuItem; onPress: () => void; last?: boolean }) {
   const Icon = item.icon;
   return (
     <TouchableOpacity
       onPress={onPress}
-      className="flex-row items-center px-4 py-3.5 gap-3"
       activeOpacity={0.7}
+      className={`flex-row items-center gap-3 py-3.5 ${last ? "" : "border-b border-gray-50"}`}
     >
-      <View
-        className="w-9 h-9 rounded-xl items-center justify-center flex-shrink-0"
-        style={{ backgroundColor: item.bg }}
-      >
-        <Icon size={16} color={item.color} />
+      <View className="w-9 h-9 rounded-lg items-center justify-center" style={{ backgroundColor: ROW_ICON_BG }}>
+        <Icon size={16} color="#374151" />
       </View>
-      <Text
-        className={`flex-1 text-sm font-semibold ${item.danger ? "text-red-600" : "text-gray-900"}`}
-      >
-        {item.label}
-      </Text>
-      {item.badge && (
-        <View className="flex-row items-center gap-1 bg-green-50 px-2 py-0.5 rounded-full">
-          <CheckCircle size={10} color="#16a34a" />
-          <Text className="text-[10px] font-bold text-green-700">
-            {item.badge}
-          </Text>
-        </View>
-      )}
-      <ChevronRight size={14} color="#d1d5db" />
+      <Text className="font-grotesk flex-1 text-sm text-gray-900">{item.label}</Text>
+      {!!item.meta && <Text className="font-manrope text-xs text-gray-400">{item.meta}</Text>}
+      <ChevronRight size={15} color="#9ca3af" />
     </TouchableOpacity>
+  );
+}
+
+function Section({ title, items, onPress }: { title: string; items: MenuItem[]; onPress: (item: MenuItem) => void }) {
+  return (
+    <View className="mt-6">
+      <Text className="text-[11px] font-grotesk-bold text-gray-400 tracking-widest mb-1">
+        {title.toUpperCase()}
+      </Text>
+      <View>
+        {items.map((item, i) => (
+          <MenuRow key={item.label} item={item} onPress={() => onPress(item)} last={i === items.length - 1} />
+        ))}
+      </View>
+    </View>
   );
 }
 
@@ -244,29 +59,37 @@ export default function ProfileScreen() {
   useRequireAuth();
   const router = useRouter();
   const { user, profile, logout } = useAuthStore();
+  const cartCount = useCartStore((s) => s.totalItems());
 
-  // Derive display fields from the auth store
-  const displayName =
-    (profile as any)?.name ||
-    (profile as any)?.business_name ||
-    user?.email?.split("@")[0] ||
-    "User";
+  const displayName = (profile as any)?.name || user?.email?.split("@")[0] || "User";
   const displayEmail = user?.email ?? "";
-  const displayPhone = (profile as any)?.phone || (profile as any)?.contact_phone || "";
+  const displayPhone = (profile as any)?.phone || "";
   const isVerified = user?.email_verified ?? false;
   const avatarUrl: string | null = (profile as any)?.avatar_url ?? null;
 
-  const [stats, setStats] = useState({ orders: "-", saved: "-" });
+  const [orderCount, setOrderCount] = useState<string | null>(null);
+  const [savedCount, setSavedCount] = useState<string | null>(null);
+  const [unreadCount, setUnreadCount] = useState<string | null>(null);
+  const [financeMeta, setFinanceMeta] = useState<string | null>(null);
 
   useEffect(() => {
-    dashboardApi.customerStats().then((s) => {
-      setStats({
-        orders: String(s.total_orders ?? 0),
-        saved: String(s.wishlist_items ?? 0),
-      });
-    }).catch(() => {
-      setStats({ orders: "0", saved: "0" });
-    });
+    dashboardApi.customerStats()
+      .then((s) => {
+        setOrderCount(`${s.total_orders ?? 0} total`);
+        setSavedCount(`${s.wishlist_items ?? 0} saved`);
+      })
+      .catch(() => {});
+    notificationsApi.list({ limit: 1 })
+      .then((res) => setUnreadCount(`${res.unread_count ?? 0} unread`))
+      .catch(() => {});
+    financingApi.getMyApplication()
+      .then((app) => {
+        if (!app) setFinanceMeta("apply");
+        else if (app.status === "approved") setFinanceMeta("approved");
+        else if (app.status === "pending_review") setFinanceMeta("in review");
+        else setFinanceMeta(String(app.status).replace(/_/g, " "));
+      })
+      .catch(() => {});
   }, []);
 
   const handleLogout = () => {
@@ -284,138 +107,124 @@ export default function ProfileScreen() {
   };
 
   const handleMenuPress = (item: MenuItem) => {
-    if (item.route) {
-      router.push(item.route as any);
-    }
+    if (item.route) router.push(item.route as any);
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
+    <SafeAreaView className="flex-1 bg-white">
       <StatusBar barStyle="dark-content" />
-
-      {/* Header */}
-      <View className="flex-row items-center justify-between px-5 pt-4 pb-3 bg-white">
-        <View>
-          <Text className="text-xs text-gray-400 font-medium">
-            Your account
-          </Text>
-          <Text className="text-xl font-extrabold text-gray-900 tracking-tight">
-            My <Text className="text-amber-400">Profile</Text>
-          </Text>
-        </View>
-        <TouchableOpacity
-          onPress={() => router.push("/settings")}
-          className="w-11 h-11 rounded-full bg-gray-100 items-center justify-center"
-        >
-          <Settings size={18} color="#374151" strokeWidth={1.8} />
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 32 }}
-      >
-        {/* Profile card */}
-        <View
-          className="mx-5 mt-4 bg-white rounded-3xl p-5 mb-4"
-          style={shadow.md}
-        >
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
+        <View className="px-5 pt-6">
+          {/* Identity */}
           <View className="flex-row items-center gap-4">
-            <View className="relative">
-              {avatarUrl ? (
-                <Image
-                  source={{ uri: avatarUrl }}
-                  style={{ width: 64, height: 64, borderRadius: 32 }}
-                  resizeMode="cover"
-                />
-              ) : (
-                <View className="w-16 h-16 rounded-full bg-indigo-900 items-center justify-center">
-                  <Text className="text-white text-2xl font-bold">
-                    {displayName.charAt(0).toUpperCase()}
-                  </Text>
-                </View>
-              )}
-              {isVerified && (
-                <View className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-green-400 rounded-full border-2 border-white items-center justify-center">
-                  <CheckCircle size={10} color="#fff" />
-                </View>
-              )}
-            </View>
-            <View className="flex-1">
-              <Text className="text-base font-extrabold text-gray-900">
+            {avatarUrl ? (
+              <Image source={{ uri: avatarUrl }} style={{ width: 64, height: 64, borderRadius: 32 }} />
+            ) : (
+              <View
+                className="items-center justify-center"
+                style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: COLORS.primarySoft }}
+              >
+                <Text className="text-2xl font-grotesk-extrabold" style={{ color: COLORS.primary }}>
+                  {displayName.charAt(0).toUpperCase()}
+                </Text>
+              </View>
+            )}
+            <View className="flex-1 min-w-0">
+              <Text className="text-lg font-grotesk-extrabold text-gray-900" numberOfLines={1}>
                 {displayName}
               </Text>
-              <Text className="text-xs text-gray-400 mt-0.5">
+              <Text className="font-manrope text-xs text-gray-400 mt-0.5" numberOfLines={1}>
                 {displayEmail}
               </Text>
-              <Text className="text-xs text-gray-400">{displayPhone}</Text>
+              {!!displayPhone && (
+                <Text className="font-manrope text-xs text-gray-400" numberOfLines={1}>
+                  {displayPhone}
+                </Text>
+              )}
             </View>
-            <TouchableOpacity
-              onPress={() => router.push("/edit-profile")}
-              className="w-9 h-9 bg-amber-50 rounded-full items-center justify-center"
-            >
-              <Edit size={16} color="#f59e0b" />
-            </TouchableOpacity>
           </View>
 
-          {/* Stats row */}
-          <View className="flex-row mt-4 pt-4 border-t border-gray-100">
-            {[
-              { label: "Orders", value: stats.orders, icon: ShoppingBag, color: "#f59e0b" },
-              { label: "Saved", value: stats.saved, icon: Heart, color: "#ef4444" },
-            ].map(({ label, value, icon: Icon, color }) => (
-              <View key={label} className="flex-1 items-center gap-1">
-                <Icon size={18} color={color} />
-                <Text className="text-base font-extrabold text-gray-900">
-                  {value}
-                </Text>
-                <Text className="text-[10px] text-gray-400 font-medium">
-                  {label}
-                </Text>
+          {/* Pills */}
+          <View className="flex-row gap-2 mt-3">
+            {isVerified && (
+              <View className="flex-row items-center gap-1 bg-green-50 px-2.5 py-1 rounded-md">
+                <CheckCircle size={11} color="#16a34a" />
+                <Text className="text-[11px] font-grotesk-semibold text-green-700">Verified account</Text>
               </View>
-            ))}
-          </View>
-        </View>
-
-{/* Menu sections */}
-        <View className="mx-5 gap-4">
-          {MENU_SECTIONS.map((section) => (
-            <View key={section.title}>
-              <Text className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">
-                {section.title}
+            )}
+            <View className="bg-green-50 px-2.5 py-1 rounded-md">
+              <Text className="text-[11px] font-grotesk-semibold text-green-700">
+                {cartCount} in cart
               </Text>
-              <View
-                className="bg-white rounded-2xl overflow-hidden"
-                style={shadow.md}
-              >
-                {section.items.map((item, i) => (
-                  <View key={item.label}>
-                    <MenuItem
-                      item={item}
-                      onPress={() => handleMenuPress(item)}
-                    />
-                    {i < section.items.length - 1 && (
-                      <View className="h-px bg-gray-50 mx-4" />
-                    )}
-                  </View>
-                ))}
-              </View>
             </View>
-          ))}
+          </View>
 
-          {/* Logout */}
+          {/* Edit profile */}
+          <TouchableOpacity
+            onPress={() => router.push("/edit-profile")}
+            className="rounded-xl border border-gray-200 py-3.5 flex-row items-center justify-center gap-2 mt-4"
+          >
+            <User size={15} color="#111827" />
+            <Text className="text-sm font-grotesk-bold text-gray-900">Edit profile</Text>
+          </TouchableOpacity>
+
+          <Section
+            title="Activity"
+            onPress={handleMenuPress}
+            items={[
+              { icon: Package, label: "My orders", route: "/orders", meta: orderCount ?? undefined },
+              { icon: Heart, label: "Wishlist", route: "/(tabs)/wishlist", meta: savedCount ?? undefined },
+              { icon: Landmark, label: "Financing & plans", route: "/my-financing-application", meta: financeMeta ?? undefined },
+              { icon: Bell, label: "Notifications", route: "/notifications", meta: unreadCount ?? undefined },
+            ]}
+          />
+
+          <Section
+            title="Assets"
+            onPress={handleMenuPress}
+            items={[
+              { icon: ClipboardList, label: "My inspections", route: "/inspections" },
+              { icon: FileText, label: "My agreements", route: "/my-agreements" },
+              { icon: CreditCard, label: "My payments", route: "/my-payments" },
+              { icon: Star, label: "My reviews", route: "/my-reviews" },
+              { icon: Truck, label: "Track order", route: "/track-order" },
+              { icon: AlertCircle, label: "My disputes", route: "/disputes" },
+            ]}
+          />
+
+          <Section
+            title="Account"
+            onPress={handleMenuPress}
+            items={[
+              { icon: MapPin, label: "Saved addresses", route: "/addresses" },
+              { icon: Grid3x3, label: "Categories", route: "/categories" },
+              { icon: Settings, label: "App settings", route: "/settings" },
+            ]}
+          />
+
+          <Section
+            title="Support"
+            onPress={handleMenuPress}
+            items={[
+              { icon: HelpCircle, label: "Help & support", route: "/help" },
+              { icon: ShieldCheck, label: "Terms of service", route: "/terms" },
+              { icon: ShieldCheck, label: "Privacy policy", route: "/privacy" },
+              { icon: Info, label: "About LEL Store", route: "/about" },
+            ]}
+          />
+
+          {/* Sign out */}
           <TouchableOpacity
             onPress={handleLogout}
-            className="bg-white rounded-2xl px-4 py-4 flex-row items-center gap-3"
-            style={shadow.md}
+            className="rounded-xl border border-gray-200 py-3.5 flex-row items-center justify-center gap-2 mt-6"
           >
-            <View className="w-9 h-9 rounded-xl bg-red-50 items-center justify-center">
-              <LogOut size={16} color="#ef4444" />
-            </View>
-            <Text className="text-sm font-semibold text-red-600 flex-1">
-              Sign Out
-            </Text>
+            <LogOut size={15} color={COLORS.danger} />
+            <Text className="text-sm font-grotesk-bold" style={{ color: COLORS.danger }}>Sign out</Text>
           </TouchableOpacity>
+
+          <Text className="font-manrope text-[11px] text-gray-300 text-center mt-5">
+            Lel Store · v1.0.0 · Lagos, Nigeria
+          </Text>
         </View>
       </ScrollView>
     </SafeAreaView>

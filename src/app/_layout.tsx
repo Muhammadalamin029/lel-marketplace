@@ -3,6 +3,20 @@ import { useEffect } from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
+import {
+  useFonts,
+  HostGrotesk_400Regular,
+  HostGrotesk_500Medium,
+  HostGrotesk_600SemiBold,
+  HostGrotesk_700Bold,
+  HostGrotesk_800ExtraBold,
+} from "@expo-google-fonts/host-grotesk";
+import {
+  Manrope_400Regular,
+  Manrope_500Medium,
+  Manrope_600SemiBold,
+  Manrope_700Bold,
+} from "@expo-google-fonts/manrope";
 import { BRAND, COLORS } from "@/constants/brand";
 import { useAuthStore } from "@/store/authStore";
 
@@ -10,20 +24,32 @@ SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export default function RootLayout() {
   const { rehydrate, hasHydrated } = useAuthStore();
+  // Web parity fonts: Host Grotesk + Manrope (same families as the frontend).
+  const [fontsLoaded] = useFonts({
+    HostGrotesk_400Regular,
+    HostGrotesk_500Medium,
+    HostGrotesk_600SemiBold,
+    HostGrotesk_700Bold,
+    HostGrotesk_800ExtraBold,
+    Manrope_400Regular,
+    Manrope_500Medium,
+    Manrope_600SemiBold,
+    Manrope_700Bold,
+  });
 
   useEffect(() => {
     rehydrate();
   }, [rehydrate]);
 
   useEffect(() => {
-    if (hasHydrated) {
+    if (hasHydrated && fontsLoaded) {
       SplashScreen.hideAsync().catch(() => {});
     }
-  }, [hasHydrated]);
+  }, [hasHydrated, fontsLoaded]);
 
-  // Block all rendering until we know whether the user has a valid session.
-  // This prevents a flash of the wrong screen (onboarding vs tabs).
-  if (!hasHydrated) {
+  // Block all rendering until session + fonts are ready (prevents a flash of
+  // the wrong screen and a flash of fallback system fonts).
+  if (!hasHydrated || !fontsLoaded) {
     return (
       <View style={styles.splash}>
         <Image source={require("../../assets/images/splash-icon.png")} style={styles.splashLogo} resizeMode="contain" />

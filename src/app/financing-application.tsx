@@ -128,15 +128,15 @@ export default function FinancingApplicationScreen() {
         <ScreenHeader title="Financing Application" />
         <View className="flex-1 items-center justify-center px-8 gap-3">
           <Landmark size={40} color="#9ca3af" />
-          <Text className="text-base font-bold text-gray-800 text-center">You already have a financing application</Text>
-          <Text className="text-sm text-gray-500 text-center capitalize">
+          <Text className="text-base font-grotesk-bold text-gray-800 text-center">You already have a financing application</Text>
+          <Text className="font-manrope text-sm text-gray-500 text-center capitalize">
             Status: {myApplication?.status.replace("_", " ")}
           </Text>
           <TouchableOpacity
             onPress={() => router.push("/my-financing-application")}
-            className="bg-amber-400 py-3 px-6 rounded-2xl mt-2"
+            className="bg-[#ff4b26] py-3 px-6 rounded-2xl mt-2"
           >
-            <Text className="text-white font-bold">View Application Status</Text>
+            <Text className="text-white font-grotesk-bold">View Application Status</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -150,18 +150,18 @@ export default function FinancingApplicationScreen() {
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
         <View className="px-5 pt-6 gap-6">
-          <Text className="text-sm text-gray-600 leading-relaxed">
+          <Text className="font-grotesk text-sm text-gray-600 leading-relaxed">
             Submit your employment and income details to become eligible for monthly and installment payment plans on any purchase.
           </Text>
 
           <View className="bg-white rounded-2xl p-4 gap-5" style={shadow.md}>
             <View className="gap-2">
-              <Text className="text-sm font-bold text-gray-700">Employment Status *</Text>
+              <Text className="text-sm font-grotesk-bold text-gray-700">Employment Status *</Text>
               <TouchableOpacity
                 onPress={() => setShowStatusPicker(!showStatusPicker)}
                 className="border border-gray-200 rounded-xl bg-gray-50 px-4 py-3.5 flex-row items-center justify-between"
               >
-                <Text className="text-sm font-semibold text-gray-900">
+                <Text className="text-sm font-grotesk-semibold text-gray-900">
                   {EMPLOYMENT_STATUS_OPTIONS.find((o) => o.value === employmentStatus)?.label || "Select status"}
                 </Text>
                 <ChevronDown size={16} color="#6b7280" />
@@ -172,9 +172,9 @@ export default function FinancingApplicationScreen() {
                     <TouchableOpacity
                       key={opt.value}
                       onPress={() => { setEmploymentStatus(opt.value); setShowStatusPicker(false); }}
-                      className={`px-4 py-3 border-b border-gray-100 ${employmentStatus === opt.value ? "bg-amber-50" : "bg-white"}`}
+                      className={`px-4 py-3 border-b border-gray-100 ${employmentStatus === opt.value ? "bg-[#fff0e9]" : "bg-white"}`}
                     >
-                      <Text className={`text-sm font-semibold ${employmentStatus === opt.value ? "text-amber-600" : "text-gray-800"}`}>
+                      <Text className={`text-sm font-grotesk-semibold ${employmentStatus === opt.value ? "text-[#e03f1c]" : "text-gray-800"}`}>
                         {opt.label}
                       </Text>
                     </TouchableOpacity>
@@ -184,7 +184,7 @@ export default function FinancingApplicationScreen() {
             </View>
 
             <View className="gap-2">
-              <Text className="text-sm font-bold text-gray-700">Employer Name</Text>
+              <Text className="text-sm font-grotesk-bold text-gray-700">Employer Name</Text>
               <TextInput
                 className="border border-gray-200 rounded-xl bg-gray-50 px-4 py-3.5 text-sm text-gray-900"
                 placeholder="e.g. Acme Ltd"
@@ -195,7 +195,7 @@ export default function FinancingApplicationScreen() {
             </View>
 
             <View className="gap-2">
-              <Text className="text-sm font-bold text-gray-700">Job Title</Text>
+              <Text className="text-sm font-grotesk-bold text-gray-700">Job Title</Text>
               <TextInput
                 className="border border-gray-200 rounded-xl bg-gray-50 px-4 py-3.5 text-sm text-gray-900"
                 placeholder="e.g. Accountant"
@@ -206,7 +206,7 @@ export default function FinancingApplicationScreen() {
             </View>
 
             <View className="gap-2">
-              <Text className="text-sm font-bold text-gray-700">Monthly Income (₦) *</Text>
+              <Text className="text-sm font-grotesk-bold text-gray-700">Monthly Income (₦) *</Text>
               <TextInput
                 className="border border-gray-200 rounded-xl bg-gray-50 px-4 py-3.5 text-sm text-gray-900"
                 placeholder="e.g. 350000"
@@ -218,7 +218,7 @@ export default function FinancingApplicationScreen() {
             </View>
 
             <View className="gap-2">
-              <Text className="text-sm font-bold text-gray-700">Employment Duration (months)</Text>
+              <Text className="text-sm font-grotesk-bold text-gray-700">Employment Duration (months)</Text>
               <TextInput
                 className="border border-gray-200 rounded-xl bg-gray-50 px-4 py-3.5 text-sm text-gray-900"
                 placeholder="e.g. 24"
@@ -230,7 +230,7 @@ export default function FinancingApplicationScreen() {
             </View>
 
             <View className="gap-2">
-              <Text className="text-sm font-bold text-gray-700">Additional Notes</Text>
+              <Text className="text-sm font-grotesk-bold text-gray-700">Additional Notes</Text>
               <TextInput
                 className="border border-gray-200 rounded-xl bg-gray-50 px-4 py-3 text-sm text-gray-900"
                 placeholder="Anything else you'd like us to know"
@@ -246,21 +246,21 @@ export default function FinancingApplicationScreen() {
 
           {documentRequirements.length > 0 && (
             <View className="bg-white rounded-2xl p-4 gap-4" style={shadow.md}>
-              <Text className="text-sm font-bold text-gray-700">Supporting Documents</Text>
+              <Text className="text-sm font-grotesk-bold text-gray-700">Supporting Documents</Text>
               {documentRequirements.map((req) => {
                 const doc = documents[req.id];
                 return (
                   <View key={req.id} className="gap-2">
-                    <Text className="text-xs font-bold text-gray-600">
-                      {req.name}{req.is_required && <Text className="text-red-500"> *</Text>}
+                    <Text className="text-xs font-grotesk-bold text-gray-600">
+                      {req.name}{req.is_required && <Text className="font-grotesk text-red-500"> *</Text>}
                     </Text>
-                    {req.description && <Text className="text-xs text-gray-400">{req.description}</Text>}
+                    {req.description && <Text className="font-manrope text-xs text-gray-400">{req.description}</Text>}
 
                     {doc?.url ? (
                       <View className="flex-row items-center justify-between border border-gray-200 rounded-xl bg-gray-50 px-4 py-3">
                         <View className="flex-row items-center gap-2 flex-1">
                           <FileCheck2 size={16} color="#16a34a" />
-                          <Text className="text-sm text-gray-800 flex-1" numberOfLines={1}>{doc.filename}</Text>
+                          <Text className="font-grotesk text-sm text-gray-800 flex-1" numberOfLines={1}>{doc.filename}</Text>
                         </View>
                         <TouchableOpacity onPress={() => setDocuments((prev) => ({ ...prev, [req.id]: null }))}>
                           <X size={16} color="#6b7280" />
@@ -269,7 +269,7 @@ export default function FinancingApplicationScreen() {
                     ) : doc?.uploading ? (
                       <View className="flex-row items-center gap-2 border border-gray-200 rounded-xl bg-gray-50 px-4 py-3">
                         <ActivityIndicator size="small" color="#d97706" />
-                        <Text className="text-sm text-gray-500">Uploading...</Text>
+                        <Text className="font-manrope text-sm text-gray-500">Uploading...</Text>
                       </View>
                     ) : (
                       <View className="flex-row gap-2">
@@ -278,14 +278,14 @@ export default function FinancingApplicationScreen() {
                           className="flex-1 flex-row items-center justify-center gap-2 border border-dashed border-gray-300 rounded-xl py-3"
                         >
                           <Upload size={14} color="#6b7280" />
-                          <Text className="text-xs font-semibold text-gray-600">Photo</Text>
+                          <Text className="text-xs font-grotesk-semibold text-gray-600">Photo</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
                           onPress={() => handleUploadFile(req.id)}
                           className="flex-1 flex-row items-center justify-center gap-2 border border-dashed border-gray-300 rounded-xl py-3"
                         >
                           <Upload size={14} color="#6b7280" />
-                          <Text className="text-xs font-semibold text-gray-600">File / PDF</Text>
+                          <Text className="text-xs font-grotesk-semibold text-gray-600">File / PDF</Text>
                         </TouchableOpacity>
                       </View>
                     )}
@@ -298,10 +298,10 @@ export default function FinancingApplicationScreen() {
           <TouchableOpacity
             onPress={handleSubmit}
             disabled={isSubmitting}
-            className="bg-amber-400 py-4 rounded-2xl items-center"
+            className="bg-[#ff4b26] py-4 rounded-2xl items-center"
             style={shadow.btn}
           >
-            {isSubmitting ? <ActivityIndicator color="#fff" /> : <Text className="text-white font-bold text-base">Submit Application</Text>}
+            {isSubmitting ? <ActivityIndicator color="#fff" /> : <Text className="text-white font-grotesk-bold text-base">Submit Application</Text>}
           </TouchableOpacity>
         </View>
       </ScrollView>

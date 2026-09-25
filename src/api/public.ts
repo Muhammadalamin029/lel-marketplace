@@ -59,7 +59,6 @@ export const publicApi = {
     const { data } = await api.get("/public/properties/featured");
     return unwrapList<Property>(data);
   },
-
   async deliveryStates() {
     const { data } = await api.get("/public/delivery/states");
     return unwrapList<DeliveryState>(data);
@@ -73,5 +72,24 @@ export const publicApi = {
   async promoBanner() {
     const { data } = await api.get("/public/promo-banner");
     return unwrapData<PromoBanner>(data);
+  },
+};
+
+export type LegalSlug = "terms" | "privacy";
+
+export interface LegalDocumentResponse {
+  slug: string;
+  body_html: string | null;
+  effective_date_label: string | null;
+  effective_date: string | null;
+  structure: unknown | null;
+  updated_at: string | null;
+}
+
+/** GET /public/legal/{slug} — same source web Terms/Privacy pages render. */
+export const legalApi = {
+  async get(slug: LegalSlug): Promise<LegalDocumentResponse> {
+    const { data } = await api.get(`/public/legal/${slug}`);
+    return (data?.data ?? data) as LegalDocumentResponse;
   },
 };

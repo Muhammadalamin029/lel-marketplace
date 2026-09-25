@@ -2,24 +2,22 @@ import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { useEffect, useState } from "react";
 import {
   View, Text, ScrollView, TouchableOpacity, StatusBar,
-  ActivityIndicator, Alert, TextInput,
+  ActivityIndicator, Alert, TextInput, Clipboard,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { ScreenHeader } from "@/components/ScreenHeader";
-import { SectionHeader } from "@/components/SectionHeader";
+import { PrimaryButton, LabeledInput } from "@/components/forms";
+import { COLORS } from "@/constants/brand";
 import { fmt } from "@/utils/format";
-import { shadow } from "@/constants/shadows";
-import {
-  MapPin, CheckCircle, Package, Truck, Landmark, Wallet, Store, AlertCircle,
-} from "lucide-react-native";
 import { useCartStore } from "@/store/cartStore";
 import { ordersApi } from "@/api/orders";
 import { addressesApi, paymentsApi, publicApi } from "@/api";
 import type { Address, CheckoutSummary, DeliverySettings, InstallmentEligibility } from "@/api";
 import { useAuthStore } from "@/store/authStore";
+import { CheckCircle, Copy, Package, Landmark, Wallet } from "lucide-react-native";
 
-type Step = "review" | "processing" | "payment" | "success";
+type Step = "delivery" | "payment" | "review";
 type DeliveryType = "delivery" | "pickup";
 type PaymentMethod = "bank_transfer" | "installment";
 type TransferDetails = {
@@ -32,20 +30,73 @@ type TransferDetails = {
   currency?: string;
 };
 
+const STEPS: { id: Step; label: string }[] = [
+  { id: "delivery", label: "Delivery" },
+  { id: "payment", label: "Payment" },
+  { id: "review", label: "Review" },
+];
+
+function Stepper({ step }: { step: Step }) {
+  const idx = STEPS.findIndex((s) => s.id === step);
+  return (
+    <View className="px-5 pt-2 pb-4">
+      <View className="flex-row gap-1.5">
+        {STEPS.map((s, i) => (
+          <View
+            key={s.id}
+            className="flex-1 rounded-full"
+            style={{ height: 4, backgroundColor: i <= idx ? COLORS.primary : "#e5e7eb" }}
+          />
+        ))}
+      </View>
+      <View className="flex-row mt-1.5">
+        {STEPS.map((s, i) => (
+          <Text
+            key={s.id}
+            className="flex-1 text-[11px]"
+            style={{ color: i <= idx ? "#111827" : "#9ca3af", fontWeight: i === idx ? "700" : "400" }}
+          >
+            {s.label}
+          </Text>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+function useCountdown(expiresAt?: string | null) {
+  const [left, setLeft] = useState("");
+  useEffect(() => {
+    if (!expiresAt) { setLeft(""); return; }
+    const tick = () => {
+      const ms = new Date(expiresAt).getTime() - Date.now();
+      if (ms <= 0) { setLeft("Expired"); return; }
+      const m = Math.floor(ms / 60000);
+      const s = Math.floor((ms % 60000) / 1000);
+      setLeft(`${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`);
+    };
+    tick();
+    const t = setInterval(tick, 1000);
+    return () => clearInterval(t);
+  }, [expiresAt]);
+  return left;
+}
+
 export default function CheckoutScreen() {
   useRequireAuth();
   const router = useRouter();
   const { pendingOrder, fetchPendingOrder, clearCart } = useCartStore();
-  const { user } = useAuthStore();
+  const { user, profile } = useAuthStore();
 
-  const [step, setStep] = useState<Step>("review");
+  const [step, setStep] = useState<Step>("delivery");
+  const [processing, setProcessing] = useState(false);
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [deliveryType, setDeliveryType] = useState<DeliveryType>("delivery");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("bank_transfer");
   const [loadingAddresses, setLoadingAddresses] = useState(true);
-  const [isProcessing, setIsProcessing] = useState(false);
   const [confirmedOrderId, setConfirmedOrderId] = useState<string | null>(null);
+  const [confirmedTotal, setConfirmedTotal] = useState(0);
   const [checkoutSummary, setCheckoutSummary] = useState<CheckoutSummary | null>(null);
   const [deliverySettings, setDeliverySettings] = useState<DeliverySettings | null>(null);
   const [transfer, setTransfer] = useState<TransferDetails | null>(null);
@@ -53,6 +104,10 @@ export default function CheckoutScreen() {
   const [installmentAmount, setInstallmentAmount] = useState("");
   const [installmentTransferStarted, setInstallmentTransferStarted] = useState(false);
   const [verifyingPayment, setVerifyingPayment] = useState(false);
+
+  const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [instructions, setInstructions] = useState("");
 
   useEffect(() => {
     fetchPendingOrder();
@@ -71,7 +126,14 @@ export default function CheckoutScreen() {
       })
       .catch(() => {})
       .finally(() => setLoadingAddresses(false));
-  }, [fetchPendingOrder]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!fullName) setFullName((profile as any)?.name ?? "");
+    if (!phone) setPhone((profile as any)?.phone ?? "");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile]);
 
   const order = checkoutSummary?.order ?? pendingOrder;
   const items = order?.order_items ?? [];
@@ -82,6 +144,15 @@ export default function CheckoutScreen() {
     : Number(selectedAddress?.delivery_state?.delivery_price ?? deliverySettings?.base_delivery_price ?? checkoutSummary?.summary.delivery_fee ?? 0);
   const total = subtotal + deliveryFee;
   const canContinue = items.length > 0 && (deliveryType === "pickup" || !!selectedAddressId);
+
+  const countdown = useCountdown(transfer?.expires_at);
+
+  const copyNumber = () => {
+    if (transfer) {
+      Clipboard.setString(transfer.account_number);
+      Alert.alert("Copied", "Account number copied to clipboard.");
+    }
+  };
 
   const beginInstallmentTransfer = async () => {
     if (!confirmedOrderId || !user?.email || !installment) return;
@@ -102,7 +173,7 @@ export default function CheckoutScreen() {
       return;
     }
 
-    setIsProcessing(true);
+    setProcessing(true);
     try {
       const bankTransfer = await paymentsApi.initializeBankTransfer({
         order_id: confirmedOrderId,
@@ -116,7 +187,7 @@ export default function CheckoutScreen() {
     } catch (e: any) {
       Alert.alert("Payment details failed", e?.response?.data?.detail ?? e?.message ?? "Could not generate bank transfer details.");
     } finally {
-      setIsProcessing(false);
+      setProcessing(false);
     }
   };
 
@@ -124,14 +195,14 @@ export default function CheckoutScreen() {
     if (!transfer?.reference) return;
     setVerifyingPayment(true);
     try {
-      const result = await paymentsApi.verify(transfer.reference) as { status?: string; order_id?: string };
+      const result = await paymentsApi.verify(transfer.reference) as { status?: string };
       const status = String(result?.status ?? "success").toLowerCase();
       if (!["success", "paid", "completed"].includes(status)) {
         Alert.alert("Payment not received yet", "We have not received your transfer yet. Please try again shortly after transferring.");
         return;
       }
       await clearCart();
-      setStep("success");
+      setStep("review");
     } catch (e: any) {
       Alert.alert("Verification failed", e?.response?.data?.detail ?? e?.message ?? "Please try again.");
     } finally {
@@ -139,9 +210,13 @@ export default function CheckoutScreen() {
     }
   };
 
-  const handlePlaceOrder = async () => {
+  const handleContinueFromDelivery = async () => {
+    if (!fullName.trim()) {
+      Alert.alert("Full Name Required", "Please enter the recipient's full name.");
+      return;
+    }
     if (deliveryType === "delivery" && !selectedAddressId) {
-      Alert.alert("Address Required", "Please select a delivery address before placing your order.");
+      Alert.alert("Address Required", "Please select a delivery address before continuing.");
       return;
     }
     if (!pendingOrder || items.length === 0) {
@@ -149,8 +224,7 @@ export default function CheckoutScreen() {
       return;
     }
 
-    setIsProcessing(true);
-    setStep("processing");
+    setProcessing(true);
     setTransfer(null);
     setInstallment(null);
     setInstallmentAmount("");
@@ -162,6 +236,7 @@ export default function CheckoutScreen() {
         delivery_address_id: deliveryType === "delivery" ? selectedAddressId : null,
       });
       setConfirmedOrderId(confirmation.order_id);
+      setConfirmedTotal(Number(confirmation.total_amount ?? total));
 
       if (paymentMethod === "installment") {
         const plan = await ordersApi.getInstallment(confirmation.order_id);
@@ -180,386 +255,334 @@ export default function CheckoutScreen() {
       setTransfer(bankTransfer);
       setStep("payment");
     } catch (e: any) {
-      setStep("review");
-      Alert.alert(
-        "Checkout Failed",
-        e?.response?.data?.detail ?? e?.message ?? "Something went wrong. Please try again."
-      );
+      Alert.alert("Checkout Failed", e?.response?.data?.detail ?? e?.message ?? "Something went wrong. Please try again.");
     } finally {
-      setIsProcessing(false);
+      setProcessing(false);
     }
   };
 
-  // ── States ───────────────────────────────────────────────────────────────────
-
-  if (step === "processing") {
+  if (items.length === 0 && !loadingAddresses && !confirmedOrderId) {
     return (
-      <SafeAreaView className="flex-1 bg-gray-50 items-center justify-center gap-5">
-        <ActivityIndicator size="large" color="#f59e0b" />
-        <Text className="text-base font-bold text-gray-900">Processing your order…</Text>
-        <Text className="text-sm text-gray-500 text-center px-8">
-          We're placing your order and preparing your payment details.
-        </Text>
-      </SafeAreaView>
-    );
-  }
-
-  if (step === "payment") {
-    const showTransfer = paymentMethod === "bank_transfer" || installmentTransferStarted;
-    return (
-      <SafeAreaView className="flex-1 bg-gray-50">
-        <StatusBar barStyle="dark-content" />
-        <ScreenHeader title={paymentMethod === "installment" ? "Start your plan" : "Bank Transfer"} />
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
-          <View className="gap-5">
-            {paymentMethod === "installment" && installment && !installmentTransferStarted && (
-              <View className="bg-white rounded-2xl p-4 gap-4" style={shadow.md}>
-                {installment.eligible ? (
-                  <>
-                    <View>
-                      <Text className="text-lg font-extrabold text-gray-900">Installment Plan</Text>
-                      <Text className="text-sm text-gray-500 mt-1">Choose your first payment to get started.</Text>
-                    </View>
-                    <View className="gap-3">
-                      <View className="flex-row justify-between">
-                        <Text className="text-sm text-gray-500">Order total</Text>
-                        <Text className="text-sm font-bold text-gray-900">{fmt(installment.total_amount)}</Text>
-                      </View>
-                      <View className="flex-row justify-between">
-                        <Text className="text-sm text-gray-500">Remaining balance</Text>
-                        <Text className="text-sm font-bold text-gray-900">{fmt(installment.remaining_balance)}</Text>
-                      </View>
-                      <View className="flex-row justify-between">
-                        <Text className="text-sm text-gray-500">Minimum first payment</Text>
-                        <Text className="text-sm font-bold text-gray-900">{fmt(installment.min_initial_amount)}</Text>
-                      </View>
-                    </View>
-                    <View>
-                      <Text className="text-xs font-bold text-gray-500 mb-2">Amount to pay now</Text>
-                      <TextInput
-                        value={installmentAmount}
-                        onChangeText={setInstallmentAmount}
-                        keyboardType="numeric"
-                        className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-base font-bold text-gray-900"
-                        placeholder="Enter amount"
-                      />
-                    </View>
-                    <TouchableOpacity
-                      onPress={beginInstallmentTransfer}
-                      disabled={isProcessing}
-                      className="bg-amber-400 rounded-2xl py-4 items-center"
-                      style={shadow.btn}
-                    >
-                      {isProcessing ? <ActivityIndicator color="#fff" /> : <Text className="text-white font-bold">Continue to transfer</Text>}
-                    </TouchableOpacity>
-                  </>
-                ) : (
-                  <View className="items-center gap-3 py-6">
-                    <AlertCircle size={42} color="#f59e0b" />
-                    <Text className="text-lg font-extrabold text-gray-900">Installment unavailable</Text>
-                    <Text className="text-sm text-gray-500 text-center">{installment.reason ?? "This order is not eligible for installment payment."}</Text>
-                  </View>
-                )}
-              </View>
-            )}
-
-            {showTransfer && transfer && (
-              <View className="bg-white rounded-2xl p-4 gap-4" style={shadow.md}>
-                <View>
-                  <Text className="text-lg font-extrabold text-gray-900">Bank Transfer Details</Text>
-                  <Text className="text-sm text-gray-500 mt-1">Please send the exact amount to the account below.</Text>
-                </View>
-                {[
-                  ["Bank", transfer.bank_name],
-                  ["Account Number", transfer.account_number],
-                  ["Account Name", transfer.account_name],
-                  ["Amount", fmt(transfer.amount)],
-                  ["Reference", transfer.reference],
-                ].map(([label, value]) => (
-                  <View key={label} className="flex-row justify-between gap-4 border-b border-gray-100 pb-3">
-                    <Text className="text-sm text-gray-500">{label}</Text>
-                    <Text className="text-sm font-bold text-gray-900 flex-1 text-right">{value}</Text>
-                  </View>
-                ))}
-                {transfer.expires_at && (
-                  <Text className="text-xs text-amber-600">
-                    This transfer account expires at {new Date(transfer.expires_at).toLocaleString()}.
-                  </Text>
-                )}
-                <TouchableOpacity
-                  onPress={verifyTransfer}
-                  disabled={verifyingPayment}
-                  className="bg-amber-400 rounded-2xl py-4 items-center"
-                  style={shadow.btn}
-                >
-                  {verifyingPayment ? <ActivityIndicator color="#fff" /> : <Text className="text-white font-bold">I have sent the payment</Text>}
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => confirmedOrderId ? router.push(`/order-details?id=${confirmedOrderId}` as any) : router.push("/orders")}
-                  className="bg-white border border-gray-200 rounded-2xl py-4 items-center"
-                >
-                  <Text className="text-gray-700 font-bold">View order</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
-        </ScrollView>
-      </SafeAreaView>
-    );
-  }
-
-  if (step === "success") {
-    return (
-      <SafeAreaView className="flex-1 bg-gray-50 items-center justify-center px-8 gap-6">
-        <View className="w-24 h-24 rounded-full bg-green-50 items-center justify-center">
-          <CheckCircle size={48} color="#22c55e" />
-        </View>
-        <View className="items-center gap-2">
-          <Text className="text-2xl font-extrabold text-gray-900">Payment Sent!</Text>
-          <Text className="text-sm text-gray-500 text-center leading-relaxed">
-            We'll verify your transfer and update your order shortly.
-          </Text>
-        </View>
-        <TouchableOpacity
-          onPress={() => confirmedOrderId
-            ? router.push(`/order-details?id=${confirmedOrderId}` as any)
-            : router.push("/orders")}
-          className="w-full bg-amber-400 py-4 rounded-2xl items-center"
-          style={shadow.btn}
-        >
-          <Text className="text-white font-bold">Track My Order</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => router.replace("/(tabs)")}
-          className="w-full bg-white border border-gray-200 py-4 rounded-2xl items-center"
-        >
-          <Text className="text-gray-700 font-semibold">Continue Shopping</Text>
-        </TouchableOpacity>
-      </SafeAreaView>
-    );
-  }
-
-  if (items.length === 0 && !loadingAddresses) {
-    return (
-      <SafeAreaView className="flex-1 bg-gray-50 items-center justify-center gap-5 px-8">
+      <SafeAreaView className="flex-1 bg-white items-center justify-center gap-4 px-8">
         <Package size={48} color="#d1d5db" />
-        <Text className="text-lg font-bold text-gray-900">Your cart is empty</Text>
-        <Text className="text-sm text-gray-400 text-center">Add items before checking out.</Text>
-        <TouchableOpacity onPress={() => router.back()} className="bg-amber-400 px-6 py-3 rounded-2xl" style={shadow.btn}>
-          <Text className="text-white font-bold">Go Back</Text>
+        <Text className="text-lg font-grotesk-bold text-gray-900">Your cart is empty</Text>
+        <Text className="font-manrope text-sm text-gray-400 text-center">Add items before checking out.</Text>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className="px-6 py-3 rounded-xl"
+          style={{ backgroundColor: COLORS.primary }}
+        >
+          <Text className="text-white font-grotesk-bold">Go Back</Text>
         </TouchableOpacity>
       </SafeAreaView>
     );
   }
 
-  // ── Review ───────────────────────────────────────────────────────────────────
+  const stepNumber = step === "delivery" ? 1 : step === "payment" ? 2 : 3;
+  const stepName = step === "delivery" ? "Delivery" : step === "payment" ? "Payment" : "Review";
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
+    <SafeAreaView className="flex-1 bg-white">
       <StatusBar barStyle="dark-content" />
-      <ScreenHeader title="Checkout" />
+      <ScreenHeader title="Checkout" subtitle={`Step ${stepNumber} of 3 ${stepName}`} />
+      <Stepper step={step} />
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
-        <View className="px-5 pt-5 gap-6">
+      {/* ── STEP 1: DELIVERY ── */}
+      {step === "delivery" && (
+        <>
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
+            <View className="px-5 gap-4">
+              <LabeledInput label="Full name" value={fullName} onChangeText={setFullName} placeholder="Oluwasegun Adebayo" autoCapitalize="words" />
+              <LabeledInput
+                label="Phone number" value={phone} onChangeText={setPhone}
+                placeholder="+234 803 412 8890" keyboardType="phone-pad"
+                hint="We call before delivery"
+              />
 
-          {/* Delivery type */}
-          <View>
-            <SectionHeader title="Delivery Method" showDots={false} />
-            <View className="flex-row bg-white rounded-2xl p-1 border border-gray-100" style={shadow.sm}>
-              {(["delivery", "pickup"] as DeliveryType[]).map((type) => {
-                const active = deliveryType === type;
-                return (
-                  <TouchableOpacity
-                    key={type}
-                    onPress={() => setDeliveryType(type)}
-                    className={`flex-1 py-3 rounded-xl items-center ${active ? "bg-orange-500" : ""}`}
-                  >
-                    <Text className={`text-sm font-bold ${active ? "text-white" : "text-gray-600"}`}>
-                      {type === "delivery" ? "Delivery" : "Pickup"}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </View>
-
-          {/* Delivery address */}
-          <View>
-            <SectionHeader title={deliveryType === "delivery" ? "Delivery Address" : "Pickup"} showDots={false} />
-            {deliveryType === "pickup" ? (
-              <View className="bg-white rounded-2xl p-4 flex-row items-center gap-3 border border-gray-100" style={shadow.md}>
-                <View className="w-10 h-10 rounded-full bg-orange-50 items-center justify-center">
-                  <Store size={18} color="#ff4b26" />
-                </View>
-                <View className="flex-1">
-                  <Text className="text-sm font-bold text-gray-900">{deliverySettings?.store_pickup_location || "Store pickup"}</Text>
-                  <Text className="text-xs text-gray-500">
-                    {deliverySettings?.store_pickup_address || "No delivery fee will be charged."}
-                  </Text>
+              {/* Delivery method */}
+              <View className="gap-1.5">
+                <Text className="text-xs font-grotesk-bold text-gray-900">Delivery method</Text>
+                <View className="flex-row gap-2">
+                  {(["delivery", "pickup"] as DeliveryType[]).map((t) => {
+                    const active = deliveryType === t;
+                    return (
+                      <TouchableOpacity
+                        key={t}
+                        onPress={() => setDeliveryType(t)}
+                        className="flex-1 py-3 rounded-lg items-center border"
+                        style={{
+                          backgroundColor: active ? COLORS.primarySoft : "#fff",
+                          borderColor: active ? COLORS.primary : COLORS.inputBorder,
+                        }}
+                      >
+                        <Text className="text-xs font-grotesk-bold" style={{ color: active ? COLORS.primary : "#374151" }}>
+                          {t === "delivery" ? "Delivery" : "Pickup"}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
                 </View>
               </View>
-            ) : loadingAddresses ? (
-              <ActivityIndicator color="#f59e0b" />
-            ) : addresses.length === 0 ? (
-              <TouchableOpacity
-                onPress={() => router.push("/addresses")}
-                className="bg-white rounded-2xl p-4 flex-row items-center gap-3 border border-amber-200"
-                style={shadow.md}
-              >
-                <View className="w-10 h-10 rounded-full bg-amber-50 items-center justify-center">
-                  <MapPin size={18} color="#f59e0b" />
-                </View>
-                <Text className="text-sm font-semibold text-amber-600 flex-1">
-                  Add a delivery address first →
-                </Text>
-              </TouchableOpacity>
-            ) : (
-              <View className="gap-2">
-                {addresses.map((addr) => (
+
+              {/* Address */}
+              <View className="gap-1.5">
+                <Text className="text-xs font-grotesk-bold text-gray-900">Delivery address</Text>
+                {deliveryType === "pickup" ? (
+                  <View className="border rounded-lg px-4 py-3.5" style={{ borderColor: COLORS.inputBorder }}>
+                    <Text className="text-sm font-grotesk-semibold text-gray-900">
+                      {deliverySettings?.store_pickup_location || "Store pickup"}
+                    </Text>
+                    <Text className="font-manrope text-xs text-gray-400 mt-0.5">
+                      {deliverySettings?.store_pickup_address || "No delivery fee will be charged."}
+                    </Text>
+                  </View>
+                ) : loadingAddresses ? (
+                  <ActivityIndicator color={COLORS.primary} />
+                ) : addresses.length === 0 ? (
                   <TouchableOpacity
-                    key={addr.id}
-                    onPress={() => setSelectedAddressId(addr.id)}
-                    className={`bg-white rounded-2xl p-4 flex-row items-center gap-3 border-2 ${selectedAddressId === addr.id ? "border-amber-400" : "border-transparent"}`}
-                    style={shadow.sm}
+                    onPress={() => router.push("/addresses")}
+                    className="border rounded-lg px-4 py-3.5"
+                    style={{ borderColor: COLORS.primary }}
                   >
-                    <View className={`w-5 h-5 rounded-full border-2 items-center justify-center flex-shrink-0 ${selectedAddressId === addr.id ? "border-amber-400 bg-amber-400" : "border-gray-300"}`}>
-                      {selectedAddressId === addr.id && <View className="w-2 h-2 rounded-full bg-white" />}
+                    <Text className="text-sm font-grotesk-semibold" style={{ color: COLORS.primary }}>
+                      Add a delivery address first →
+                    </Text>
+                  </TouchableOpacity>
+                ) : (
+                  <View className="gap-2">
+                    {addresses.map((addr) => {
+                      const active = selectedAddressId === addr.id;
+                      return (
+                        <TouchableOpacity
+                          key={addr.id}
+                          onPress={() => setSelectedAddressId(addr.id)}
+                          className="border rounded-lg px-4 py-3 flex-row items-center gap-3"
+                          style={{ borderColor: active ? COLORS.primary : COLORS.inputBorder }}
+                        >
+                          <View
+                            className="w-4 h-4 rounded-full border-2 items-center justify-center"
+                            style={{ borderColor: active ? COLORS.primary : "#d1d5db" }}
+                          >
+                            {active && <View className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS.primary }} />}
+                          </View>
+                          <View className="flex-1">
+                            <Text className="text-sm font-grotesk-bold text-gray-900">{addr.title}</Text>
+                            <Text className="font-manrope text-xs text-gray-500" numberOfLines={1}>
+                              {addr.street_address}, {addr.city}, {addr.state_province}
+                            </Text>
+                          </View>
+                        </TouchableOpacity>
+                      );
+                    })}
+                    <TouchableOpacity onPress={() => router.push("/addresses")} className="self-end">
+                      <Text className="text-xs font-grotesk-semibold" style={{ color: COLORS.primary }}>+ Add new address</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+
+              <LabeledInput
+                label="Delivery instructions (optional)" value={instructions} onChangeText={setInstructions}
+                placeholder="e.g. Call when you reach the estate gate" multiline
+              />
+
+              {/* Payment method */}
+              <View className="gap-1.5">
+                <Text className="text-xs font-grotesk-bold text-gray-900">Payment method</Text>
+                {([
+                  { key: "bank_transfer", title: "Bank Transfer", desc: "Transfer to a dedicated account.", Icon: Landmark },
+                  { key: "installment", title: "Installment plan", desc: "Pay a first amount now, top up later.", Icon: Wallet },
+                ] as const).map((option) => {
+                  const active = paymentMethod === option.key;
+                  const Icon = option.Icon;
+                  return (
+                    <TouchableOpacity
+                      key={option.key}
+                      onPress={() => setPaymentMethod(option.key)}
+                      className="border rounded-lg p-3.5 flex-row items-center gap-3"
+                      style={{ borderColor: active ? COLORS.primary : COLORS.inputBorder }}
+                    >
+                      <Icon size={18} color={active ? COLORS.primary : "#6b7280"} />
+                      <View className="flex-1">
+                        <Text className="text-sm font-grotesk-bold text-gray-900">{option.title}</Text>
+                        <Text className="font-manrope text-xs text-gray-400">{option.desc}</Text>
+                      </View>
+                      <View
+                        className="w-4 h-4 rounded-full border-2 items-center justify-center"
+                        style={{ borderColor: active ? COLORS.primary : "#d1d5db" }}
+                      >
+                        {active && <View className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS.primary }} />}
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              {/* Summary */}
+              <View className="gap-2 border-t border-gray-100 pt-4">
+                <View className="flex-row justify-between">
+                  <Text className="font-manrope text-[13px] text-gray-500">Subtotal</Text>
+                  <Text className="text-[13px] font-grotesk-bold text-gray-900">{fmt(subtotal)}</Text>
+                </View>
+                <View className="flex-row justify-between">
+                  <Text className="font-manrope text-[13px] text-gray-500">Delivery Fee</Text>
+                  <Text className="text-[13px] font-grotesk-bold text-gray-900">
+                    {deliveryType === "pickup" ? "Free" : fmt(deliveryFee)}
+                  </Text>
+                </View>
+                <View className="flex-row justify-between">
+                  <Text className="text-sm font-grotesk-extrabold text-gray-900">Total</Text>
+                  <Text className="text-sm font-grotesk-extrabold" style={{ color: COLORS.primary }}>{fmt(total)}</Text>
+                </View>
+              </View>
+            </View>
+          </ScrollView>
+          <View className="absolute bottom-0 left-0 right-0 bg-white px-5 pb-8 pt-3 border-t border-gray-100">
+            <PrimaryButton title={processing ? "Processing…" : "Continue"} onPress={handleContinueFromDelivery} disabled={!canContinue || processing} busy={processing} />
+          </View>
+        </>
+      )}
+
+      {/* ── STEP 2: PAYMENT ── */}
+      {step === "payment" && (
+        <>
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
+            <View className="px-5 gap-4">
+              <View>
+                <Text className="text-lg font-grotesk-extrabold text-gray-900">Complete your payment.</Text>
+                <Text className="font-manrope text-[13px] text-gray-400 mt-1">
+                  Transfer the exact amount to the account below to complete your payment
+                </Text>
+              </View>
+
+              {paymentMethod === "installment" && installment && !installmentTransferStarted ? (
+                <View className="border border-gray-100 rounded-2xl p-5 gap-4">
+                  {installment.eligible ? (
+                    <>
+                      <View className="gap-2.5">
+                        <View className="flex-row justify-between">
+                          <Text className="font-manrope text-[13px] text-gray-500">Order total</Text>
+                          <Text className="text-[13px] font-grotesk-bold text-gray-900">{fmt(installment.total_amount)}</Text>
+                        </View>
+                        <View className="flex-row justify-between">
+                          <Text className="font-manrope text-[13px] text-gray-500">Remaining balance</Text>
+                          <Text className="text-[13px] font-grotesk-bold text-gray-900">{fmt(installment.remaining_balance)}</Text>
+                        </View>
+                        <View className="flex-row justify-between">
+                          <Text className="font-manrope text-[13px] text-gray-500">Minimum first payment</Text>
+                          <Text className="text-[13px] font-grotesk-bold text-gray-900">{fmt(installment.min_initial_amount)}</Text>
+                        </View>
+                      </View>
+                      <View className="gap-1.5">
+                        <Text className="text-xs font-grotesk-bold text-gray-900">Amount to pay now</Text>
+                        <TextInput
+                          value={installmentAmount}
+                          onChangeText={setInstallmentAmount}
+                          keyboardType="numeric"
+                          placeholder="Enter amount"
+                          placeholderTextColor="#bdbdbd"
+                          className="border rounded-lg px-4 py-3.5 font-grotesk-bold text-sm text-gray-900"
+                          style={{ borderColor: COLORS.inputBorder }}
+                        />
+                      </View>
+                      <PrimaryButton title="Continue to transfer" onPress={beginInstallmentTransfer} disabled={processing} busy={processing} />
+                    </>
+                  ) : (
+                    <Text className="font-manrope text-sm text-gray-500 text-center py-4">
+                      {installment.reason ?? "This order is not eligible for installment payment."}
+                    </Text>
+                  )}
+                </View>
+              ) : transfer ? (
+                <View className="border border-gray-100 rounded-2xl p-5 gap-4">
+                  <View>
+                    <Text className="text-sm font-grotesk-extrabold text-gray-900">Bank Transfer Details</Text>
+                    <Text className="font-manrope text-xs text-gray-400 mt-0.5">Please send the exact amount to the account below</Text>
+                  </View>
+                  <View className="gap-3">
+                    {[
+                      ["Bank name", transfer.bank_name],
+                      ["Account Name", transfer.account_name],
+                    ].map(([label, value]) => (
+                      <View key={label} className="flex-row justify-between">
+                        <Text className="font-manrope text-[13px] text-gray-500">{label}</Text>
+                        <Text className="text-[13px] font-grotesk-bold text-gray-900">{value}</Text>
+                      </View>
+                    ))}
+                    <View className="flex-row justify-between items-center">
+                      <Text className="font-manrope text-[13px] text-gray-500">Account Number</Text>
+                      <View className="flex-row items-center gap-2">
+                        <Text className="text-[13px] font-grotesk-extrabold text-gray-900">{transfer.account_number}</Text>
+                        <TouchableOpacity onPress={copyNumber} hitSlop={8}>
+                          <Copy size={14} color="#9ca3af" />
+                        </TouchableOpacity>
+                      </View>
                     </View>
-                    <View className="flex-1">
-                      <Text className="text-sm font-bold text-gray-900">{addr.title}</Text>
-                      <Text className="text-xs text-gray-500" numberOfLines={1}>
-                        {addr.street_address}, {addr.city}, {addr.state_province}
-                      </Text>
+                  </View>
+                  <View className="rounded-xl px-4 py-3 gap-1.5" style={{ backgroundColor: COLORS.peach }}>
+                    <View className="flex-row justify-between">
+                      <Text className="text-xs font-grotesk-semibold" style={{ color: COLORS.primary }}>Amount to Transfer</Text>
+                      <Text className="text-xs font-grotesk-extrabold" style={{ color: COLORS.primary }}>{fmt(transfer.amount)}</Text>
                     </View>
-                    {addr.is_default && (
-                      <View className="bg-green-50 px-2 py-0.5 rounded-full">
-                        <Text className="text-[10px] font-bold text-green-600">Default</Text>
+                    {!!countdown && (
+                      <View className="flex-row justify-between">
+                        <Text className="text-xs font-grotesk-semibold" style={{ color: COLORS.primary }}>Complete your payment within</Text>
+                        <Text className="text-xs font-grotesk-extrabold" style={{ color: COLORS.primary }}>{countdown}</Text>
                       </View>
                     )}
-                  </TouchableOpacity>
-                ))}
-                <TouchableOpacity onPress={() => router.push("/addresses")} className="flex-row items-center gap-1 self-end pr-1">
-                  <Text className="text-xs text-amber-500 font-semibold">+ Add new address</Text>
+                  </View>
+                  <View className="flex-row items-center gap-1.5">
+                    <CheckCircle size={12} color="#9ca3af" />
+                    <Text className="font-manrope text-[11px] text-gray-400">We will confirm your payment and give you an update</Text>
+                  </View>
+                  <PrimaryButton
+                    title={verifyingPayment ? "Verifying…" : "I've Made The Transfer Payment"}
+                    onPress={verifyTransfer}
+                    disabled={verifyingPayment}
+                    busy={verifyingPayment}
+                  />
+                </View>
+              ) : (
+                <View className="items-center py-10">
+                  <ActivityIndicator size="large" color={COLORS.primary} />
+                </View>
+              )}
+            </View>
+          </ScrollView>
+        </>
+      )}
+
+      {/* ── STEP 3: REVIEW ── */}
+      {step === "review" && (
+        <>
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
+            <View className="px-5 gap-4 items-center pt-6">
+              <View className="w-20 h-20 rounded-full items-center justify-center" style={{ backgroundColor: "#f0fdf4" }}>
+                <CheckCircle size={40} color={COLORS.success} />
+              </View>
+              <Text className="text-xl font-grotesk-extrabold text-gray-900">Payment Submitted!</Text>
+              <Text className="font-manrope text-[13px] text-gray-500 text-center leading-relaxed">
+                We'll verify your transfer and update your order shortly.{"\n"}
+                {confirmedOrderId ? `Order #${confirmedOrderId.slice(-8).toUpperCase()} · ${fmt(confirmedTotal)}` : ""}
+              </Text>
+              <View className="w-full gap-2.5 mt-2">
+                <PrimaryButton
+                  title="Track My Order"
+                  onPress={() => confirmedOrderId
+                    ? router.push(`/order-details?id=${confirmedOrderId}` as any)
+                    : router.push("/orders")}
+                />
+                <TouchableOpacity
+                  onPress={() => router.push("/(tabs)")}
+                  className="rounded-xl border border-gray-300 py-4 items-center"
+                >
+                  <Text className="text-sm font-grotesk-bold text-gray-700">Continue Shopping</Text>
                 </TouchableOpacity>
               </View>
-            )}
-          </View>
-
-          {/* Items */}
-          <View>
-            <SectionHeader title={`Order Items (${items.length})`} showDots={false} />
-            <View className="bg-white rounded-2xl overflow-hidden" style={shadow.md}>
-              {items.map((item, i) => (
-                <View
-                  key={item.id}
-                  className={`flex-row items-center gap-3 p-4 ${i < items.length - 1 ? "border-b border-gray-100" : ""}`}
-                >
-                  <View className="w-10 h-10 rounded-xl bg-gray-100 items-center justify-center">
-                    <Package size={18} color="#6b7280" />
-                  </View>
-                  <View className="flex-1">
-                    <Text className="text-sm font-semibold text-gray-900" numberOfLines={1}>
-                      {item.product?.name ?? "Product"}
-                    </Text>
-                    <Text className="text-xs text-gray-500">Qty: {item.quantity}</Text>
-                  </View>
-                  <Text className="text-sm font-bold text-gray-900">
-                    {fmt(item.price * item.quantity)}
-                  </Text>
-                </View>
-              ))}
             </View>
-          </View>
-
-          {/* Delivery notice */}
-          <View className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex-row gap-3">
-            <Truck size={18} color="#3b82f6" />
-            <View className="flex-1">
-              <Text className="text-sm font-bold text-blue-900 mb-0.5">Delivery Fee</Text>
-              <Text className="text-xs text-blue-700 leading-relaxed">
-                {deliveryType === "pickup"
-                  ? "Pickup is free."
-                  : "Delivery is included in your checkout total based on the selected address."}
-              </Text>
-            </View>
-          </View>
-
-          {/* Payment method */}
-          <View>
-            <SectionHeader title="Payment Method" showDots={false} />
-            <View className="gap-3">
-              {([
-                { key: "bank_transfer", title: "Bank Transfer", desc: "Transfer to a dedicated checkout account.", icon: Landmark },
-                { key: "installment", title: "Installment plan", desc: "Pay a first amount now and top up over time.", icon: Wallet },
-              ] as const).map((option) => {
-                const active = paymentMethod === option.key;
-                const Icon = option.icon;
-                return (
-                  <TouchableOpacity
-                    key={option.key}
-                    onPress={() => setPaymentMethod(option.key)}
-                    className={`bg-white rounded-2xl p-4 flex-row items-center gap-3 border-2 ${active ? "border-amber-400" : "border-transparent"}`}
-                    style={shadow.sm}
-                  >
-                    <View className={`w-10 h-10 rounded-full items-center justify-center ${active ? "bg-amber-50" : "bg-gray-50"}`}>
-                      <Icon size={18} color={active ? "#f59e0b" : "#6b7280"} />
-                    </View>
-                    <View className="flex-1">
-                      <Text className="text-sm font-bold text-gray-900">{option.title}</Text>
-                      <Text className="text-xs text-gray-500">{option.desc}</Text>
-                    </View>
-                    <View className={`w-5 h-5 rounded-full border-2 items-center justify-center ${active ? "border-amber-400 bg-amber-400" : "border-gray-300"}`}>
-                      {active && <View className="w-2 h-2 rounded-full bg-white" />}
-                    </View>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </View>
-
-          {/* Summary */}
-          <View>
-            <SectionHeader title="Summary" showDots={false} />
-            <View className="bg-white rounded-2xl p-4 gap-3" style={shadow.md}>
-              <View className="flex-row justify-between">
-                <Text className="text-sm text-gray-500">Subtotal</Text>
-                <Text className="text-sm font-semibold text-gray-900">{fmt(subtotal)}</Text>
-              </View>
-              <View className="flex-row justify-between">
-                <Text className="text-sm text-gray-500">Delivery Fee</Text>
-                <Text className="text-sm font-semibold text-gray-900">{deliveryType === "pickup" ? "Free" : fmt(deliveryFee)}</Text>
-              </View>
-              <View className="h-px bg-gray-100" />
-              <View className="flex-row justify-between">
-                <Text className="text-base font-extrabold text-gray-900">Total</Text>
-                <Text className="text-base font-extrabold text-amber-400">{fmt(total)}</Text>
-              </View>
-            </View>
-          </View>
-
-        </View>
-      </ScrollView>
-
-      {/* Sticky CTA */}
-      <View
-        className="absolute bottom-0 left-0 right-0 bg-white px-5 pb-8 pt-4 border-t border-gray-100"
-        style={shadow.lg}
-      >
-        <TouchableOpacity
-          onPress={handlePlaceOrder}
-          disabled={isProcessing || !canContinue}
-          className={`rounded-2xl py-4 items-center ${
-            !canContinue ? "bg-gray-200" : "bg-amber-400"
-          }`}
-          style={!canContinue ? undefined : shadow.btn}
-        >
-          {isProcessing
-            ? <ActivityIndicator color="#fff" />
-            : <Text className={`font-bold text-base ${!canContinue ? "text-gray-400" : "text-white"}`}>
-                {deliveryType === "delivery" && !selectedAddressId ? "Select an address first" : `Continue — ${fmt(total)}`}
-              </Text>}
-        </TouchableOpacity>
-      </View>
+          </ScrollView>
+        </>
+      )}
     </SafeAreaView>
   );
 }

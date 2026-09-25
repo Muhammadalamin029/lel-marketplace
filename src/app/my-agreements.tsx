@@ -42,7 +42,7 @@ export default function MyAgreementsScreen() {
   useEffect(() => {
     let cancelled = false;
     inspectionsApi.listAgreements()
-      .then((data) => { if (!cancelled) setAgreements(data ?? []); })
+      .then((data) => { if (!cancelled) setAgreements(Array.isArray(data) ? data : []); })
       .catch((e) => { if (!cancelled) setError(e?.message ?? "Failed to load agreements"); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
@@ -62,8 +62,8 @@ export default function MyAgreementsScreen() {
       <ScrollView className="flex-1 px-5 pt-5" showsVerticalScrollIndicator={false}>
         {loading ? (
           <View className="items-center justify-center pt-20">
-            <ActivityIndicator size="large" color="#f59e0b" />
-            <Text className="text-sm text-gray-400 mt-3">Loading agreements…</Text>
+            <ActivityIndicator size="large" color="#ff4b26" />
+            <Text className="font-manrope text-sm text-gray-400 mt-3">Loading agreements…</Text>
           </View>
         ) : error ? (
           <EmptyState Icon={FileText} title="Could not load agreements" subtitle={error} />
@@ -97,10 +97,10 @@ export default function MyAgreementsScreen() {
                       <AssetIcon size={24} color={iconColor} strokeWidth={1.5} />
                     </View>
                     <View className="flex-1 min-w-0">
-                      <Text className="text-sm font-extrabold text-gray-900" numberOfLines={1}>
+                      <Text className="text-sm font-grotesk-extrabold text-gray-900" numberOfLines={1}>
                         {agr.asset?.title ?? `${agr.asset_type} Asset`}
                       </Text>
-                      <Text className="text-xs text-gray-400 mt-0.5">
+                      <Text className="font-manrope text-xs text-gray-400 mt-0.5">
                         #{agr.id.slice(0, 8).toUpperCase()} · {agr.plan_type === "structured" ? "Installment" : "Flexible"}
                       </Text>
                     </View>
@@ -111,15 +111,15 @@ export default function MyAgreementsScreen() {
                   {agr.status === "active" && (
                     <View className="mb-4">
                       <View className="flex-row justify-between mb-1.5">
-                        <Text className="text-[10px] text-gray-400 font-semibold uppercase">Amount Paid</Text>
-                        <Text className="text-[10px] font-bold text-gray-600">{pct}%</Text>
+                        <Text className="text-[10px] text-gray-400 font-grotesk-semibold uppercase">Amount Paid</Text>
+                        <Text className="text-[10px] font-grotesk-bold text-gray-600">{pct}%</Text>
                       </View>
                       <View className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                        <View className="h-full bg-amber-400 rounded-full" style={{ width: `${pct}%` }} />
+                        <View className="h-full bg-[#ff4b26] rounded-full" style={{ width: `${pct}%` }} />
                       </View>
                       <View className="flex-row justify-between mt-1">
-                        <Text className="text-[10px] text-gray-400">{fmt(paid)} paid</Text>
-                        <Text className="text-[10px] text-gray-400">{fmt(agr.total_price)} total</Text>
+                        <Text className="font-manrope text-[10px] text-gray-400">{fmt(paid)} paid</Text>
+                        <Text className="font-manrope text-[10px] text-gray-400">{fmt(agr.total_price)} total</Text>
                       </View>
                     </View>
                   )}
@@ -127,30 +127,30 @@ export default function MyAgreementsScreen() {
                   {/* Key financials */}
                   <View className="flex-row gap-3 mb-4">
                     <View className="flex-1 bg-gray-50 rounded-xl p-3">
-                      <Text className="text-[10px] text-gray-400 font-semibold uppercase mb-1">Total Price</Text>
-                      <Text className="text-sm font-bold text-gray-900">{fmt(agr.total_price)}</Text>
+                      <Text className="text-[10px] text-gray-400 font-grotesk-semibold uppercase mb-1">Total Price</Text>
+                      <Text className="text-sm font-grotesk-bold text-gray-900">{fmt(agr.total_price)}</Text>
                     </View>
                     <View className="flex-1 bg-gray-50 rounded-xl p-3">
-                      <Text className="text-[10px] text-gray-400 font-semibold uppercase mb-1">
+                      <Text className="text-[10px] text-gray-400 font-grotesk-semibold uppercase mb-1">
                         {agr.status === "pending_deposit" ? "Deposit Due" : "Remaining"}
                       </Text>
-                      <Text className="text-sm font-bold text-amber-500">
+                      <Text className="text-sm font-grotesk-bold text-[#ff4b26]">
                         {fmt(agr.remaining_balance ?? agr.total_price)}
                       </Text>
                     </View>
                     {agr.monthly_installment && (
                       <View className="flex-1 bg-gray-50 rounded-xl p-3">
-                        <Text className="text-[10px] text-gray-400 font-semibold uppercase mb-1">Monthly</Text>
-                        <Text className="text-sm font-bold text-gray-900">{fmt(agr.monthly_installment)}</Text>
+                        <Text className="text-[10px] text-gray-400 font-grotesk-semibold uppercase mb-1">Monthly</Text>
+                        <Text className="text-sm font-grotesk-bold text-gray-900">{fmt(agr.monthly_installment)}</Text>
                       </View>
                     )}
                   </View>
 
                   {/* Next due date */}
                   {agr.next_due_date && agr.status === "active" && (
-                    <View className="flex-row items-center gap-2 bg-amber-50 rounded-xl px-3 py-2 mb-4 border border-amber-100">
-                      <Calendar size={13} color="#f59e0b" />
-                      <Text className="text-xs text-amber-700 font-semibold">
+                    <View className="flex-row items-center gap-2 bg-[#fff0e9] rounded-xl px-3 py-2 mb-4 border border-[#ffd9c7]">
+                      <Calendar size={13} color="#ff4b26" />
+                      <Text className="text-xs text-[#c23a12] font-grotesk-semibold">
                         Next payment due:{" "}
                         {new Date(agr.next_due_date).toLocaleDateString("en-NG", { day: "numeric", month: "short", year: "numeric" })}
                       </Text>
@@ -162,26 +162,26 @@ export default function MyAgreementsScreen() {
                     {agr.status === "pending_deposit" && (
                       <TouchableOpacity
                         onPress={() => router.push(`/agreement-details?id=${agr.id}&openPayment=true` as any)}
-                        className="flex-row items-center gap-1.5 bg-amber-400 px-4 py-2 rounded-xl"
+                        className="flex-row items-center gap-1.5 bg-[#ff4b26] px-4 py-2 rounded-xl"
                         style={shadow.btn}
                       >
                         <CreditCard size={14} color="#fff" />
-                        <Text className="text-white text-xs font-bold">Pay Deposit</Text>
+                        <Text className="text-white text-xs font-grotesk-bold">Pay Deposit</Text>
                       </TouchableOpacity>
                     )}
                     {agr.status === "active" && (
                       <TouchableOpacity
                         onPress={() => router.push(`/agreement-details?id=${agr.id}&openPayment=true` as any)}
-                        className="flex-row items-center gap-1.5 bg-amber-400 px-4 py-2 rounded-xl"
+                        className="flex-row items-center gap-1.5 bg-[#ff4b26] px-4 py-2 rounded-xl"
                         style={shadow.btn}
                       >
                         <CreditCard size={14} color="#fff" />
-                        <Text className="text-white text-xs font-bold">Pay Installment</Text>
+                        <Text className="text-white text-xs font-grotesk-bold">Pay Installment</Text>
                       </TouchableOpacity>
                     )}
                     {!["pending_deposit", "active"].includes(agr.status) && <View />}
                     <View className="flex-row items-center gap-1">
-                      <Text className="text-xs font-bold text-indigo-600">Details</Text>
+                      <Text className="text-xs font-grotesk-bold text-indigo-600">Details</Text>
                       <ChevronRight size={14} color="#4f46e5" />
                     </View>
                   </View>

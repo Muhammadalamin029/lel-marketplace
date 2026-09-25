@@ -1,8 +1,11 @@
-import { useRef, useState } from "react";
-import { FlatList, Image, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { FlatList, Image, Text, TouchableOpacity, useWindowDimensions, View, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { BRAND, BRAND_ASSETS, COLORS } from "@/constants/brand";
+import { getApiError } from "@/api";
+import { handleGoogleResponse, useGoogleIdTokenRequest } from "@/hooks/useGoogleAuth";
+import { GoogleButton } from "@/components/forms";
 
 const SLIDES = [
   {
@@ -41,12 +44,32 @@ export default function Onboarding() {
     router.replace("/(auth)/login");
   };
 
+  const [googleBusy, setGoogleBusy] = useState(false);
+  const { request: googleRequest, response: googleResponse, promptAsync: promptGoogle, configured: googleConfigured } =
+    useGoogleIdTokenRequest();
+
+  useEffect(() => {
+    if (!googleResponse) return;
+    (async () => {
+      setGoogleBusy(true);
+      try {
+        const { redirectTarget } = await handleGoogleResponse(googleResponse);
+        router.replace(redirectTarget as any);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : getApiError(e);
+        if (msg !== "Google sign-in was cancelled.") Alert.alert("Google Sign-In", msg);
+      } finally {
+        setGoogleBusy(false);
+      }
+    })();
+  }, [googleResponse]);
+
   return (
     <SafeAreaView className="flex-1 bg-white">
       <View className="px-8 pt-6 flex-row items-center justify-between">
-        <Text className="text-base font-black text-gray-950">{BRAND.name}</Text>
+        <Text className="text-base font-grotesk-extrabold text-gray-950">{BRAND.name}</Text>
         <TouchableOpacity onPress={() => router.replace("/(auth)/login")}>
-          <Text style={{ color: COLORS.primary }} className="text-sm font-bold">Skip</Text>
+          <Text style={{ color: COLORS.primary }} className="text-sm font-grotesk-bold">Skip</Text>
         </TouchableOpacity>
       </View>
 
@@ -71,22 +94,26 @@ export default function Onboarding() {
                 />
               ))}
             </View>
-            <Text className="text-2xl font-black text-gray-950 leading-8">
+            <Text className="text-2xl font-grotesk-extrabold text-gray-950 leading-8">
               {item.title.replace(item.accent, "")}
               <Text style={{ color: COLORS.primary }}>{item.accent}</Text>
             </Text>
-            <Text className="text-sm text-gray-400 leading-6 mt-4">{item.description}</Text>
+            <Text className="font-manrope text-sm text-gray-400 leading-6 mt-4">{item.description}</Text>
           </View>
         )}
       />
 
       <View className="px-8 pb-10 gap-3">
         <TouchableOpacity onPress={goNext} className="h-14 rounded-full items-center justify-center" style={{ backgroundColor: COLORS.primary }}>
-          <Text className="text-white text-sm font-black">Get Started</Text>
+          <Text className="text-white text-sm font-grotesk-extrabold">Get Started</Text>
         </TouchableOpacity>
-        <TouchableOpacity className="h-14 rounded-full border border-gray-200 items-center justify-center">
-          <Text className="text-gray-950 text-sm font-bold">Continue with Google</Text>
-        </TouchableOpacity>
+        {googleConfigured && (
+          <GoogleButton
+            onPress={() => promptGoogle()}
+            disabled={!googleRequest || googleBusy}
+            busy={googleBusy}
+          />
+        )}
       </View>
     </SafeAreaView>
   );

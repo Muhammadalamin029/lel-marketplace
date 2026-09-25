@@ -106,24 +106,24 @@ export default function AddressesScreen() {
           <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center">
             <ArrowLeft size={18} color="#111827" />
           </TouchableOpacity>
-          <Text className="text-lg font-extrabold text-gray-900">Saved Addresses</Text>
+          <Text className="text-lg font-grotesk-extrabold text-gray-900">Saved Addresses</Text>
         </View>
-        <TouchableOpacity onPress={openAdd} className="w-10 h-10 rounded-full bg-amber-50 items-center justify-center" style={shadow.sm}>
-          <Plus size={20} color="#f59e0b" />
+        <TouchableOpacity onPress={openAdd} className="w-10 h-10 rounded-full bg-[#fff0e9] items-center justify-center" style={shadow.sm}>
+          <Plus size={20} color="#ff4b26" />
         </TouchableOpacity>
       </View>
 
       <ScrollView className="flex-1 px-5 pt-5" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 140 }}>
         {loading ? (
           <View className="items-center justify-center pt-20">
-            <ActivityIndicator size="large" color="#f59e0b" />
+            <ActivityIndicator size="large" color="#ff4b26" />
           </View>
         ) : (
           <View className="gap-4 pb-28">
             {addresses.map((addr) => (
               <View
                 key={addr.id}
-                className={`bg-white rounded-2xl p-4 border-2 ${addr.is_default ? "border-amber-400" : "border-transparent"}`}
+                className={`bg-white rounded-2xl p-4 border-2 ${addr.is_default ? "border-[#ff4b26]" : "border-transparent"}`}
                 style={shadow.card}
               >
                 <View className="flex-row justify-between items-start mb-3">
@@ -132,11 +132,11 @@ export default function AddressesScreen() {
                       <MapPin size={18} color="#4f46e5" />
                     </View>
                     <View>
-                      <Text className="text-sm font-bold text-gray-900">{addr.title}</Text>
+                      <Text className="text-sm font-grotesk-bold text-gray-900">{addr.title}</Text>
                       {addr.is_default && (
                         <View className="flex-row items-center gap-1 mt-0.5">
-                          <CheckCircle size={10} color="#f59e0b" />
-                          <Text className="text-[10px] font-bold text-amber-500 uppercase tracking-wider">Default</Text>
+                          <CheckCircle size={10} color="#ff4b26" />
+                          <Text className="text-[10px] font-grotesk-bold text-[#ff4b26] uppercase tracking-wider">Default</Text>
                         </View>
                       )}
                     </View>
@@ -144,8 +144,8 @@ export default function AddressesScreen() {
 
                   <View className="flex-row gap-1.5">
                     {!addr.is_default && (
-                      <TouchableOpacity onPress={() => setDefault(addr.id)} className="w-8 h-8 rounded-full bg-amber-50 items-center justify-center">
-                        <Star size={14} color="#f59e0b" />
+                      <TouchableOpacity onPress={() => setDefault(addr.id)} className="w-8 h-8 rounded-full bg-[#fff0e9] items-center justify-center">
+                        <Star size={14} color="#ff4b26" />
                       </TouchableOpacity>
                     )}
                     <TouchableOpacity onPress={() => openEdit(addr)} className="w-8 h-8 rounded-full bg-blue-50 items-center justify-center">
@@ -158,14 +158,14 @@ export default function AddressesScreen() {
                 </View>
 
                 <View className="pl-12">
-                  <Text className="text-sm text-gray-600 mb-0.5">{addr.street_address}</Text>
-                  <Text className="text-sm text-gray-500">{addr.city}, {addr.state_province}</Text>
+                  <Text className="font-grotesk text-sm text-gray-600 mb-0.5">{addr.street_address}</Text>
+                  <Text className="font-manrope text-sm text-gray-500">{addr.city}, {addr.state_province}</Text>
                   {addr.delivery_state && (
-                    <Text className="text-xs text-orange-500 mt-1">
+                    <Text className="font-grotesk text-xs text-orange-500 mt-1">
                       Delivery: {addr.delivery_state.state_name}
                     </Text>
                   )}
-                  <Text className="text-sm text-gray-500">{addr.country}</Text>
+                  <Text className="font-manrope text-sm text-gray-500">{addr.country}</Text>
                 </View>
               </View>
             ))}
@@ -175,8 +175,8 @@ export default function AddressesScreen() {
                 <View className="w-16 h-16 rounded-full bg-gray-100 items-center justify-center">
                   <MapPin size={28} color="#9ca3af" />
                 </View>
-                <Text className="text-base font-bold text-gray-900">No addresses yet</Text>
-                <Text className="text-sm text-gray-400">Tap + to add your first address.</Text>
+                <Text className="text-base font-grotesk-bold text-gray-900">No addresses yet</Text>
+                <Text className="font-manrope text-sm text-gray-400">Tap + to add your first address.</Text>
               </View>
             )}
           </View>
@@ -186,7 +186,7 @@ export default function AddressesScreen() {
       <View className="absolute bottom-0 left-0 right-0 p-5 bg-white border-t border-gray-100">
         <TouchableOpacity onPress={openAdd} className="w-full bg-gray-900 h-14 rounded-2xl items-center justify-center flex-row gap-2" style={shadow.md}>
           <Plus size={18} color="#ffffff" />
-          <Text className="text-white font-bold text-base">Add New Address</Text>
+          <Text className="text-white font-grotesk-bold text-base">Add New Address</Text>
         </TouchableOpacity>
       </View>
 
@@ -198,7 +198,7 @@ export default function AddressesScreen() {
             keyboardVerticalOffset={Platform.OS === "ios" ? 12 : 0}
           >
             <View className="flex-row items-center justify-between px-5 pt-4 pb-4 border-b border-gray-100">
-              <Text className="text-lg font-extrabold text-gray-900">{editing ? "Edit Address" : "New Address"}</Text>
+              <Text className="text-lg font-grotesk-extrabold text-gray-900">{editing ? "Edit Address" : "New Address"}</Text>
               <TouchableOpacity onPress={() => setModalOpen(false)} className="w-9 h-9 rounded-full bg-gray-100 items-center justify-center">
                 <X size={18} color="#374151" />
               </TouchableOpacity>
@@ -220,7 +220,7 @@ export default function AddressesScreen() {
                   { label: "Country", key: "country" as const, placeholder: "Nigeria" },
                 ].map(({ label, key, placeholder }) => (
                   <View key={key} className="gap-1.5">
-                    <Text className="text-xs font-bold text-gray-500 uppercase tracking-wide">{label}</Text>
+                    <Text className="text-xs font-grotesk-bold text-gray-500 uppercase tracking-wide">{label}</Text>
                     <TextInput
                       className="border border-gray-200 rounded-xl bg-gray-50 px-4 py-3 text-sm text-gray-900"
                       placeholder={placeholder}
@@ -233,7 +233,7 @@ export default function AddressesScreen() {
 
                 {deliveryStates.length > 0 && (
                   <View className="gap-2">
-                    <Text className="text-xs font-bold text-gray-500 uppercase tracking-wide">Delivery State</Text>
+                    <Text className="text-xs font-grotesk-bold text-gray-500 uppercase tracking-wide">Delivery State</Text>
                     <View className="flex-row flex-wrap gap-2">
                       {deliveryStates.map((state) => {
                         const active = form.delivery_state_id === state.id;
@@ -247,7 +247,7 @@ export default function AddressesScreen() {
                             }))}
                             className={`px-3 py-2 rounded-full border ${active ? "bg-orange-500 border-orange-500" : "bg-white border-gray-200"}`}
                           >
-                            <Text className={`text-xs font-bold ${active ? "text-white" : "text-gray-700"}`}>
+                            <Text className={`text-xs font-grotesk-bold ${active ? "text-white" : "text-gray-700"}`}>
                               {state.state_name}
                             </Text>
                           </TouchableOpacity>
@@ -260,10 +260,10 @@ export default function AddressesScreen() {
                 <TouchableOpacity
                   onPress={handleSave}
                   disabled={saving}
-                  className={`py-4 rounded-2xl items-center mt-2 ${saving ? "bg-amber-300" : "bg-amber-400"}`}
+                  className={`py-4 rounded-2xl items-center mt-2 ${saving ? "bg-amber-300" : "bg-[#ff4b26]"}`}
                   style={shadow.btn}
                 >
-                  {saving ? <ActivityIndicator color="#fff" /> : <Text className="text-white font-bold">{editing ? "Save Changes" : "Add Address"}</Text>}
+                  {saving ? <ActivityIndicator color="#fff" /> : <Text className="text-white font-grotesk-bold">{editing ? "Save Changes" : "Add Address"}</Text>}
                 </TouchableOpacity>
               </View>
             </ScrollView>

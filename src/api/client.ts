@@ -37,7 +37,25 @@ api.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
   return config;
 });
 
-// ── Response interceptor: silent token refresh on 401 ────────────────────────
+// Endpoints that never carry a usable session — a 401 here is the real
+// answer (e.g. wrong password), not a signal to rotate tokens (web parity:
+// web only refreshes when a refresh token actually exists).
+const NO_REFRESH_URLS = [
+  "/auth/login",
+  "/auth/register",
+  "/auth/refresh",
+  "/auth/google",
+  "/auth/request-password-reset",
+  "/auth/reset-password",
+  "/auth/verify-email",
+  "/auth/send-verification",
+  "/auth/resend-verification",
+];
+
+function shouldAttemptRefresh(url: string | undefined): boolean {
+  if (!url) return true;
+  return !NO_REFRESH_URLS.some((p) => url.includes(p));
+}
 
 let isRefreshing = false;
 let failedQueue: Array<{ resolve: (t: string) => void; reject: (e: unknown) => void }> = [];
@@ -56,6 +74,13 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
+    // Never rewrite auth failures (login/register/refresh/verify): surface the
+    // backend's message (e.g. "Invalid email or password") instead of a
+    // misleading "No refresh token".
+    if (!shouldAttemptRefresh(original.url)) {
+      return Promise.reject(error);
+    }
+
     if (isRefreshing) {
       return new Promise((resolve, reject) => {
         failedQueue.push({ resolve, reject });
@@ -70,7 +95,9 @@ api.interceptors.response.use(
 
     try {
       const refreshToken = await storage.getRefreshToken();
-      if (!refreshToken) throw new Error("No refresh token");
+      // No session to rotate (e.g. logged-out request hit 401) — keep the
+      // original error so the UI shows the real reason.
+      if (!refreshToken) return Promise.reject(error);
 
       const { data } = await axios.post(`${BASE_URL}/auth/refresh`, {
         refresh_token: refreshToken,

@@ -25,9 +25,36 @@ export interface CustomerProfileData {
   created_at?: string;
 }
 
+export interface PasswordPolicy {
+  min_length: number;
+  max_length: number;
+  requires_uppercase: boolean;
+  requires_lowercase: boolean;
+  requires_number: boolean;
+  requires_special_char: boolean;
+  special_chars: string;
+  description: string;
+}
+
+export interface PasswordStrength {
+  score: number;
+  max_score: number;
+  strength: "Weak" | "Fair" | "Good" | "Excellent";
+  feedback: string[];
+}
+
 export const authApi = {
   async login(payload: LoginPayload): Promise<TokenResponse> {
     const { data } = await api.post<TokenResponse>("/auth/login", payload);
+    await storage.setTokens(data.access_token, data.refresh_token);
+    return data;
+  },
+
+  /** POST /auth/google — customer sign-in with a Google ID token (web parity). */
+  async googleLogin(idToken: string): Promise<TokenResponse> {
+    const { data } = await api.post<TokenResponse>("/auth/google", {
+      id_token: idToken,
+    });
     await storage.setTokens(data.access_token, data.refresh_token);
     return data;
   },
@@ -75,6 +102,28 @@ export const authApi = {
 
   async resetPassword(email: string, reset_code: string, new_password: string, confirm_password: string): Promise<void> {
     await api.post("/auth/reset-password", { email, reset_code, new_password, confirm_password });
+  },
+
+  /** GET /auth/password-policy — server-driven requirements (web parity). */
+  async getPasswordPolicy(): Promise<PasswordPolicy> {
+    const { data } = await api.get("/auth/password-policy");
+    return (data?.data ?? data) as PasswordPolicy;
+  },
+
+  /** POST /auth/check-password-strength — server-side strength meter (web parity). */
+  async checkPasswordStrength(password: string): Promise<{ strength: PasswordStrength; errors: string[]; is_valid: boolean }> {
+    const { data } = await api.post("/auth/check-password-strength", { password });
+    return (data?.data ?? data) as { strength: PasswordStrength; errors: string[]; is_valid: boolean };
+  },
+
+  /** GET /auth/verification-status/{email} — poll whether email is verified. */
+  async getVerificationStatus(email: string): Promise<{ verified: boolean } & Record<string, unknown>> {
+    const { data } = await api.get(`/auth/verification-status/${encodeURIComponent(email)}`);
+    return (data?.data ?? data) as { verified: boolean } & Record<string, unknown>;
+  },
+
+  async resendVerificationEmail(email: string): Promise<void> {
+    await api.post("/auth/resend-verification", { email });
   },
 
   async logout(): Promise<void> {

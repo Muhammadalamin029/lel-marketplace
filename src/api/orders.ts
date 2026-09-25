@@ -219,8 +219,16 @@ export const ordersApi = {
     return unwrapData(data);
   },
 
-  async getTimeline(id: string) {
+  async getTimeline(id: string): Promise<{ event: string; timestamp: string; description?: string }[]> {
     const { data } = await api.get(`/orders/${id}/timeline`);
-    return data;
+    // Backend shape: { success, data: { order_id, current_status, timeline: [{status, date, completed, description}] } }
+    const inner = (data as any)?.data ?? data;
+    const raw = inner?.timeline ?? inner;
+    const list = Array.isArray(raw) ? raw : [];
+    return list.map((e: any) => ({
+      event: e.event ?? e.status ?? "Status update",
+      timestamp: e.timestamp ?? e.date ?? "",
+      description: e.description,
+    }));
   },
 };

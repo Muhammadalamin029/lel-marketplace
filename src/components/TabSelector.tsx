@@ -18,7 +18,7 @@ export function TabSelector<T extends string>({ tabs, activeTab, onTabChange }: 
           }`}
         >
           <Text
-            className={`text-xs font-bold ${
+            className={`font-grotesk-bold text-xs ${
               activeTab === tab ? "text-gray-900" : "text-gray-500"
             }`}
           >

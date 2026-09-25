@@ -108,10 +108,10 @@ export function InspectionModal({ visible, onClose, assetId, assetType, assetTit
         {/* Header */}
         <View className="flex-row items-center justify-between px-5 pt-4 pb-4 border-b border-gray-100">
           <View className="flex-1">
-            <Text className="text-lg font-extrabold text-gray-900">
+            <Text className="text-lg font-grotesk-extrabold text-gray-900">
               {isVehicle ? "Request Inspection" : "Book a Viewing"}
             </Text>
-            <Text className="text-xs text-gray-400 mt-0.5" numberOfLines={1}>{assetTitle}</Text>
+            <Text className="font-manrope text-xs text-gray-400 mt-0.5" numberOfLines={1}>{assetTitle}</Text>
           </View>
           <TouchableOpacity
             onPress={onClose}
@@ -125,7 +125,7 @@ export function InspectionModal({ visible, onClose, assetId, assetType, assetTit
           <View className="gap-5 pb-10">
 
             {/* Description */}
-            <Text className="text-sm text-gray-600 leading-relaxed">
+            <Text className="font-grotesk text-sm text-gray-600 leading-relaxed">
               {isVehicle
                 ? "Propose a preferred date and time for your visit. The seller will review and confirm or set a fixed time."
                 : "The agent will receive your request and confirm a convenient viewing time for the property."}
@@ -133,7 +133,7 @@ export function InspectionModal({ visible, onClose, assetId, assetType, assetTit
 
             {/* Date picker */}
             <View className="gap-2">
-              <Text className="text-sm font-bold text-gray-700">
+              <Text className="text-sm font-grotesk-bold text-gray-700">
                 {isVehicle ? "Proposed Date & Time" : "Preferred Viewing Date & Time"}
               </Text>
 
@@ -144,10 +144,10 @@ export function InspectionModal({ visible, onClose, assetId, assetType, assetTit
                   className="flex-1 bg-gray-50 border border-gray-200 rounded-xl p-4 flex-row items-center gap-2"
                   style={shadow.sm}
                 >
-                  <Calendar size={18} color="#f59e0b" />
+                  <Calendar size={18} color="#ff4b26" />
                   <View className="flex-1">
-                    <Text className="text-[10px] text-gray-400 font-semibold uppercase">Date</Text>
-                    <Text className="text-sm font-bold text-gray-900" numberOfLines={1}>{formattedDate}</Text>
+                    <Text className="text-[10px] text-gray-400 font-grotesk-semibold uppercase">Date</Text>
+                    <Text className="text-sm font-grotesk-bold text-gray-900" numberOfLines={1}>{formattedDate}</Text>
                   </View>
                 </TouchableOpacity>
 
@@ -157,10 +157,10 @@ export function InspectionModal({ visible, onClose, assetId, assetType, assetTit
                   className="bg-gray-50 border border-gray-200 rounded-xl p-4 flex-row items-center gap-2"
                   style={shadow.sm}
                 >
-                  <Clock size={18} color="#f59e0b" />
+                  <Clock size={18} color="#ff4b26" />
                   <View>
-                    <Text className="text-[10px] text-gray-400 font-semibold uppercase">Time</Text>
-                    <Text className="text-sm font-bold text-gray-900">{formattedTime}</Text>
+                    <Text className="text-[10px] text-gray-400 font-grotesk-semibold uppercase">Time</Text>
+                    <Text className="text-sm font-grotesk-bold text-gray-900">{formattedTime}</Text>
                   </View>
                 </TouchableOpacity>
               </View>
@@ -186,17 +186,17 @@ export function InspectionModal({ visible, onClose, assetId, assetType, assetTit
             </View>
 
             {/* Selected summary */}
-            <View className="bg-amber-50 rounded-2xl p-4 border border-amber-100">
-              <Text className="text-xs font-bold text-amber-700 uppercase tracking-wide mb-2">Selected</Text>
-              <Text className="text-sm font-bold text-amber-900">{formattedDate}</Text>
-              <Text className="text-sm text-amber-700">{formattedTime}</Text>
+            <View className="bg-[#fff0e9] rounded-2xl p-4 border border-[#ffd9c7]">
+              <Text className="text-xs font-grotesk-bold text-[#c23a12] uppercase tracking-wide mb-2">Selected</Text>
+              <Text className="text-sm font-grotesk-bold text-amber-900">{formattedDate}</Text>
+              <Text className="font-grotesk text-sm text-[#c23a12]">{formattedTime}</Text>
             </View>
 
             {/* Info note */}
             <View className="bg-blue-50 rounded-2xl p-4 border border-blue-100 flex-row gap-3">
               <Info size={16} color="#3b82f6" style={{ marginTop: 1 }} />
               <View className="flex-1">
-                <Text className="text-sm text-blue-800 leading-relaxed">
+                <Text className="font-grotesk text-sm text-blue-800 leading-relaxed">
                   {isVehicle
                     ? "Location details will be shared once the seller confirms your inspection."
                     : "The exact location and agent contact will be revealed once the viewing is confirmed."}
@@ -208,8 +208,8 @@ export function InspectionModal({ visible, onClose, assetId, assetType, assetTit
             <View className="bg-green-50 rounded-2xl p-4 border border-green-100 flex-row items-center gap-3">
               <Shield size={20} color="#22c55e" />
               <View className="flex-1">
-                <Text className="text-sm font-bold text-green-800">Free Physical Inspection</Text>
-                <Text className="text-xs text-green-600 mt-0.5">
+                <Text className="text-sm font-grotesk-bold text-green-800">Free Physical Inspection</Text>
+                <Text className="font-grotesk text-xs text-green-600 mt-0.5">
                   There is no charge for scheduling an inspection on LEL Marketplace.
                 </Text>
               </View>
@@ -219,12 +219,12 @@ export function InspectionModal({ visible, onClose, assetId, assetType, assetTit
             <TouchableOpacity
               onPress={handleConfirm}
               disabled={isSubmitting}
-              className="bg-amber-400 py-4 rounded-2xl items-center"
+              className="bg-[#ff4b26] py-4 rounded-2xl items-center"
               style={shadow.btn}
             >
               {isSubmitting
                 ? <ActivityIndicator color="#fff" />
-                : <Text className="text-white font-bold text-base">
+                : <Text className="text-white font-grotesk-bold text-base">
                     {isVehicle ? "Confirm Booking" : "Confirm Request"}
                   </Text>}
             </TouchableOpacity>

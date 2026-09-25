@@ -12,11 +12,11 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Check, CreditCard, Landmark, MapPin, Package } from "lucide-react-native";
+import { Check, CreditCard, Landmark, Package } from "lucide-react-native";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { shadow } from "@/constants/shadows";
-import { addressesApi, inspectionsApi, paymentsApi, productsApi } from "@/api";
-import type { Address, Agreement, Car, Property } from "@/api";
+import { inspectionsApi, paymentsApi, productsApi } from "@/api";
+import type { Agreement, Car, Property } from "@/api";
 import { useAuthStore } from "@/store/authStore";
 import { useFinancingStore } from "@/store/financingStore";
 import { fmt } from "@/utils/format";
@@ -44,8 +44,6 @@ export default function AssetPurchaseScreen() {
 
   const [step, setStep] = useState<Step>("details");
   const [asset, setAsset] = useState<Car | Property | null>(null);
-  const [addresses, setAddresses] = useState<Address[]>([]);
-  const [selectedAddressId, setSelectedAddressId] = useState("");
   const [selectedUnitId, setSelectedUnitId] = useState("");
   const [planType, setPlanType] = useState<PlanChoice>("full_payment");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("bank_transfer");
@@ -60,15 +58,11 @@ export default function AssetPurchaseScreen() {
       if (!id || !type) return;
       setLoading(true);
       try {
-        const [assetData, addressData] = await Promise.all([
+        const [assetData] = await Promise.all([
           type === "automotive" ? productsApi.getCarById(id) : productsApi.getPropertyById(id),
-          addressesApi.list(),
           fetchMyApplication(),
         ]);
         setAsset(assetData);
-        setAddresses(addressData);
-        const def = addressData.find((a) => a.is_default) ?? addressData[0];
-        if (def) setSelectedAddressId(def.id);
         const units = ((assetData as any).units ?? []).filter((u: any) => u.status === "available");
         if (units[0]) setSelectedUnitId(units[0].id);
       } catch (e: any) {
@@ -98,7 +92,6 @@ export default function AssetPurchaseScreen() {
   const paymentCategory = planType === "full_payment" ? "full_pay" : "asset_deposit";
   const units = ((asset as any)?.units ?? []) as any[];
   const availableUnits = units.filter((u) => u.status === "available");
-  const selectedAddress = addresses.find((a) => a.id === selectedAddressId);
 
   const choosePlan = async (plan: PlanChoice) => {
     if ((plan === "monthly" || plan === "installment") && !isEligible()) {
@@ -125,11 +118,6 @@ export default function AssetPurchaseScreen() {
 
   const createAgreement = async () => {
     if (!asset || !id || !type) return null;
-    if (!selectedAddressId) {
-      Alert.alert("Address Required", "Please select a delivery or handover address.");
-      setStep("details");
-      return null;
-    }
     if (availableUnits.length > 0 && !selectedUnitId) {
       Alert.alert("Unit Required", "Please select a unit to purchase.");
       setStep("details");
@@ -218,8 +206,8 @@ export default function AssetPurchaseScreen() {
   if (loading || !asset) {
     return (
       <SafeAreaView className="flex-1 bg-gray-50 items-center justify-center gap-3">
-        <ActivityIndicator size="large" color="#f59e0b" />
-        <Text className="text-sm text-gray-400">Loading purchase…</Text>
+        <ActivityIndicator size="large" color="#ff4b26" />
+        <Text className="font-manrope text-sm text-gray-400">Loading purchase…</Text>
       </SafeAreaView>
     );
   }
@@ -234,12 +222,12 @@ export default function AssetPurchaseScreen() {
           {step !== "confirmation" && (
             <View className="bg-white rounded-3xl p-5 gap-3" style={shadow.md}>
               <View className="flex-row items-center gap-3">
-                <View className="w-12 h-12 rounded-2xl bg-amber-50 items-center justify-center">
-                  <Package size={22} color="#f59e0b" />
+                <View className="w-12 h-12 rounded-2xl bg-[#fff0e9] items-center justify-center">
+                  <Package size={22} color="#ff4b26" />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-base font-extrabold text-gray-900" numberOfLines={2}>{title}</Text>
-                  <Text className="text-xl font-black text-amber-500 mt-1">{fmt(price)}</Text>
+                  <Text className="text-base font-grotesk-extrabold text-gray-900" numberOfLines={2}>{title}</Text>
+                  <Text className="text-xl font-grotesk-extrabold text-[#ff4b26] mt-1">{fmt(price)}</Text>
                 </View>
               </View>
             </View>
@@ -248,33 +236,15 @@ export default function AssetPurchaseScreen() {
           {step === "details" && (
             <>
               <View className="bg-white rounded-3xl p-5 gap-4" style={shadow.md}>
-                <Text className="text-xs font-bold text-gray-400 uppercase tracking-wide">Personal Information</Text>
+                <Text className="text-xs font-grotesk-bold text-gray-400 uppercase tracking-wide">Personal Information</Text>
                 <InfoRow label="Full Name" value={(profile as any)?.name ?? user?.email?.split("@")[0] ?? "-"} />
                 <InfoRow label="Email" value={user?.email ?? "-"} />
                 <InfoRow label="Phone" value={(profile as any)?.phone ?? "Not set"} />
               </View>
 
-              <View className="bg-white rounded-3xl p-5 gap-3" style={shadow.md}>
-                <Text className="text-xs font-bold text-gray-400 uppercase tracking-wide">Delivery / Handover Address</Text>
-                {addresses.length === 0 ? (
-                  <TouchableOpacity onPress={() => router.push("/addresses")} className="border border-amber-200 rounded-2xl p-4 flex-row gap-3">
-                    <MapPin size={18} color="#f59e0b" />
-                    <Text className="text-sm font-bold text-amber-600 flex-1">Add an address to continue</Text>
-                  </TouchableOpacity>
-                ) : addresses.map((address) => (
-                  <SelectableRow
-                    key={address.id}
-                    active={selectedAddressId === address.id}
-                    title={address.title}
-                    subtitle={`${address.street_address}, ${address.city}, ${address.state_province}`}
-                    onPress={() => setSelectedAddressId(address.id)}
-                  />
-                ))}
-              </View>
-
               {availableUnits.length > 0 && (
                 <View className="bg-white rounded-3xl p-5 gap-3" style={shadow.md}>
-                  <Text className="text-xs font-bold text-gray-400 uppercase tracking-wide">Choose a Unit</Text>
+                  <Text className="text-xs font-grotesk-bold text-gray-400 uppercase tracking-wide">Choose a Unit</Text>
                   {availableUnits.map((unit) => (
                     <SelectableRow
                       key={unit.id}
@@ -288,14 +258,11 @@ export default function AssetPurchaseScreen() {
               )}
 
               <TouchableOpacity
-                onPress={() => {
-                  if (!selectedAddressId) Alert.alert("Address Required", "Please select or add an address.");
-                  else setStep("plan");
-                }}
-                className="bg-amber-400 py-4 rounded-2xl items-center"
+                onPress={() => setStep("plan")}
+                className="bg-[#ff4b26] py-4 rounded-2xl items-center"
                 style={shadow.btn}
               >
-                <Text className="text-white font-bold">Next</Text>
+                <Text className="text-white font-grotesk-bold">Next</Text>
               </TouchableOpacity>
             </>
           )}
@@ -337,9 +304,9 @@ export default function AssetPurchaseScreen() {
                     <TouchableOpacity
                       key={d}
                       onPress={() => setDuration(d)}
-                      className={`flex-1 py-3 rounded-xl items-center ${duration === d ? "bg-amber-400" : "bg-white border border-gray-200"}`}
+                      className={`flex-1 py-3 rounded-xl items-center ${duration === d ? "bg-[#ff4b26]" : "bg-white border border-gray-200"}`}
                     >
-                      <Text className={`font-bold ${duration === d ? "text-white" : "text-gray-700"}`}>{d} Months</Text>
+                      <Text className={`font-grotesk-bold ${duration === d ? "text-white" : "text-gray-700"}`}>{d} Months</Text>
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -350,15 +317,14 @@ export default function AssetPurchaseScreen() {
           {step === "payment" && (
             <>
               <View className="bg-white rounded-3xl p-5 gap-3" style={shadow.md}>
-                <Text className="text-xs font-bold text-gray-400 uppercase tracking-wide">Payment Summary</Text>
+                <Text className="text-xs font-grotesk-bold text-gray-400 uppercase tracking-wide">Payment Summary</Text>
                 <InfoRow label={type === "automotive" ? "Car" : "Property"} value={title} />
                 <InfoRow label="Payment Plan" value={planType.replace("_", " ")} />
                 <InfoRow label="Due Now" value={fmt(dueNow)} highlight />
-                {selectedAddress && <InfoRow label="Address" value={`${selectedAddress.city}, ${selectedAddress.state_province}`} />}
               </View>
 
               <View className="bg-white rounded-3xl p-5 gap-3" style={shadow.md}>
-                <Text className="text-xs font-bold text-gray-400 uppercase tracking-wide">Payment Method</Text>
+                <Text className="text-xs font-grotesk-bold text-gray-400 uppercase tracking-wide">Payment Method</Text>
                 {planType !== "monthly" && (
                   <SelectableRow
                     active={paymentMethod === "bank_transfer"}
@@ -379,19 +345,19 @@ export default function AssetPurchaseScreen() {
                 <TouchableOpacity
                   onPress={paymentMethod === "bank_transfer" ? startBankTransfer : startCardPayment}
                   disabled={busy}
-                  className="bg-amber-400 py-4 rounded-2xl flex-row items-center justify-center gap-2"
+                  className="bg-[#ff4b26] py-4 rounded-2xl flex-row items-center justify-center gap-2"
                   style={shadow.btn}
                 >
                   {busy ? <ActivityIndicator color="#fff" /> : (
                     <>
                       {paymentMethod === "bank_transfer" ? <Landmark size={16} color="#fff" /> : <CreditCard size={16} color="#fff" />}
-                      <Text className="text-white font-bold">Complete Payment</Text>
+                      <Text className="text-white font-grotesk-bold">Complete Payment</Text>
                     </>
                   )}
                 </TouchableOpacity>
               ) : (
                 <View className="bg-white rounded-3xl p-5 gap-4" style={shadow.md}>
-                  <Text className="text-base font-extrabold text-gray-900">Bank Transfer Details</Text>
+                  <Text className="text-base font-grotesk-extrabold text-gray-900">Bank Transfer Details</Text>
                   {[
                     ["Bank", transfer.bank_name],
                     ["Account Number", transfer.account_number],
@@ -400,10 +366,10 @@ export default function AssetPurchaseScreen() {
                     ["Reference", transfer.reference],
                   ].map(([label, value]) => <InfoRow key={label} label={label} value={value} />)}
                   {transfer.expires_at && (
-                    <Text className="text-xs text-amber-600">Expires at {new Date(transfer.expires_at).toLocaleString()}</Text>
+                    <Text className="font-grotesk text-xs text-[#e03f1c]">Expires at {new Date(transfer.expires_at).toLocaleString()}</Text>
                   )}
-                  <TouchableOpacity onPress={verifyTransfer} disabled={busy} className="bg-amber-400 py-4 rounded-2xl items-center" style={shadow.btn}>
-                    {busy ? <ActivityIndicator color="#fff" /> : <Text className="text-white font-bold">I have sent the payment</Text>}
+                  <TouchableOpacity onPress={verifyTransfer} disabled={busy} className="bg-[#ff4b26] py-4 rounded-2xl items-center" style={shadow.btn}>
+                    {busy ? <ActivityIndicator color="#fff" /> : <Text className="text-white font-grotesk-bold">I have sent the payment</Text>}
                   </TouchableOpacity>
                 </View>
               )}
@@ -415,16 +381,16 @@ export default function AssetPurchaseScreen() {
               <View className="w-20 h-20 rounded-full bg-green-50 items-center justify-center">
                 <Check size={40} color="#22c55e" />
               </View>
-              <Text className="text-2xl font-extrabold text-gray-900">Payment Submitted</Text>
-              <Text className="text-sm text-gray-500 text-center">
+              <Text className="text-2xl font-grotesk-extrabold text-gray-900">Payment Submitted</Text>
+              <Text className="font-manrope text-sm text-gray-500 text-center">
                 Thank you. Your purchase has been received and your agreement is ready to view.
               </Text>
               <TouchableOpacity
                 onPress={() => agreement ? router.replace(`/agreement-details?id=${agreement.id}` as any) : router.replace("/my-agreements")}
-                className="w-full bg-amber-400 py-4 rounded-2xl items-center"
+                className="w-full bg-[#ff4b26] py-4 rounded-2xl items-center"
                 style={shadow.btn}
               >
-                <Text className="text-white font-bold">View My Purchase</Text>
+                <Text className="text-white font-grotesk-bold">View My Purchase</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -437,8 +403,8 @@ export default function AssetPurchaseScreen() {
 function InfoRow({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
   return (
     <View className="flex-row justify-between gap-4">
-      <Text className="text-sm text-gray-500">{label}</Text>
-      <Text className={`text-sm font-bold flex-1 text-right ${highlight ? "text-amber-500" : "text-gray-900"}`}>{value}</Text>
+      <Text className="font-manrope text-sm text-gray-500">{label}</Text>
+      <Text className={`text-sm font-grotesk-bold flex-1 text-right ${highlight ? "text-[#ff4b26]" : "text-gray-900"}`}>{value}</Text>
     </View>
   );
 }
@@ -447,14 +413,14 @@ function SelectableRow({ active, title, subtitle, onPress }: { active: boolean; 
   return (
     <TouchableOpacity
       onPress={onPress}
-      className={`rounded-2xl p-4 flex-row items-center gap-3 border-2 ${active ? "border-amber-400 bg-amber-50" : "border-gray-100 bg-white"}`}
+      className={`rounded-2xl p-4 flex-row items-center gap-3 border-2 ${active ? "border-[#ff4b26] bg-[#fff0e9]" : "border-gray-100 bg-white"}`}
     >
-      <View className={`w-5 h-5 rounded-full border-2 items-center justify-center ${active ? "border-amber-400 bg-amber-400" : "border-gray-300"}`}>
+      <View className={`w-5 h-5 rounded-full border-2 items-center justify-center ${active ? "border-[#ff4b26] bg-[#ff4b26]" : "border-gray-300"}`}>
         {active && <View className="w-2 h-2 rounded-full bg-white" />}
       </View>
       <View className="flex-1">
-        <Text className="text-sm font-bold text-gray-900">{title}</Text>
-        <Text className="text-xs text-gray-500 mt-0.5">{subtitle}</Text>
+        <Text className="text-sm font-grotesk-bold text-gray-900">{title}</Text>
+        <Text className="font-manrope text-xs text-gray-500 mt-0.5">{subtitle}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -479,16 +445,16 @@ function PlanCard({
     <TouchableOpacity
       onPress={onPress}
       disabled={disabled}
-      className={`bg-white rounded-3xl p-5 gap-4 border-2 ${active && !disabled ? "border-amber-400" : "border-transparent"} ${disabled ? "opacity-60" : ""}`}
+      className={`bg-white rounded-3xl p-5 gap-4 border-2 ${active && !disabled ? "border-[#ff4b26]" : "border-transparent"} ${disabled ? "opacity-60" : ""}`}
       style={shadow.md}
     >
       <View className="flex-row items-start gap-3">
-        <View className={`w-6 h-6 rounded-full items-center justify-center ${active && !disabled ? "bg-amber-400" : "bg-gray-100"}`}>
+        <View className={`w-6 h-6 rounded-full items-center justify-center ${active && !disabled ? "bg-[#ff4b26]" : "bg-gray-100"}`}>
           {active && !disabled && <Check size={14} color="#fff" />}
         </View>
         <View className="flex-1">
-          <Text className="text-base font-extrabold text-gray-900">{title}</Text>
-          <Text className="text-sm text-gray-500 mt-1">{subtitle}</Text>
+          <Text className="text-base font-grotesk-extrabold text-gray-900">{title}</Text>
+          <Text className="font-manrope text-sm text-gray-500 mt-1">{subtitle}</Text>
         </View>
       </View>
       <View className="gap-2">

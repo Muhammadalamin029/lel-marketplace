@@ -1,4 +1,4 @@
-import { api, unwrapData } from "./client";
+import { api, unwrapData, unwrapList } from "./client";
 
 /** Matches backend AssetMini schema */
 export interface AssetMini {
@@ -85,7 +85,8 @@ export const inspectionsApi = {
 
   async list() {
     const { data } = await api.get("/assets/inspections");
-    return data as Inspection[];
+    // Backend returns { success, data: [...], pagination } — unwrap to a real array.
+    return unwrapList<Inspection>(data);
   },
 
   async getById(id: string) {
@@ -117,7 +118,8 @@ export const inspectionsApi = {
 
   async listAgreements() {
     const { data } = await api.get("/assets/agreements");
-    return data as Agreement[];
+    // Backend returns { success, data: [...], pagination } — unwrap to a real array.
+    return unwrapList<Agreement>(data);
   },
 
   /** POST /assets/agreements — direct asset purchase, used by FE PurchaseFlow */
@@ -136,6 +138,19 @@ export const inspectionsApi = {
   async cancelAgreement(id: string) {
     const { data } = await api.post(`/assets/agreements/${id}/cancel`);
     return unwrapData<Agreement>(data);
+  },
+  // ── Asset payments (customer history, web parity) ──────────────────────────
+
+  /** GET /assets/payments — customer's asset payment history */
+  async listAssetPayments() {
+    const { data } = await api.get("/assets/payments");
+    return Array.isArray(data) ? data : [];
+  },
+
+  /** GET /assets/payments/{id} — single asset payment details */
+  async getAssetPaymentById(id: string) {
+    const { data } = await api.get(`/assets/payments/${id}`);
+    return data;
   },
 
   async initiateMandate(agreementId: string, payload: { email: string; callback_url?: string }) {

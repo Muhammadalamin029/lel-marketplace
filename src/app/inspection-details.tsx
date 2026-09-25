@@ -27,7 +27,7 @@ function FinalizeOfferModal({
   isSubmitting: boolean;
 }) {
   const [agreedPrice, setAgreedPrice] = useState(String(assetPrice));
-  const [planType, setPlanType] = useState<"structured" | "flexible">("flexible");
+  const [planType, setPlanType] = useState<"structured" | "flexible" | "full">("flexible");
   const [duration, setDuration] = useState("6");
   const [notes, setNotes] = useState("");
   const [showPlanPicker, setShowPlanPicker] = useState(false);
@@ -45,9 +45,9 @@ function FinalizeOfferModal({
     onSubmit({
       agreed_price: price,
       notes: notes.trim() || undefined,
-      // Backend's payment_plan enum is monthly/full_payment/installment - this screen's
-      // structured/flexible choice maps to monthly/installment (no full-payment option here).
-      payment_plan: planType === "structured" ? "monthly" : "installment",
+      // Backend payment_plan enum: monthly/full_payment/installment.
+      // Structured → monthly, flexible → installment, full → full_payment (web parity).
+      payment_plan: planType === "structured" ? "monthly" : planType === "full" ? "full_payment" : "installment",
       duration_months: planType === "structured" ? durationNum : undefined,
       monthly_installment: planType === "structured" ? monthly : undefined,
     });
@@ -57,7 +57,7 @@ function FinalizeOfferModal({
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
       <SafeAreaView className="flex-1 bg-white">
         <View className="flex-row items-center justify-between px-5 pt-4 pb-4 border-b border-gray-100">
-          <Text className="text-lg font-extrabold text-gray-900">Finalize Offer & Plan</Text>
+          <Text className="text-lg font-grotesk-extrabold text-gray-900">Finalize Offer & Plan</Text>
           <TouchableOpacity onPress={onClose} className="w-9 h-9 rounded-full bg-gray-100 items-center justify-center">
             <X size={18} color="#374151" />
           </TouchableOpacity>
@@ -65,15 +65,15 @@ function FinalizeOfferModal({
 
         <ScrollView className="flex-1 px-5 pt-5" showsVerticalScrollIndicator={false}>
           <View className="gap-5 pb-10">
-            <Text className="text-sm text-gray-600 leading-relaxed">
+            <Text className="font-grotesk text-sm text-gray-600 leading-relaxed">
               Enter your final offer and choose a payment plan. The seller will review and approve.
             </Text>
 
             {/* Price */}
             <View className="gap-2">
-              <Text className="text-sm font-bold text-gray-700">Negotiated Final Price (₦) *</Text>
+              <Text className="text-sm font-grotesk-bold text-gray-700">Negotiated Final Price (₦) *</Text>
               <TextInput
-                className="border border-gray-200 rounded-xl bg-gray-50 px-4 py-3.5 text-base font-bold text-gray-900"
+                className="border border-gray-200 rounded-xl bg-gray-50 px-4 py-3.5 font-grotesk-bold text-base text-gray-900"
                 placeholder={`Listed at ${fmt(assetPrice)}`}
                 placeholderTextColor="#9ca3af"
                 value={agreedPrice}
@@ -84,13 +84,13 @@ function FinalizeOfferModal({
 
             {/* Plan type */}
             <View className="gap-2">
-              <Text className="text-sm font-bold text-gray-700">Payment Model *</Text>
+              <Text className="text-sm font-grotesk-bold text-gray-700">Payment Model *</Text>
               <TouchableOpacity
                 onPress={() => setShowPlanPicker(!showPlanPicker)}
                 className="border border-gray-200 rounded-xl bg-gray-50 px-4 py-3.5 flex-row items-center justify-between"
               >
-                <Text className="text-sm font-semibold text-gray-900">
-                  {planType === "structured" ? "Structured (Fixed monthly)" : "Flexible (Open duration)"}
+                <Text className="text-sm font-grotesk-semibold text-gray-900">
+                  {planType === "structured" ? "Structured (Fixed monthly)" : planType === "full" ? "Full Payment (Pay once)" : "Flexible (Open duration)"}
                 </Text>
                 <ChevronDown size={16} color="#6b7280" />
               </TouchableOpacity>
@@ -99,13 +99,14 @@ function FinalizeOfferModal({
                   {[
                     { value: "flexible", label: "Flexible (Open duration)" },
                     { value: "structured", label: "Structured (Fixed monthly)" },
+                    { value: "full", label: "Full Payment (Pay once)" },
                   ].map((opt) => (
                     <TouchableOpacity
                       key={opt.value}
                       onPress={() => { setPlanType(opt.value as any); setShowPlanPicker(false); }}
-                      className={`px-4 py-3 border-b border-gray-100 ${planType === opt.value ? "bg-amber-50" : "bg-white"}`}
+                      className={`px-4 py-3 border-b border-gray-100 ${planType === opt.value ? "bg-[#fff0e9]" : "bg-white"}`}
                     >
-                      <Text className={`text-sm font-semibold ${planType === opt.value ? "text-amber-600" : "text-gray-800"}`}>
+                      <Text className={`text-sm font-grotesk-semibold ${planType === opt.value ? "text-[#e03f1c]" : "text-gray-800"}`}>
                         {opt.label}
                       </Text>
                     </TouchableOpacity>
@@ -118,12 +119,12 @@ function FinalizeOfferModal({
             {planType === "structured" && (
               <View className="gap-3">
                 <View className="gap-2">
-                  <Text className="text-sm font-bold text-gray-700">Duration</Text>
+                  <Text className="text-sm font-grotesk-bold text-gray-700">Duration</Text>
                   <TouchableOpacity
                     onPress={() => setShowDurationPicker(!showDurationPicker)}
                     className="border border-gray-200 rounded-xl bg-gray-50 px-4 py-3.5 flex-row items-center justify-between"
                   >
-                    <Text className="text-sm font-semibold text-gray-900">{duration} months</Text>
+                    <Text className="text-sm font-grotesk-semibold text-gray-900">{duration} months</Text>
                     <ChevronDown size={16} color="#6b7280" />
                   </TouchableOpacity>
                   {showDurationPicker && (
@@ -132,9 +133,9 @@ function FinalizeOfferModal({
                         <TouchableOpacity
                           key={d}
                           onPress={() => { setDuration(d); setShowDurationPicker(false); }}
-                          className={`px-4 py-3 border-b border-gray-100 ${duration === d ? "bg-amber-50" : "bg-white"}`}
+                          className={`px-4 py-3 border-b border-gray-100 ${duration === d ? "bg-[#fff0e9]" : "bg-white"}`}
                         >
-                          <Text className={`text-sm font-semibold ${duration === d ? "text-amber-600" : "text-gray-800"}`}>
+                          <Text className={`text-sm font-grotesk-semibold ${duration === d ? "text-[#e03f1c]" : "text-gray-800"}`}>
                             {d} months
                           </Text>
                         </TouchableOpacity>
@@ -143,10 +144,10 @@ function FinalizeOfferModal({
                   )}
                 </View>
                 {monthly > 0 && (
-                  <View className="bg-amber-50 rounded-2xl p-4 border border-amber-100">
-                    <Text className="text-xs font-bold text-amber-700 uppercase tracking-wide mb-1">Monthly Payment</Text>
-                    <Text className="text-xl font-extrabold text-amber-600">{fmt(monthly)}</Text>
-                    <Text className="text-xs text-amber-600 mt-0.5">{fmt(price)} ÷ {durationNum} months</Text>
+                  <View className="bg-[#fff0e9] rounded-2xl p-4 border border-[#ffd9c7]">
+                    <Text className="text-xs font-grotesk-bold text-[#c23a12] uppercase tracking-wide mb-1">Monthly Payment</Text>
+                    <Text className="text-xl font-grotesk-extrabold text-[#e03f1c]">{fmt(monthly)}</Text>
+                    <Text className="font-grotesk text-xs text-[#e03f1c] mt-0.5">{fmt(price)} ÷ {durationNum} months</Text>
                   </View>
                 )}
               </View>
@@ -155,16 +156,26 @@ function FinalizeOfferModal({
             {/* Flexible info */}
             {planType === "flexible" && (
               <View className="bg-blue-50 rounded-2xl p-4 border border-blue-100">
-                <Text className="text-sm font-bold text-blue-800 mb-1">Flexible Terms</Text>
-                <Text className="text-sm text-blue-700 leading-relaxed">
+                <Text className="text-sm font-grotesk-bold text-blue-800 mb-1">Flexible Terms</Text>
+                <Text className="font-grotesk text-sm text-blue-700 leading-relaxed">
                   Pay any amount at any time. The full balance must be cleared within 6 months of activation.
+                </Text>
+              </View>
+            )}
+
+            {/* Full payment info */}
+            {planType === "full" && (
+              <View className="bg-green-50 rounded-2xl p-4 border border-green-100">
+                <Text className="text-sm font-grotesk-bold text-green-800 mb-1">Pay In Full</Text>
+                <Text className="font-grotesk text-sm text-green-700 leading-relaxed">
+                  {price > 0 ? `Pay ${fmt(price)} once — no financing application needed.` : "Pay the full price once — no financing application needed."}
                 </Text>
               </View>
             )}
 
             {/* Notes */}
             <View className="gap-2">
-              <Text className="text-sm font-bold text-gray-700">Inspection Notes (Optional)</Text>
+              <Text className="text-sm font-grotesk-bold text-gray-700">Inspection Notes (Optional)</Text>
               <TextInput
                 className="border border-gray-200 rounded-xl bg-gray-50 px-4 py-3 text-sm text-gray-900"
                 placeholder="Any comments about the asset or your visit…"
@@ -180,12 +191,12 @@ function FinalizeOfferModal({
             <TouchableOpacity
               onPress={handleSubmit}
               disabled={isSubmitting}
-              className="bg-amber-400 py-4 rounded-2xl items-center"
+              className="bg-[#ff4b26] py-4 rounded-2xl items-center"
               style={shadow.btn}
             >
               {isSubmitting
                 ? <ActivityIndicator color="#fff" />
-                : <Text className="text-white font-bold text-base">Submit Offer</Text>}
+                : <Text className="text-white font-grotesk-bold text-base">Submit Offer</Text>}
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -227,10 +238,9 @@ export default function InspectionDetailsScreen() {
   const handleFinalize = async (payload: CompleteInspectionPayload) => {
     if (!insp) return;
 
-    // Both plan choices offered here (structured/flexible) map to monthly/installment,
-    // which require an approved financing application - there's no full-payment option
-    // in this flow. Backend enforces this too; this just avoids a round-trip.
-    if (!isEligible()) {
+    // Structured/flexible map to monthly/installment, which require an approved
+    // financing application. Full payment needs no financing (web parity).
+    if (payload.payment_plan !== "full_payment" && !isEligible()) {
       setFinalizeModalVisible(false);
       Alert.alert(
         "Financing Application Required",
@@ -286,8 +296,8 @@ export default function InspectionDetailsScreen() {
   if (loading) {
     return (
       <SafeAreaView className="flex-1 bg-gray-50 items-center justify-center gap-3">
-        <ActivityIndicator size="large" color="#f59e0b" />
-        <Text className="text-sm text-gray-400">Loading inspection…</Text>
+        <ActivityIndicator size="large" color="#ff4b26" />
+        <Text className="font-manrope text-sm text-gray-400">Loading inspection…</Text>
       </SafeAreaView>
     );
   }
@@ -296,9 +306,9 @@ export default function InspectionDetailsScreen() {
     return (
       <SafeAreaView className="flex-1 bg-gray-50 items-center justify-center gap-4 px-8">
         <AlertCircle size={40} color="#9ca3af" />
-        <Text className="text-lg font-bold text-gray-900">Inspection not found</Text>
-        <TouchableOpacity onPress={() => router.back()} className="bg-amber-400 px-6 py-3 rounded-xl">
-          <Text className="text-white font-bold">Go Back</Text>
+        <Text className="text-lg font-grotesk-bold text-gray-900">Inspection not found</Text>
+        <TouchableOpacity onPress={() => router.back()} className="bg-[#ff4b26] px-6 py-3 rounded-xl">
+          <Text className="text-white font-grotesk-bold">Go Back</Text>
         </TouchableOpacity>
       </SafeAreaView>
     );
@@ -336,7 +346,7 @@ export default function InspectionDetailsScreen() {
                 <AssetIcon size={28} color={iconColor} strokeWidth={1.5} />
               </View>
               <View className="flex-1">
-                <Text className="text-base font-extrabold text-gray-900" numberOfLines={2}>
+                <Text className="text-base font-grotesk-extrabold text-gray-900" numberOfLines={2}>
                   {insp.asset?.title ?? `${insp.asset_type} Asset`}
                 </Text>
                 <View className="mt-1.5"><StatusBadge status={insp.status} /></View>
@@ -346,9 +356,9 @@ export default function InspectionDetailsScreen() {
             <View className="flex-row items-start gap-3">
               <Calendar size={16} color="#9ca3af" style={{ marginTop: 1 }} />
               <View>
-                <Text className="text-[10px] text-gray-400 font-semibold uppercase">Date & Time</Text>
-                <Text className="text-sm font-bold text-gray-900">{formattedDate}</Text>
-                <Text className="text-xs text-gray-500">{formattedTime}</Text>
+                <Text className="text-[10px] text-gray-400 font-grotesk-semibold uppercase">Date & Time</Text>
+                <Text className="text-sm font-grotesk-bold text-gray-900">{formattedDate}</Text>
+                <Text className="font-manrope text-xs text-gray-500">{formattedTime}</Text>
               </View>
             </View>
           </View>
@@ -356,8 +366,8 @@ export default function InspectionDetailsScreen() {
           {/* Status guidance */}
           {insp.status === "scheduled" && (
             <View className="bg-yellow-50 rounded-2xl p-4 border border-yellow-100">
-              <Text className="text-sm font-bold text-yellow-800 mb-1">Awaiting Seller Confirmation</Text>
-              <Text className="text-sm text-yellow-700 leading-relaxed">
+              <Text className="text-sm font-grotesk-bold text-yellow-800 mb-1">Awaiting Seller Confirmation</Text>
+              <Text className="font-grotesk text-sm text-yellow-700 leading-relaxed">
                 Your request has been sent. The seller will confirm a date and time soon.
               </Text>
             </View>
@@ -365,8 +375,8 @@ export default function InspectionDetailsScreen() {
 
           {canFinalize && (
             <View className="bg-blue-50 rounded-2xl p-4 border border-blue-100">
-              <Text className="text-sm font-bold text-blue-800 mb-1">Inspection Confirmed ✓</Text>
-              <Text className="text-sm text-blue-700 leading-relaxed">
+              <Text className="text-sm font-grotesk-bold text-blue-800 mb-1">Inspection Confirmed ✓</Text>
+              <Text className="font-grotesk text-sm text-blue-700 leading-relaxed">
                 After your visit, tap "Finalize Offer & Plan" to submit your offer and payment plan to the seller.
               </Text>
             </View>
@@ -374,8 +384,8 @@ export default function InspectionDetailsScreen() {
 
           {isAgreementPending && (
             <View className="bg-purple-50 rounded-2xl p-4 border border-purple-100">
-              <Text className="text-sm font-bold text-purple-800 mb-1">Offer Under Review</Text>
-              <Text className="text-sm text-purple-700 leading-relaxed">
+              <Text className="text-sm font-grotesk-bold text-purple-800 mb-1">Offer Under Review</Text>
+              <Text className="font-grotesk text-sm text-purple-700 leading-relaxed">
                 Your offer and payment plan have been submitted. The seller is reviewing.
               </Text>
             </View>
@@ -383,8 +393,8 @@ export default function InspectionDetailsScreen() {
 
           {isAgreementReady && (
             <View className="bg-green-50 rounded-2xl p-4 border border-green-100">
-              <Text className="text-sm font-bold text-green-800 mb-1">Agreement Approved! 🎉</Text>
-              <Text className="text-sm text-green-700 leading-relaxed">
+              <Text className="text-sm font-grotesk-bold text-green-800 mb-1">Agreement Approved! 🎉</Text>
+              <Text className="font-grotesk text-sm text-green-700 leading-relaxed">
                 The seller approved your offer. Go to My Agreements to make your deposit and activate the plan.
               </Text>
             </View>
@@ -393,30 +403,30 @@ export default function InspectionDetailsScreen() {
           {/* Financial summary */}
           {insp.asset && (
             <View className="bg-white rounded-3xl p-5" style={shadow.md}>
-              <Text className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">Financial Summary</Text>
+              <Text className="text-xs font-grotesk-bold text-gray-400 uppercase tracking-wide mb-3">Financial Summary</Text>
               <View className="gap-3">
                 <View className="flex-row justify-between">
-                  <Text className="text-sm text-gray-500">Listing Price</Text>
-                  <Text className="text-sm font-bold text-gray-900">{fmt(insp.asset.price)}</Text>
+                  <Text className="font-manrope text-sm text-gray-500">Listing Price</Text>
+                  <Text className="text-sm font-grotesk-bold text-gray-900">{fmt(insp.asset.price)}</Text>
                 </View>
                 {insp.asset.min_deposit_percentage && (
                   <View className="flex-row justify-between">
-                    <Text className="text-sm text-gray-500">Min. Deposit ({insp.asset.min_deposit_percentage}%)</Text>
-                    <Text className="text-sm font-bold text-amber-500">
+                    <Text className="font-manrope text-sm text-gray-500">Min. Deposit ({insp.asset.min_deposit_percentage}%)</Text>
+                    <Text className="text-sm font-grotesk-bold text-[#ff4b26]">
                       {fmt((insp.asset.price * Number(insp.asset.min_deposit_percentage)) / 100)}
                     </Text>
                   </View>
                 )}
                 {insp.agreed_price && (
                   <View className="flex-row justify-between">
-                    <Text className="text-sm text-gray-500">Agreed Price</Text>
-                    <Text className="text-sm font-bold text-green-600">{fmt(insp.agreed_price)}</Text>
+                    <Text className="font-manrope text-sm text-gray-500">Agreed Price</Text>
+                    <Text className="text-sm font-grotesk-bold text-green-600">{fmt(insp.agreed_price)}</Text>
                   </View>
                 )}
                 <View className="h-px bg-gray-100 my-1" />
                 <View className="flex-row justify-between">
-                  <Text className="text-sm text-gray-500">Inspection Fee</Text>
-                  <Text className="text-sm font-bold text-green-600">Free</Text>
+                  <Text className="font-manrope text-sm text-gray-500">Inspection Fee</Text>
+                  <Text className="text-sm font-grotesk-bold text-green-600">Free</Text>
                 </View>
               </View>
             </View>
@@ -424,9 +434,9 @@ export default function InspectionDetailsScreen() {
 
           {/* Notes */}
           {insp.notes && (
-            <View className="bg-amber-50 rounded-3xl p-5 border border-amber-100">
-              <Text className="text-xs font-bold text-amber-700 uppercase tracking-wide mb-2">Notes</Text>
-              <Text className="text-sm text-amber-800 leading-relaxed">{insp.notes}</Text>
+            <View className="bg-[#fff0e9] rounded-3xl p-5 border border-[#ffd9c7]">
+              <Text className="text-xs font-grotesk-bold text-[#c23a12] uppercase tracking-wide mb-2">Notes</Text>
+              <Text className="font-grotesk text-sm text-[#a5310f] leading-relaxed">{insp.notes}</Text>
             </View>
           )}
 
@@ -434,10 +444,10 @@ export default function InspectionDetailsScreen() {
           {canFinalize && (
             <TouchableOpacity
               onPress={() => setFinalizeModalVisible(true)}
-              className="bg-amber-400 py-4 rounded-2xl items-center"
+              className="bg-[#ff4b26] py-4 rounded-2xl items-center"
               style={shadow.btn}
             >
-              <Text className="text-white font-bold text-base">Finalize Offer & Plan</Text>
+              <Text className="text-white font-grotesk-bold text-base">Finalize Offer & Plan</Text>
             </TouchableOpacity>
           )}
 
@@ -447,7 +457,7 @@ export default function InspectionDetailsScreen() {
               className="bg-green-500 py-4 rounded-2xl items-center"
               style={shadow.btn}
             >
-              <Text className="text-white font-bold text-base">Pay Deposit → View Agreement</Text>
+              <Text className="text-white font-grotesk-bold text-base">Pay Deposit → View Agreement</Text>
             </TouchableOpacity>
           )}
 
@@ -456,7 +466,7 @@ export default function InspectionDetailsScreen() {
               onPress={handleCancel}
               className="border border-red-200 bg-red-50 py-4 rounded-2xl items-center"
             >
-              <Text className="text-red-600 font-semibold">Cancel Inspection Request</Text>
+              <Text className="text-red-600 font-grotesk-semibold">Cancel Inspection Request</Text>
             </TouchableOpacity>
           )}
 

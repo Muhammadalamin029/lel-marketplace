@@ -10,13 +10,20 @@ export const BRAND = {
 
 export const COLORS = {
   primary: "#ff4b26",
-  primaryDark: "#ea3f1e",
+  primaryDark: "#e03f1c",
+  primarySoft: "#fff0e9",
+  peach: "#fff4ec",
   accent: "#f97316",
   ink: "#111827",
   muted: "#6b7280",
+  faint: "#9ca3af",
   line: "#eeeeee",
+  inputBg: "#f5f5f5",
+  inputBorder: "#e5e5e5",
   bg: "#fafafa",
+  card: "#ffffff",
   success: "#22c55e",
+  danger: "#ef4444",
 } as const;
 
 export const BRAND_ASSETS = {

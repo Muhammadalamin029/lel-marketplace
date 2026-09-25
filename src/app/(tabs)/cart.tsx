@@ -4,17 +4,13 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import {
-  ShoppingBag, Trash2, Plus, Minus, MapPin, CreditCard, ChevronRight,
-} from "lucide-react-native";
+import { ShoppingBag, Trash2, Plus, Minus } from "lucide-react-native";
 import { EmptyState } from "@/components/EmptyState";
-import { SectionHeader } from "@/components/SectionHeader";
+import { ScreenHeader } from "@/components/ScreenHeader";
+import { COLORS } from "@/constants/brand";
 import { fmt } from "@/utils/format";
-import { shadow } from "@/constants/shadows";
 import { useCartStore } from "@/store/cartStore";
 import type { OrderItem } from "@/api/orders";
-
-// ─── Cart Item Row ─────────────────────────────────────────────────────────────
 
 function CartItemRow({ item, onQtyChange, onRemove, isLoading }: {
   item: OrderItem;
@@ -23,51 +19,54 @@ function CartItemRow({ item, onQtyChange, onRemove, isLoading }: {
   isLoading: boolean;
 }) {
   const imageUrl = item.product?.images?.[0]?.image_url;
-  const isPhysical = false; // products in orders are never physical assets
 
   return (
-    <View className="bg-white rounded-2xl border border-gray-100 p-3 flex-row items-center gap-3" style={shadow.md}>
-      {imageUrl ? (
-        <Image source={{ uri: imageUrl }} className="w-16 h-16 rounded-xl" resizeMode="cover" />
-      ) : (
-        <View className="w-16 h-16 rounded-xl bg-gray-100 items-center justify-center flex-shrink-0">
-          <ShoppingBag size={24} color="#6b7280" strokeWidth={1.5} />
+    <View className="bg-white py-4 border-b border-gray-100">
+      <View className="flex-row gap-3">
+        {imageUrl ? (
+          <Image source={{ uri: imageUrl }} className="rounded-lg" style={{ width: 64, height: 64 }} resizeMode="cover" />
+        ) : (
+          <View className="rounded-lg bg-gray-100 items-center justify-center" style={{ width: 64, height: 64 }}>
+            <ShoppingBag size={24} color="#9ca3af" strokeWidth={1.5} />
+          </View>
+        )}
+        <View className="flex-1 min-w-0">
+          <Text className="text-[13px] font-grotesk-semibold text-gray-900" numberOfLines={2}>
+            {item.product?.name ?? "Product"}
+          </Text>
+          <Text className="text-sm font-grotesk-extrabold mt-1" style={{ color: COLORS.primary }}>
+            {fmt(item.price * item.quantity)}
+          </Text>
         </View>
-      )}
-
-      <View className="flex-1 min-w-0 gap-0.5">
-        <Text className="text-sm font-semibold text-gray-900" numberOfLines={2}>
-          {item.product?.name ?? "Product"}
-        </Text>
-        <Text className="text-sm font-bold text-amber-400">{fmt(item.price)}</Text>
-        <Text className="text-[11px] text-gray-400">Each</Text>
       </View>
-
-      <View className="items-end gap-2">
-        <TouchableOpacity onPress={() => onRemove(item.id)} disabled={isLoading}>
-          <Trash2 size={15} color={isLoading ? "#e5e7eb" : "#d1d5db"} />
-        </TouchableOpacity>
-        <View className="flex-row items-center gap-2 bg-gray-100 rounded-xl px-2 py-1">
+      <View className="flex-row items-center justify-between mt-3">
+        <View className="flex-row items-center rounded-lg border border-gray-200 px-2 py-1.5 gap-4">
           <TouchableOpacity
             onPress={() => onQtyChange(item.id, item.quantity - 1)}
             disabled={isLoading || item.quantity <= 1}
+            hitSlop={8}
           >
-            <Minus size={13} color={item.quantity <= 1 || isLoading ? "#d1d5db" : "#6b7280"} />
+            <Minus size={14} color={item.quantity <= 1 || isLoading ? "#d1d5db" : "#374151"} />
           </TouchableOpacity>
-          <Text className="text-sm font-bold text-gray-900 w-4 text-center">{item.quantity}</Text>
-          <TouchableOpacity
-            onPress={() => onQtyChange(item.id, item.quantity + 1)}
-            disabled={isLoading}
-          >
-            <Plus size={13} color={isLoading ? "#d1d5db" : "#6b7280"} />
+          <Text className="text-sm font-grotesk-bold text-gray-900" style={{ minWidth: 16, textAlign: "center" }}>
+            {item.quantity}
+          </Text>
+          <TouchableOpacity onPress={() => onQtyChange(item.id, item.quantity + 1)} disabled={isLoading} hitSlop={8}>
+            <Plus size={14} color={isLoading ? "#d1d5db" : "#374151"} />
           </TouchableOpacity>
         </View>
+        <TouchableOpacity
+          onPress={() => onRemove(item.id)}
+          disabled={isLoading}
+          className="flex-row items-center gap-1.5"
+        >
+          <Trash2 size={14} color={COLORS.danger} />
+          <Text className="text-xs font-grotesk-semibold" style={{ color: COLORS.danger }}>Remove</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
 }
-
-// ─── Cart Screen ───────────────────────────────────────────────────────────────
 
 export default function CartScreen() {
   const router = useRouter();
@@ -77,13 +76,13 @@ export default function CartScreen() {
     fetchPendingOrder,
     updateQty,
     removeItem,
-    clearCart,
     totalPrice,
     totalItems,
   } = useCartStore();
 
   useEffect(() => {
     fetchPendingOrder();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const items = pendingOrder?.order_items ?? [];
@@ -103,102 +102,76 @@ export default function CartScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
-      {/* Header */}
-      <View className="flex-row items-center justify-between px-5 pt-4 pb-3 bg-white">
-        <View>
-          <Text className="text-xs text-gray-400 font-medium">Your selections</Text>
-          <Text className="text-xl font-extrabold text-gray-900 tracking-tight">
-            My <Text className="text-amber-400">Cart</Text>
-            {qty > 0 && <Text className="text-base font-bold text-amber-400"> ({qty})</Text>}
-          </Text>
-        </View>
-        <View className="w-11 h-11 rounded-full bg-gray-100 items-center justify-center">
-          <ShoppingBag size={20} color="#374151" strokeWidth={1.8} />
-        </View>
-      </View>
+    <SafeAreaView className="flex-1 bg-white">
+      <ScreenHeader title="Your Cart" subtitle={qty > 0 ? `(${qty} item${qty === 1 ? "" : "s"})` : undefined} />
 
       {isLoading && items.length === 0 ? (
         <View className="flex-1 items-center justify-center gap-3">
-          <ActivityIndicator size="large" color="#f59e0b" />
-          <Text className="text-sm text-gray-400">Loading cart…</Text>
+          <ActivityIndicator size="large" color={COLORS.primary} />
+          <Text className="font-manrope text-sm text-gray-400">Loading cart…</Text>
         </View>
       ) : items.length === 0 ? (
         <EmptyState
           Icon={ShoppingBag}
           title="Your cart is empty"
           subtitle="Browse listings and tap 'Add to Cart' on a product."
-          iconBg="#fffbeb"
-          iconColor="#f59e0b"
         />
       ) : (
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
-          {/* Items */}
-          <View className="px-5 mt-4 gap-3">
-            {items.map((item) => (
-              <CartItemRow
-                key={item.id}
-                item={item}
-                onQtyChange={handleQtyChange}
-                onRemove={handleRemove}
-                isLoading={isLoading}
-              />
-            ))}
-          </View>
+        <>
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 150 }}>
+            {/* Items */}
+            <View className="px-5">
+              {items.map((item) => (
+                <CartItemRow
+                  key={item.id}
+                  item={item}
+                  onQtyChange={handleQtyChange}
+                  onRemove={handleRemove}
+                  isLoading={isLoading}
+                />
+              ))}
+            </View>
 
-          {/* Delivery address */}
-          <View className="px-5 mt-6">
-            <SectionHeader title="Delivery" showDots={false} />
-            <TouchableOpacity
-              onPress={() => router.push("/addresses")}
-              className="bg-white rounded-2xl border border-gray-100 p-4 flex-row items-center gap-3"
-              style={shadow.md}
-            >
-              <View className="w-10 h-10 rounded-full bg-amber-50 items-center justify-center">
-                <MapPin size={18} color="#f59e0b" />
-              </View>
-              <View className="flex-1">
-                <Text className="text-sm font-semibold text-gray-900">Select delivery address</Text>
-                <Text className="text-xs text-gray-400">Tap to choose or add an address</Text>
-              </View>
-              <ChevronRight size={16} color="#9ca3af" />
-            </TouchableOpacity>
-          </View>
-
-          {/* Summary */}
-          <View className="px-5 mt-6">
-            <SectionHeader title="Summary" showDots={false} />
-            <View className="bg-white rounded-2xl border border-gray-100 p-4 gap-3" style={shadow.md}>
-              <View className="flex-row justify-between">
-                <Text className="text-sm text-gray-500">Subtotal ({qty} item{qty !== 1 ? "s" : ""})</Text>
-                <Text className="text-sm font-semibold text-gray-900">{fmt(total)}</Text>
-              </View>
-              <View className="flex-row justify-between">
-                <Text className="text-sm text-gray-500">Delivery</Text>
-                <Text className="text-sm font-semibold text-gray-400">Paid separately</Text>
-              </View>
-              <View className="h-px bg-gray-100" />
-              <View className="flex-row justify-between">
-                <Text className="text-base font-extrabold text-gray-900">Total</Text>
-                <Text className="text-base font-extrabold text-amber-400">{fmt(total)}</Text>
+            {/* Order summary */}
+            <View className="px-5 mt-4">
+              <Text className="text-base font-grotesk-extrabold text-gray-900 mb-3">Order summary</Text>
+              <View className="gap-2.5">
+                <View className="flex-row justify-between">
+                  <Text className="font-manrope text-[13px] text-gray-500">Subtotal</Text>
+                  <Text className="text-[13px] font-grotesk-bold text-gray-900">{fmt(total)}</Text>
+                </View>
+                <View className="flex-row justify-between">
+                  <Text className="font-manrope text-[13px] text-gray-500">Delivery</Text>
+                  <Text className="text-[13px] font-grotesk-bold text-gray-900">At checkout</Text>
+                </View>
+                <View className="h-px bg-gray-100 my-1" />
+                <View className="flex-row justify-between">
+                  <Text className="text-sm font-grotesk-bold text-gray-900">Total</Text>
+                  <Text className="text-sm font-grotesk-extrabold" style={{ color: COLORS.primary }}>
+                    {fmt(total)}
+                  </Text>
+                </View>
               </View>
             </View>
-          </View>
+          </ScrollView>
 
-          {/* Checkout */}
-          <View className="px-5 mt-5">
+          {/* Sticky total + checkout */}
+          <View className="absolute bottom-0 left-0 right-0 bg-white px-5 pb-8 pt-3 border-t border-gray-100">
+            <View className="flex-row items-center justify-between mb-3">
+              <Text className="font-manrope text-[13px] text-gray-400">Total</Text>
+              <Text className="text-lg font-grotesk-extrabold" style={{ color: COLORS.primary }}>
+                {fmt(total)}
+              </Text>
+            </View>
             <TouchableOpacity
               onPress={() => router.push("/checkout")}
-              className="bg-amber-400 rounded-2xl py-4 flex-row items-center justify-center gap-2"
-              style={shadow.btn}
+              className="rounded-xl py-4 items-center"
+              style={{ backgroundColor: COLORS.primary }}
             >
-              <CreditCard size={18} color="#ffffff" />
-              <Text className="text-white text-base font-bold">
-                Proceed to Checkout — {fmt(total)}
-              </Text>
+              <Text className="text-white text-sm font-grotesk-bold">Proceed to checkout</Text>
             </TouchableOpacity>
           </View>
-        </ScrollView>
+        </>
       )}
     </SafeAreaView>
   );

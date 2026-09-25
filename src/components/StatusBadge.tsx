@@ -32,8 +32,8 @@ export function StatusBadge({ status, label }: StatusBadgeProps) {
       style={{ backgroundColor: config.bg }}
     >
       <Text
-        className="text-[10px] font-bold uppercase tracking-wide"
-        style={{ color: config.text }}
+        className="font-grotesk-bold uppercase tracking-wide"
+        style={{ color: config.text, fontSize: 10 }}
       >
         {display}
       </Text>

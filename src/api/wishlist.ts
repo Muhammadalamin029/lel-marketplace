@@ -1,4 +1,4 @@
-import { api } from "./client";
+import { api, getPagination, unwrapList } from "./client";
 
 export interface WishlistItem {
   id: string;
@@ -8,9 +8,15 @@ export interface WishlistItem {
 }
 
 export const wishlistApi = {
-  async list() {
-    const { data } = await api.get("/wishlist/");
-    return data?.data as WishlistItem[];
+  async list(params: { page?: number; limit?: number } = {}) {
+    const { data } = await api.get("/wishlist/", { params: { limit: 20, ...params } });
+    return { items: unwrapList<WishlistItem>(data), pagination: getPagination(data) };
+  },
+
+  /** Backwards-compatible flat list (first page). */
+  async listAll() {
+    const { items } = await wishlistApi.list({ limit: 50 });
+    return items;
   },
 
   async add(product_id: string) {

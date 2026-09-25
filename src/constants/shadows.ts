@@ -30,7 +30,7 @@ export const shadow = {
     elevation: 2,
   } as ViewStyle,
   btn: {
-    shadowColor: "#f59e0b",
+    shadowColor: "#ff4b26",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.35,
     shadowRadius: 10,

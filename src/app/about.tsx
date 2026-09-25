@@ -31,11 +31,11 @@ export default function AboutScreen() {
 
         {/* Hero */}
         <View className="bg-indigo-950 mx-5 mt-5 rounded-3xl p-6 items-center gap-3" style={shadow.md}>
-          <View className="w-16 h-16 rounded-2xl bg-amber-400 items-center justify-center">
+          <View className="w-16 h-16 rounded-2xl bg-[#ff4b26] items-center justify-center">
             <ShoppingBag size={32} color="#fff" strokeWidth={1.5} />
           </View>
-          <Text className="text-2xl font-extrabold text-white text-center">LEL Marketplace</Text>
-          <Text className="text-sm text-white/70 text-center leading-relaxed">
+          <Text className="text-2xl font-grotesk-extrabold text-white text-center">LEL Marketplace</Text>
+          <Text className="font-grotesk text-sm text-white/70 text-center leading-relaxed">
             Nigeria's premier verified marketplace for vehicles, real estate, and quality products — with escrow-backed transactions and free physical inspections.
           </Text>
         </View>
@@ -44,35 +44,35 @@ export default function AboutScreen() {
         <View className="mx-5 mt-4 bg-white rounded-3xl p-5 flex-row flex-wrap" style={shadow.md}>
           {STATS.map(({ value, label }) => (
             <View key={label} className="w-1/2 items-center py-3">
-              <Text className="text-2xl font-extrabold text-amber-400">{value}</Text>
-              <Text className="text-xs text-gray-500 mt-0.5">{label}</Text>
+              <Text className="text-2xl font-grotesk-extrabold text-[#ff4b26]">{value}</Text>
+              <Text className="font-manrope text-xs text-gray-500 mt-0.5">{label}</Text>
             </View>
           ))}
         </View>
 
         {/* Features */}
         <View className="mx-5 mt-4 gap-3">
-          <Text className="text-xs font-bold text-gray-400 uppercase tracking-wider">What we offer</Text>
+          <Text className="text-xs font-grotesk-bold text-gray-400 uppercase tracking-wider">What we offer</Text>
           {FEATURES.map(({ icon: Icon, color, bg, title, desc }) => (
             <View key={title} className="bg-white rounded-2xl p-4 flex-row gap-3" style={shadow.sm}>
               <View className="w-11 h-11 rounded-2xl items-center justify-center flex-shrink-0" style={{ backgroundColor: bg }}>
                 <Icon size={22} color={color} strokeWidth={1.5} />
               </View>
               <View className="flex-1">
-                <Text className="text-sm font-extrabold text-gray-900">{title}</Text>
-                <Text className="text-xs text-gray-500 mt-0.5 leading-relaxed">{desc}</Text>
+                <Text className="text-sm font-grotesk-extrabold text-gray-900">{title}</Text>
+                <Text className="font-manrope text-xs text-gray-500 mt-0.5 leading-relaxed">{desc}</Text>
               </View>
             </View>
           ))}
         </View>
 
         {/* Values */}
-        <View className="mx-5 mt-4 bg-amber-50 rounded-3xl p-5 border border-amber-100">
+        <View className="mx-5 mt-4 bg-[#fff0e9] rounded-3xl p-5 border border-[#ffd9c7]">
           <View className="flex-row items-center gap-2 mb-3">
-            <Award size={18} color="#f59e0b" />
-            <Text className="text-sm font-extrabold text-amber-800">Our Commitment</Text>
+            <Award size={18} color="#ff4b26" />
+            <Text className="text-sm font-grotesk-extrabold text-[#a5310f]">Our Commitment</Text>
           </View>
-          <Text className="text-sm text-amber-700 leading-relaxed">
+          <Text className="font-grotesk text-sm text-[#c23a12] leading-relaxed">
             Every seller is KYC-verified. Every vehicle and property transaction includes a free physical inspection. Your money is held in escrow until the deal is complete — you are never at risk.
           </Text>
         </View>
@@ -89,15 +89,15 @@ export default function AboutScreen() {
               onPress={() => router.push(route as any)}
               className={`flex-row items-center justify-between px-5 py-4 ${i < arr.length - 1 ? "border-b border-gray-100" : ""}`}
             >
-              <Text className="text-sm font-semibold text-gray-700">{label}</Text>
+              <Text className="text-sm font-grotesk-semibold text-gray-700">{label}</Text>
               <ExternalLink size={14} color="#9ca3af" />
             </TouchableOpacity>
           ))}
         </View>
 
         <View className="items-center mt-6 gap-1">
-          <Text className="text-xs text-gray-400">LEL Marketplace · v1.0.0</Text>
-          <Text className="text-xs text-gray-300">© 2026 LEL Marketplace. All rights reserved.</Text>
+          <Text className="font-manrope text-xs text-gray-400">LEL Marketplace · v1.0.0</Text>
+          <Text className="font-manrope text-xs text-gray-300">© 2026 LEL Marketplace. All rights reserved.</Text>
         </View>
 
       </ScrollView>

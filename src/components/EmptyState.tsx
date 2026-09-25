@@ -23,9 +23,9 @@ export function EmptyState({
       >
         <Icon size={32} color={iconColor} />
       </View>
-      <Text className="text-lg font-bold text-gray-900 mb-1">{title}</Text>
+      <Text className="text-lg font-grotesk-bold text-gray-900 mb-1">{title}</Text>
       {subtitle && (
-        <Text className="text-sm text-gray-500 text-center px-8">{subtitle}</Text>
+        <Text className="font-manrope text-sm text-gray-500 text-center px-8">{subtitle}</Text>
       )}
     </View>
   );

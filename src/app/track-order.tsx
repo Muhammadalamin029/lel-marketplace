@@ -53,14 +53,14 @@ export default function TrackOrderScreen() {
         <View className="px-5 pt-6 gap-6">
           <View className="bg-white rounded-3xl p-5 gap-5" style={shadow.md}>
             <View>
-              <Text className="text-2xl font-extrabold text-gray-900">Track Order</Text>
-              <Text className="text-sm text-gray-500 mt-2 leading-relaxed">
+              <Text className="text-2xl font-grotesk-extrabold text-gray-900">Track Order</Text>
+              <Text className="font-manrope text-sm text-gray-500 mt-2 leading-relaxed">
                 Enter the order ID from your receipt and the billing email used at checkout.
               </Text>
             </View>
 
             <View className="gap-2">
-              <Text className="text-sm font-bold text-gray-700">Order ID</Text>
+              <Text className="text-sm font-grotesk-bold text-gray-700">Order ID</Text>
               <TextInput
                 value={orderId}
                 onChangeText={setOrderId}
@@ -72,7 +72,7 @@ export default function TrackOrderScreen() {
             </View>
 
             <View className="gap-2">
-              <Text className="text-sm font-bold text-gray-700">Billing Email</Text>
+              <Text className="text-sm font-grotesk-bold text-gray-700">Billing Email</Text>
               <TextInput
                 value={email}
                 onChangeText={setEmail}
@@ -86,7 +86,7 @@ export default function TrackOrderScreen() {
 
             <View className="flex-row items-start gap-2 bg-blue-50 rounded-2xl p-4 border border-blue-100">
               <Info size={16} color="#2563eb" />
-              <Text className="text-xs text-blue-700 flex-1 leading-relaxed">
+              <Text className="font-grotesk text-xs text-blue-700 flex-1 leading-relaxed">
                 The order ID is included in your confirmation email and receipt.
               </Text>
             </View>
@@ -94,12 +94,12 @@ export default function TrackOrderScreen() {
             <TouchableOpacity
               onPress={handleTrack}
               disabled={submitting}
-              className="bg-amber-400 py-4 rounded-2xl flex-row items-center justify-center gap-2"
+              className="bg-[#ff4b26] py-4 rounded-2xl flex-row items-center justify-center gap-2"
               style={shadow.btn}
             >
               {submitting ? <ActivityIndicator color="#fff" /> : (
                 <>
-                  <Text className="text-white font-bold">Track Your Order</Text>
+                  <Text className="text-white font-grotesk-bold">Track Your Order</Text>
                   <ArrowRight size={16} color="#fff" />
                 </>
               )}

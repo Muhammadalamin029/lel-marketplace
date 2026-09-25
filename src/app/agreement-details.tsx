@@ -68,7 +68,7 @@ function PaymentModal({
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
       <SafeAreaView className="flex-1 bg-white">
         <View className="flex-row items-center justify-between px-5 pt-4 pb-4 border-b border-gray-100">
-          <Text className="text-lg font-extrabold text-gray-900">
+          <Text className="text-lg font-grotesk-extrabold text-gray-900">
             {isDeposit ? "Make Deposit Payment" : "Pay Installment"}
           </Text>
           <TouchableOpacity onPress={onClose} className="w-9 h-9 rounded-full bg-gray-100 items-center justify-center">
@@ -81,22 +81,22 @@ function PaymentModal({
             {/* Balance info */}
             <View className="bg-gray-50 rounded-2xl p-4 gap-2">
               <View className="flex-row justify-between">
-                <Text className="text-sm text-gray-500">Remaining Balance</Text>
-                <Text className="text-sm font-bold text-gray-900">{fmt(remainingBalance)}</Text>
+                <Text className="font-manrope text-sm text-gray-500">Remaining Balance</Text>
+                <Text className="text-sm font-grotesk-bold text-gray-900">{fmt(remainingBalance)}</Text>
               </View>
               {isDeposit && (
                 <View className="flex-row justify-between">
-                  <Text className="text-sm text-gray-500">Minimum Deposit</Text>
-                  <Text className="text-sm font-bold text-amber-600">{fmt(minDeposit)}</Text>
+                  <Text className="font-manrope text-sm text-gray-500">Minimum Deposit</Text>
+                  <Text className="text-sm font-grotesk-bold text-[#e03f1c]">{fmt(minDeposit)}</Text>
                 </View>
               )}
             </View>
 
             {/* Amount input */}
             <View className="gap-2">
-              <Text className="text-sm font-bold text-gray-700">Payment Amount (₦) *</Text>
+              <Text className="text-sm font-grotesk-bold text-gray-700">Payment Amount (₦) *</Text>
               <TextInput
-                className="border border-gray-200 rounded-xl bg-gray-50 px-4 py-3.5 text-lg font-bold text-gray-900"
+                className="border border-gray-200 rounded-xl bg-gray-50 px-4 py-3.5 font-grotesk-bold text-lg text-gray-900"
                 placeholder="Enter amount"
                 placeholderTextColor="#9ca3af"
                 value={amount}
@@ -104,12 +104,12 @@ function PaymentModal({
                 keyboardType="numeric"
               />
               {tooLow && (
-                <Text className="text-xs text-red-500">
+                <Text className="font-grotesk text-xs text-red-500">
                   Minimum first payment is {fmt(minDeposit)}
                 </Text>
               )}
               {tooHigh && (
-                <Text className="text-xs text-red-500">
+                <Text className="font-grotesk text-xs text-red-500">
                   Cannot exceed remaining balance of {fmt(remainingBalance)}
                 </Text>
               )}
@@ -118,15 +118,15 @@ function PaymentModal({
             {/* Quick amount buttons */}
             {quickAmounts.length > 0 && (
               <View className="gap-2">
-                <Text className="text-xs font-bold text-gray-400 uppercase tracking-wide">Quick Select</Text>
+                <Text className="text-xs font-grotesk-bold text-gray-400 uppercase tracking-wide">Quick Select</Text>
                 <View className="flex-row flex-wrap gap-2">
                   {quickAmounts.map((q) => (
                     <TouchableOpacity
                       key={q.label}
                       onPress={() => setAmount(String(q.value))}
-                      className={`px-4 py-2 rounded-xl border ${numAmount === q.value ? "bg-amber-400 border-amber-400" : "bg-white border-gray-200"}`}
+                      className={`px-4 py-2 rounded-xl border ${numAmount === q.value ? "bg-[#ff4b26] border-[#ff4b26]" : "bg-white border-gray-200"}`}
                     >
-                      <Text className={`text-xs font-bold ${numAmount === q.value ? "text-white" : "text-gray-700"}`}>
+                      <Text className={`text-xs font-grotesk-bold ${numAmount === q.value ? "text-white" : "text-gray-700"}`}>
                         {q.label} — {fmt(q.value)}
                       </Text>
                     </TouchableOpacity>
@@ -136,8 +136,8 @@ function PaymentModal({
             )}
 
             <View className="bg-blue-50 rounded-2xl p-4 border border-blue-100">
-              <Text className="text-sm font-bold text-blue-800 mb-1">Bank Transfer</Text>
-              <Text className="text-sm text-blue-700 leading-relaxed">
+              <Text className="text-sm font-grotesk-bold text-blue-800 mb-1">Bank Transfer</Text>
+              <Text className="font-grotesk text-sm text-blue-700 leading-relaxed">
                 We'll generate a dedicated transfer account. Your balance updates after payment verification.
               </Text>
             </View>
@@ -146,7 +146,7 @@ function PaymentModal({
               onPress={() => onPay(numAmount)}
               disabled={isPaying || numAmount <= 0 || tooLow || tooHigh}
               className={`py-4 rounded-2xl flex-row items-center justify-center gap-2 ${
-                isPaying || numAmount <= 0 || tooLow || tooHigh ? "bg-amber-200" : "bg-amber-400"
+                isPaying || numAmount <= 0 || tooLow || tooHigh ? "bg-amber-200" : "bg-[#ff4b26]"
               }`}
               style={shadow.btn}
             >
@@ -155,7 +155,7 @@ function PaymentModal({
                 : (
                   <>
                     <CreditCard size={16} color="#fff" />
-                    <Text className="text-white font-bold">
+                    <Text className="text-white font-grotesk-bold">
                       Pay {numAmount > 0 ? fmt(numAmount) : "…"}
                     </Text>
                   </>
@@ -280,8 +280,8 @@ export default function AgreementDetailsScreen() {
   if (loading) {
     return (
       <SafeAreaView className="flex-1 bg-gray-50 items-center justify-center gap-3">
-        <ActivityIndicator size="large" color="#f59e0b" />
-        <Text className="text-sm text-gray-400">Loading agreement…</Text>
+        <ActivityIndicator size="large" color="#ff4b26" />
+        <Text className="font-manrope text-sm text-gray-400">Loading agreement…</Text>
       </SafeAreaView>
     );
   }
@@ -290,10 +290,10 @@ export default function AgreementDetailsScreen() {
     return (
       <SafeAreaView className="flex-1 bg-gray-50 items-center justify-center gap-4 px-8">
         <AlertCircle size={40} color="#9ca3af" />
-        <Text className="text-lg font-bold text-gray-900">Agreement not found</Text>
-        <Text className="text-sm text-gray-400 text-center">{error}</Text>
-        <TouchableOpacity onPress={() => router.back()} className="bg-amber-400 px-6 py-3 rounded-xl">
-          <Text className="text-white font-bold">Go Back</Text>
+        <Text className="text-lg font-grotesk-bold text-gray-900">Agreement not found</Text>
+        <Text className="font-manrope text-sm text-gray-400 text-center">{error}</Text>
+        <TouchableOpacity onPress={() => router.back()} className="bg-[#ff4b26] px-6 py-3 rounded-xl">
+          <Text className="text-white font-grotesk-bold">Go Back</Text>
         </TouchableOpacity>
       </SafeAreaView>
     );
@@ -310,6 +310,8 @@ export default function AgreementDetailsScreen() {
   const isActive = agr.status === "active";
   const canCancel = agr.status === "pending_review" || agr.status === "pending_deposit";
   const isCompleted = agr.status === "completed";
+  // Web parity: installment payments are gated until the next due window opens.
+  const isPaymentDisabled = !!agr.next_due_date && new Date(agr.next_due_date) > new Date();
 
   const createdDate = new Date(agr.created_at).toLocaleDateString("en-NG", {
     day: "numeric", month: "long", year: "numeric",
@@ -332,7 +334,7 @@ export default function AgreementDetailsScreen() {
                 <AssetIcon size={28} color={isVehicle ? "#ea580c" : "#3b82f6"} strokeWidth={1.5} />
               </View>
               <View className="flex-1">
-                <Text className="text-base font-extrabold text-gray-900" numberOfLines={2}>
+                <Text className="text-base font-grotesk-extrabold text-gray-900" numberOfLines={2}>
                   {agr.asset?.title ?? `${agr.asset_type} Asset`}
                 </Text>
                 <View className="mt-1.5">
@@ -345,15 +347,15 @@ export default function AgreementDetailsScreen() {
             {(isActive || isCompleted) && (
               <View>
                 <View className="flex-row justify-between mb-1.5">
-                  <Text className="text-[10px] text-gray-400 font-semibold uppercase">Amount Paid</Text>
-                  <Text className="text-[10px] font-bold text-gray-600">{pct}%</Text>
+                  <Text className="text-[10px] text-gray-400 font-grotesk-semibold uppercase">Amount Paid</Text>
+                  <Text className="text-[10px] font-grotesk-bold text-gray-600">{pct}%</Text>
                 </View>
                 <View className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                  <View className="h-full bg-amber-400 rounded-full" style={{ width: `${pct}%` }} />
+                  <View className="h-full bg-[#ff4b26] rounded-full" style={{ width: `${pct}%` }} />
                 </View>
                 <View className="flex-row justify-between mt-1">
-                  <Text className="text-[10px] text-gray-400">{fmt(paid)} paid</Text>
-                  <Text className="text-[10px] text-gray-400">{fmt(agr.total_price)} total</Text>
+                  <Text className="font-manrope text-[10px] text-gray-400">{fmt(paid)} paid</Text>
+                  <Text className="font-manrope text-[10px] text-gray-400">{fmt(agr.total_price)} total</Text>
                 </View>
               </View>
             )}
@@ -362,17 +364,17 @@ export default function AgreementDetailsScreen() {
           {/* Status guidance */}
           {agr.status === "pending_review" && (
             <View className="bg-yellow-50 rounded-2xl p-4 border border-yellow-100">
-              <Text className="text-sm font-bold text-yellow-800 mb-1">Awaiting Seller Approval</Text>
-              <Text className="text-sm text-yellow-700 leading-relaxed">
+              <Text className="text-sm font-grotesk-bold text-yellow-800 mb-1">Awaiting Seller Approval</Text>
+              <Text className="font-grotesk text-sm text-yellow-700 leading-relaxed">
                 The seller is reviewing your offer. You'll be notified once approved.
               </Text>
             </View>
           )}
 
           {isDeposit && (
-            <View className="bg-amber-50 rounded-2xl p-4 border border-amber-100">
-              <Text className="text-sm font-bold text-amber-800 mb-1">Deposit Required to Activate</Text>
-              <Text className="text-sm text-amber-700 leading-relaxed">
+            <View className="bg-[#fff0e9] rounded-2xl p-4 border border-[#ffd9c7]">
+              <Text className="text-sm font-grotesk-bold text-[#a5310f] mb-1">Deposit Required to Activate</Text>
+              <Text className="font-grotesk text-sm text-[#c23a12] leading-relaxed">
                 Pay the minimum deposit ({fmt(minDeposit)}) to activate your installment plan and secure this asset.
               </Text>
             </View>
@@ -380,8 +382,8 @@ export default function AgreementDetailsScreen() {
 
           {isCompleted && (
             <View className="bg-green-50 rounded-2xl p-4 border border-green-100">
-              <Text className="text-sm font-bold text-green-800 mb-1">Agreement Completed ✓</Text>
-              <Text className="text-sm text-green-700">
+              <Text className="text-sm font-grotesk-bold text-green-800 mb-1">Agreement Completed ✓</Text>
+              <Text className="font-grotesk text-sm text-green-700">
                 All payments have been made. This asset is fully yours.
               </Text>
             </View>
@@ -389,35 +391,35 @@ export default function AgreementDetailsScreen() {
 
           {/* Financial details */}
           <View className="bg-white rounded-3xl p-5" style={shadow.md}>
-            <Text className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">Financial Details</Text>
+            <Text className="text-xs font-grotesk-bold text-gray-400 uppercase tracking-wide mb-3">Financial Details</Text>
             <View className="gap-3">
               {[
                 { label: "Total Price",         value: fmt(agr.total_price),                       color: "#111827" },
                 { label: "Deposit Paid",         value: fmt(agr.deposit_paid),                      color: "#22c55e" },
                 { label: "Remaining Balance",    value: fmt(remainingBalance),                      color: remainingBalance > 0 ? "#ef4444" : "#22c55e" },
                 ...(agr.monthly_installment
-                  ? [{ label: "Monthly Installment", value: fmt(agr.monthly_installment), color: "#f59e0b" }]
+                  ? [{ label: "Monthly Installment", value: fmt(agr.monthly_installment), color: "#ff4b26" }]
                   : []),
               ].map(({ label, value, color }) => (
                 <View key={label} className="flex-row justify-between items-center">
-                  <Text className="text-sm text-gray-500">{label}</Text>
-                  <Text className="text-sm font-bold" style={{ color }}>{value}</Text>
+                  <Text className="font-manrope text-sm text-gray-500">{label}</Text>
+                  <Text className="text-sm font-grotesk-bold" style={{ color }}>{value}</Text>
                 </View>
               ))}
               <View className="h-px bg-gray-100 my-1" />
               <View className="flex-row justify-between">
-                <Text className="text-sm text-gray-500">Plan Type</Text>
-                <Text className="text-sm font-bold text-gray-800">
+                <Text className="font-manrope text-sm text-gray-500">Plan Type</Text>
+                <Text className="text-sm font-grotesk-bold text-gray-800">
                   {agr.plan_type === "structured" ? "Structured" : "Flexible"}
                   {agr.duration_months ? ` · ${agr.duration_months} months` : ""}
                 </Text>
               </View>
               {agr.next_due_date && isActive && (
                 <View className="flex-row justify-between items-center">
-                  <Text className="text-sm text-gray-500">Next Payment Due</Text>
+                  <Text className="font-manrope text-sm text-gray-500">Next Payment Due</Text>
                   <View className="flex-row items-center gap-1.5">
-                    <Calendar size={12} color="#f59e0b" />
-                    <Text className="text-sm font-bold text-amber-600">
+                    <Calendar size={12} color="#ff4b26" />
+                    <Text className="text-sm font-grotesk-bold text-[#e03f1c]">
                       {new Date(agr.next_due_date).toLocaleDateString("en-NG", {
                         day: "numeric", month: "short", year: "numeric",
                       })}
@@ -432,11 +434,11 @@ export default function AgreementDetailsScreen() {
           {isDeposit && (
             <TouchableOpacity
               onPress={() => setPayModalVisible(true)}
-              className="bg-amber-400 py-4 rounded-2xl flex-row items-center justify-center gap-2"
+              className="bg-[#ff4b26] py-4 rounded-2xl flex-row items-center justify-center gap-2"
               style={shadow.btn}
             >
               <CreditCard size={16} color="#fff" />
-              <Text className="text-white font-bold text-base">
+              <Text className="text-white font-grotesk-bold text-base">
                 Pay Deposit — min. {fmt(minDeposit)}
               </Text>
             </TouchableOpacity>
@@ -444,27 +446,35 @@ export default function AgreementDetailsScreen() {
 
           {/* Pay installment button */}
           {isActive && remainingBalance > 0 && (
-            <TouchableOpacity
-              onPress={() => setPayModalVisible(true)}
-              className="bg-amber-400 py-4 rounded-2xl flex-row items-center justify-center gap-2"
-              style={shadow.btn}
-            >
-              <CreditCard size={16} color="#fff" />
-              <Text className="text-white font-bold text-base">
-                Pay Installment{agr.monthly_installment ? ` — ${fmt(agr.monthly_installment)}` : ""}
-              </Text>
-            </TouchableOpacity>
+            <>
+              <TouchableOpacity
+                onPress={() => setPayModalVisible(true)}
+                disabled={isPaymentDisabled}
+                className={`py-4 rounded-2xl flex-row items-center justify-center gap-2 ${isPaymentDisabled ? "bg-gray-200" : "bg-[#ff4b26]"}`}
+                style={isPaymentDisabled ? undefined : shadow.btn}
+              >
+                <CreditCard size={16} color="#fff" />
+                <Text className="text-white font-grotesk-bold text-base">
+                  {isPaymentDisabled ? "Payment Not Due" : `Pay Installment${agr.monthly_installment ? ` — ${fmt(agr.monthly_installment)}` : ""}`}
+                </Text>
+              </TouchableOpacity>
+              {isPaymentDisabled && agr.next_due_date && (
+                <Text className="font-manrope text-[11px] text-center text-gray-400 italic">
+                  Next payment window opens on {new Date(agr.next_due_date).toLocaleDateString("en-NG", { day: "numeric", month: "short", year: "numeric" })}
+                </Text>
+              )}
+            </>
           )}
 
           {transfer && (
             <View className="bg-white rounded-3xl p-5 gap-4" style={shadow.md}>
               <View className="flex-row items-center gap-3">
-                <View className="w-10 h-10 rounded-full bg-amber-50 items-center justify-center">
-                  <Landmark size={18} color="#f59e0b" />
+                <View className="w-10 h-10 rounded-full bg-[#fff0e9] items-center justify-center">
+                  <Landmark size={18} color="#ff4b26" />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-sm font-bold text-gray-900">Bank Transfer Details</Text>
-                  <Text className="text-xs text-gray-500">Send the exact amount to this account.</Text>
+                  <Text className="text-sm font-grotesk-bold text-gray-900">Bank Transfer Details</Text>
+                  <Text className="font-manrope text-xs text-gray-500">Send the exact amount to this account.</Text>
                 </View>
               </View>
               {[
@@ -475,22 +485,22 @@ export default function AgreementDetailsScreen() {
                 ["Reference", transfer.reference],
               ].map(([label, value]) => (
                 <View key={label} className="flex-row justify-between gap-4 border-b border-gray-100 pb-3">
-                  <Text className="text-sm text-gray-500">{label}</Text>
-                  <Text className="text-sm font-bold text-gray-900 flex-1 text-right">{value}</Text>
+                  <Text className="font-manrope text-sm text-gray-500">{label}</Text>
+                  <Text className="text-sm font-grotesk-bold text-gray-900 flex-1 text-right">{value}</Text>
                 </View>
               ))}
               {transfer.expires_at && (
-                <Text className="text-xs text-amber-600">
+                <Text className="font-grotesk text-xs text-[#e03f1c]">
                   This transfer account expires at {new Date(transfer.expires_at).toLocaleString()}.
                 </Text>
               )}
               <TouchableOpacity
                 onPress={verifyTransfer}
                 disabled={isPaying}
-                className="bg-amber-400 py-4 rounded-2xl items-center"
+                className="bg-[#ff4b26] py-4 rounded-2xl items-center"
                 style={shadow.btn}
               >
-                {isPaying ? <ActivityIndicator color="#fff" /> : <Text className="text-white font-bold">I have sent the payment</Text>}
+                {isPaying ? <ActivityIndicator color="#fff" /> : <Text className="text-white font-grotesk-bold">I have sent the payment</Text>}
               </TouchableOpacity>
             </View>
           )}
@@ -504,12 +514,24 @@ export default function AgreementDetailsScreen() {
             >
               {isCancelling
                 ? <ActivityIndicator color="#ef4444" />
-                : <Text className="text-red-600 font-semibold">Cancel Agreement</Text>}
+                : <Text className="text-red-600 font-grotesk-semibold">Cancel Agreement</Text>}
             </TouchableOpacity>
           )}
 
+          <TouchableOpacity
+            onPress={() => router.push("/my-payments")}
+            className="bg-white rounded-2xl p-4 flex-row items-center gap-3 border border-gray-100"
+            style={shadow.sm}
+          >
+            <View className="w-10 h-10 rounded-full bg-[#fff0e9] items-center justify-center">
+              <CreditCard size={18} color="#ff4b26" />
+            </View>
+            <Text className="text-sm font-grotesk-semibold text-gray-900 flex-1">View Payment History</Text>
+            <Text className="text-xs text-[#ff4b26] font-grotesk-bold">→</Text>
+          </TouchableOpacity>
+
           <View className="bg-gray-50 rounded-2xl p-4 border border-gray-100">
-            <Text className="text-xs text-gray-400 text-center leading-relaxed">
+            <Text className="font-manrope text-xs text-gray-400 text-center leading-relaxed">
               Agreement signed on {createdDate}. All transactions are secured via our escrow system.
             </Text>
           </View>

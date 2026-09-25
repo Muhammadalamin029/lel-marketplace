@@ -21,7 +21,7 @@ export default function InspectionsScreen() {
   useEffect(() => {
     let cancelled = false;
     inspectionsApi.list()
-      .then((data) => { if (!cancelled) setInspections(data); })
+      .then((data) => { if (!cancelled) setInspections(Array.isArray(data) ? data : []); })
       .catch((e) => { if (!cancelled) setError(e?.message ?? "Failed to load inspections"); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
@@ -35,8 +35,8 @@ export default function InspectionsScreen() {
       <ScrollView className="flex-1 px-5 pt-6" showsVerticalScrollIndicator={false}>
         {loading ? (
           <View className="items-center justify-center pt-20">
-            <ActivityIndicator size="large" color="#f59e0b" />
-            <Text className="text-sm text-gray-400 mt-3">Loading inspections…</Text>
+            <ActivityIndicator size="large" color="#ff4b26" />
+            <Text className="font-manrope text-sm text-gray-400 mt-3">Loading inspections…</Text>
           </View>
         ) : error ? (
           <EmptyState Icon={Calendar} title="Could not load inspections" subtitle={error} />
@@ -59,10 +59,10 @@ export default function InspectionsScreen() {
                         {isVehicle ? <Car size={20} color="#ea580c" /> : <Home size={20} color="#3b82f6" />}
                       </View>
                       <View>
-                        <Text className="text-sm font-extrabold text-gray-900">
+                        <Text className="text-sm font-grotesk-extrabold text-gray-900">
                           {insp.asset?.title ?? `${insp.asset_type} asset`}
                         </Text>
-                        <Text className="text-xs text-gray-400 mt-0.5">#{insp.id.slice(0, 8).toUpperCase()}</Text>
+                        <Text className="font-manrope text-xs text-gray-400 mt-0.5">#{insp.id.slice(0, 8).toUpperCase()}</Text>
                       </View>
                     </View>
                     <StatusBadge status={insp.status} />
@@ -71,14 +71,14 @@ export default function InspectionsScreen() {
                   <View className="bg-gray-50 rounded-xl p-3 gap-2">
                     <View className="flex-row items-center gap-2">
                       <Clock size={14} color="#6b7280" />
-                      <Text className={`text-sm font-bold ${insp.status === "confirmed" ? "text-gray-900" : "text-gray-500"}`}>
+                      <Text className={`text-sm font-grotesk-bold ${insp.status === "confirmed" ? "text-gray-900" : "text-gray-500"}`}>
                         {new Date(insp.inspection_date).toLocaleDateString("en-NG", { weekday: "short", day: "numeric", month: "short", year: "numeric" })}
                       </Text>
                     </View>
                   </View>
 
                   <View className="flex-row items-center justify-end mt-3 gap-1">
-                    <Text className="text-xs font-bold text-indigo-600">View Details</Text>
+                    <Text className="text-xs font-grotesk-bold text-indigo-600">View Details</Text>
                     <ChevronRight size={14} color="#4f46e5" />
                   </View>
                 </TouchableOpacity>

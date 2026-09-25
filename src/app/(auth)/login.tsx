@@ -1,10 +1,12 @@
-import { useState } from "react";
-import { ActivityIndicator, Image, KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
-import { AlertCircle, Eye, EyeOff, Lock, Mail } from "lucide-react-native";
+import { AlertCircle, Eye, EyeOff, ChevronLeft } from "lucide-react-native";
 import { authApi, getApiError } from "@/api";
-import { BRAND, BRAND_ASSETS, COLORS } from "@/constants/brand";
+import { COLORS } from "@/constants/brand";
 import { useAuthStore } from "@/store/authStore";
+import { handleGoogleResponse, useGoogleIdTokenRequest } from "@/hooks/useGoogleAuth";
+import { AuthPrimaryButton, GoogleButton, OrDivider, AuthInput } from "@/components/forms";
 
 export default function Login() {
   const router = useRouter();
@@ -14,6 +16,27 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [googleBusy, setGoogleBusy] = useState(false);
+  const { request: googleRequest, response: googleResponse, promptAsync: promptGoogle, configured: googleConfigured } =
+    useGoogleIdTokenRequest();
+
+  useEffect(() => {
+    if (!googleResponse) return;
+    (async () => {
+      setGoogleBusy(true);
+      setError(null);
+      try {
+        const { redirectTarget } = await handleGoogleResponse(googleResponse, redirect);
+        router.replace(redirectTarget as any);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : getApiError(e);
+        if (msg !== "Google sign-in was cancelled.") setError(msg);
+      } finally {
+        setGoogleBusy(false);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [googleResponse]);
 
   const handleLogin = async () => {
     if (!email.trim() || !password) return;
@@ -37,60 +60,71 @@ export default function Login() {
 
   return (
     <KeyboardAvoidingView className="flex-1 bg-white" behavior={Platform.OS === "ios" ? "padding" : "height"}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 34 }}>
-        <View className="px-8 pt-14">
-          <Image source={BRAND_ASSETS.login} style={{ width: "100%", height: 210, borderRadius: 10 }} resizeMode="cover" />
-          <Text className="text-3xl font-black text-gray-950 mt-8">Log in</Text>
-          <Text className="text-sm text-gray-400 mt-2 mb-8">Welcome back. Please login to your {BRAND.name} account.</Text>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1, paddingBottom: 34 }}>
+        <View className="px-7 pt-14 flex-1">
+          <TouchableOpacity onPress={() => router.back()} hitSlop={12} className="self-start p-1 -ml-1 mb-6">
+            <ChevronLeft size={22} color="#111827" />
+          </TouchableOpacity>
+
+          <Text className="text-[26px] font-grotesk-extrabold text-gray-950">Welcome back.</Text>
+          <Text className="font-manrope text-sm text-gray-400 mt-2 mb-8">Log in to continue to LEL Store.</Text>
 
           {error && (
             <View className="flex-row items-center gap-2 bg-red-50 border border-red-100 rounded-xl p-3 mb-4">
               <AlertCircle size={16} color="#ef4444" />
-              <Text className="text-sm text-red-600 flex-1">{error}</Text>
+              <Text className="font-grotesk text-sm text-red-600 flex-1">{error}</Text>
             </View>
           )}
 
           <View className="gap-5">
             <View className="gap-2">
-              <Text className="text-sm font-bold text-gray-900">Email or phone number</Text>
-              <View className="h-14 bg-gray-50 rounded-sm flex-row items-center px-4">
-                <TextInput className="flex-1 text-sm text-gray-950" placeholder="Enter email or phone number" placeholderTextColor="#bdbdbd" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" />
-                <Mail size={16} color="#9ca3af" />
-              </View>
+              <Text className="text-sm font-grotesk-semibold text-gray-900">Email address</Text>
+              <AuthInput
+                value={email} onChangeText={setEmail}
+                placeholder="Enter your email" keyboardType="email-address"
+              />
             </View>
             <View className="gap-2">
-              <Text className="text-sm font-bold text-gray-900">Password</Text>
-              <View className="h-14 bg-gray-50 rounded-sm flex-row items-center px-4">
-                <Lock size={16} color="#9ca3af" />
-                <TextInput className="flex-1 text-sm text-gray-950 px-3" placeholder="Enter your password" placeholderTextColor="#bdbdbd" value={password} onChangeText={setPassword} secureTextEntry={!showPassword} />
-                <TouchableOpacity onPress={() => setShowPassword((v) => !v)}>
-                  {showPassword ? <EyeOff size={16} color="#9ca3af" /> : <Eye size={16} color="#9ca3af" />}
-                </TouchableOpacity>
-              </View>
+              <Text className="text-sm font-grotesk-semibold text-gray-900">Password</Text>
+              <AuthInput
+                value={password} onChangeText={setPassword}
+                placeholder="Enter your password" secureTextEntry={!showPassword}
+                rightSlot={
+                  <TouchableOpacity onPress={() => setShowPassword((v) => !v)} hitSlop={8}>
+                    {showPassword ? <EyeOff size={16} color="#9ca3af" /> : <Eye size={16} color="#9ca3af" />}
+                  </TouchableOpacity>
+                }
+              />
             </View>
           </View>
 
-          <TouchableOpacity onPress={() => router.push("/(auth)/forgot-password" as any)} className="items-end mt-5">
-            <Text style={{ color: COLORS.primary }} className="text-xs font-bold">Forget Password ?</Text>
+          <TouchableOpacity onPress={() => router.push("/(auth)/forgot-password" as any)} className="items-end mt-4">
+            <Text style={{ color: COLORS.primary }} className="text-xs font-grotesk-bold">Forget Password?</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity disabled={disabled} onPress={handleLogin} className="h-14 rounded-full items-center justify-center mt-12" style={{ backgroundColor: disabled ? "#ffb3a2" : COLORS.primary }}>
-            {isLoading ? <ActivityIndicator color="#fff" /> : <Text className="text-white text-sm font-black">Get Started</Text>}
-          </TouchableOpacity>
-
-          <View className="flex-row items-center gap-4 my-5">
-            <View className="h-px bg-gray-100 flex-1" />
-            <Text className="text-xs text-gray-400">Or</Text>
-            <View className="h-px bg-gray-100 flex-1" />
+          <View className="mt-10">
+            <AuthPrimaryButton title={isLoading ? "Please wait…" : "Log In"} onPress={handleLogin} disabled={disabled} busy={isLoading} />
           </View>
-          <TouchableOpacity className="h-14 rounded-full border border-gray-200 items-center justify-center">
-            <Text className="text-gray-950 text-sm font-bold">Continue with Google</Text>
-          </TouchableOpacity>
 
-          <View className="flex-row justify-center mt-16">
-            <Text className="text-xs text-gray-500">Don't have an account? </Text>
+          {googleConfigured && (
+            <>
+              <View className="my-6">
+                <OrDivider />
+              </View>
+              <GoogleButton
+                onPress={() => promptGoogle()}
+                disabled={!googleRequest || googleBusy || isLoading}
+                busy={googleBusy}
+              />
+            </>
+          )}
+
+          <View className="flex-row justify-center mt-auto pt-10">
+            <Text className="font-manrope text-xs text-gray-500">Don't have an account? </Text>
             <Link href="/(auth)/register" asChild>
-              <TouchableOpacity><Text style={{ color: COLORS.primary }} className="text-xs font-bold">Sign up</Text></TouchableOpacity>
+              <TouchableOpacity>
+                <Text style={{ color: COLORS.primary }} className="text-xs font-grotesk-bold">Sign up.</Text>
+              </TouchableOpacity>
             </Link>
           </View>
         </View>

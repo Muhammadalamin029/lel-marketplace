@@ -11,6 +11,7 @@ export interface Product {
   price: number;
   stock_quantity: number;
   status: string;
+  amenities?: string[] | null;
   category: CategoryInfo;
   images: ProductImage[];
 }

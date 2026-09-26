@@ -150,6 +150,7 @@ function productToDisplay(p: Product): DisplayItem {
     rawStatus: p.status,
     minDepositPercent: 0,
     monthlyAllowed: false,
+    amenities: p.amenities ?? [],
   };
 }
 

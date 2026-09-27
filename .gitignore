@@ -46,3 +46,7 @@ example
 # Firebase (contains API keys — each dev/CI provides its own)
 google-services.json
 GoogleService-Info.plist
+
+# Play Store build artifacts (publishing docs in store/ stay tracked)
+store/*.aab
+store/*.apk

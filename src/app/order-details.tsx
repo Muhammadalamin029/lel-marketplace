@@ -243,7 +243,7 @@ export default function OrderDetailsScreen() {
   };
 
   const contactSupport = () => {
-    Linking.openURL("mailto:support@lel-marketplace.com?subject=Order Support").catch(() =>
+    Linking.openURL("mailto:support@lelstore.com?subject=Order Support").catch(() =>
       router.push("/help" as any),
     );
   };

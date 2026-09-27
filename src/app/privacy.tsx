@@ -5,32 +5,52 @@ import { LegalDocument } from "@/components/LegalDocument";
 
 const SECTIONS = [
   {
-    title: "1. Data We Collect",
-    body: "To operate a secure escrow and highly-regulated physical marketplace, LEL Marketplace collects necessary identification information. For Merchants, this includes CAC documents, government IDs (KYC), and payout routing numbers. For Customers, this includes basic contact parameters (email, phone number) used exclusively to coordinate physical inspections.",
+    title: "1. Data Controller and Contact",
+    body: "LEL Store Ltd (trading as LEL Store, Osun State, Nigeria) controls your data for the LEL Store app and lelstore.com. Privacy and deletion requests: support@lelstore.com. We respond within 30 days. This screen shows a summary when offline; the current policy is always at https://lelstore.com/privacy.",
   },
   {
-    title: "2. How We Share Data",
-    body: "Before Purchase: Users browsing stores remain completely anonymous to the seller.\n\nDuring Inspection: Upon scheduling an inspection, we share the buyer's appointment details with the seller. The buyer's residential address is masked unless delivery is required for a standard retail product.\n\nPost-Purchase: Finalised legal receipts and property/automotive documents will contain the legal names of both parties as required by law.",
+    title: "2. Data We Collect",
+    body: "Identity and account: name, email, password (stored only as an Argon2 hash), Google ID if you use Google sign-in, and login security data. Profile and contact: phone number, bio, profile photo, delivery and billing addresses. Transactions: cart, orders, inspection bookings, agreements, reviews, wishlist and disputes. Financing (only if you apply): employment details, income and uploaded ID or payslip documents. Payments: non-sensitive references only (amounts, receipt numbers, escrow states) — we never collect raw card numbers or bank passwords. Technical: notification preferences and Expo push tokens if you enable notifications.",
   },
   {
-    title: "3. Financial Security",
-    body: "LEL Marketplace does not store raw credit card numbers or banking passwords. All fiat processing, card tokenisation, and payout bridging is handled via our PCI-DSS Level 1 compliant gateway partners (Paystack). Our database only holds non-sensitive transaction references and escrow states.",
+    title: "3. Purposes and Legal Basis (NDPR)",
+    body: "We process your data to run your account, checkout, inspections, agreements, delivery and support (contract); for marketing notifications only with your consent, withdrawable in Settings; for AML, tax and deed-tracing record-keeping (legal obligation); and for fraud prevention and security (legitimate interests). Sensitive financing data is processed only when you submit an application.",
   },
   {
-    title: "4. Data Storage & Security",
-    body: "Your data is stored on secured servers with encryption at rest and in transit. We use industry-standard security practices including JWT authentication, rate limiting, and regular security audits. Passwords are hashed using Argon2.",
+    title: "4. How We Share Data",
+    body: "Browsing users are not publicly identified. Paid inspection details go to LEL Store operations only; your home address stays masked unless delivery is required. Final receipts and agreements contain legal names as required by law. Processors: Paystack (payments, PCI-DSS Level 1), Cloudinary (images), Google Identity (sign-in), Gmail (transactional email) and Expo Push (notifications). We do not sell personal data.",
   },
   {
-    title: "5. Your Rights",
-    body: "You have the right to access, correct, or request deletion of your personal data at any time. Note that due to AML laws and real estate deed requirements, records of finalised purchases may need to be retained for a statutory period and cannot always be fully expunged.",
+    title: "5. Financial Security and Data Protection",
+    body: "Card entry happens only inside the Paystack payment screen; card data never touches our servers. Connections use TLS, passwords use Argon2 hashing, sessions use short-lived tokens, and admin access is role-based. Report suspected compromise to support@lelstore.com immediately.",
   },
   {
-    title: "6. Cookies & Analytics",
-    body: "The mobile app does not use cookies. We may collect anonymous usage analytics (screen views, feature usage) to improve the product. No personally identifiable information is included in analytics data.",
+    title: "6. Data Retention and Deletion",
+    body: "Account data is kept while your account is active. On deletion (Settings, Danger Zone, Delete Account, or https://lelstore.com/account-deletion by email to support@lelstore.com with no login needed): sign-in is blocked immediately, the account has a 30-day grace period, then personal data is permanently deleted or irreversibly anonymised. Anonymised escrow and financial ledgers are kept up to 7 years for anti-money laundering, tax and deed-tracing law and cannot be expunged.",
   },
   {
-    title: "7. Contact",
-    body: "For privacy-related requests, contact our Data Protection Officer at privacy@lel-marketplace.com. We aim to respond to all requests within 30 days.",
+    title: "7. Your Rights",
+    body: "You may access, correct, erase, export (JSON), restrict or object to processing of your data, and withdraw consent at any time — in Settings or by emailing support@lelstore.com from your account email. Web requests are actioned within 7 days, with purge after the 30-day grace period.",
+  },
+  {
+    title: "8. Cookies and Analytics",
+    body: "The mobile app uses no cookies and contains no advertising or analytics SDKs. On-device storage (secure session, preferences) is strictly necessary for sign-in and checkout.",
+  },
+  {
+    title: "9. Children",
+    body: "LEL Store is for adults aged 18 and over. We do not knowingly collect data from children; contact support@lelstore.com for prompt deletion if you believe a child provided data.",
+  },
+  {
+    title: "10. International Transfers",
+    body: "Primary hosting is in secure cloud regions; some processors (email, push, CDN) may handle data outside Nigeria under contracts, encryption and strict necessity, consistent with NDPR safeguards.",
+  },
+  {
+    title: "11. Changes to This Policy",
+    body: "We update this policy as the app evolves. Material changes are posted with a new Last updated date and notified in-app or by email where required.",
+  },
+  {
+    title: "12. Contact and App Permissions",
+    body: "Privacy contact: support@lelstore.com, +234 800 123 4567, Osun State, Nigeria. You may also complain to the Nigeria Data Protection Commission (NDPC). The app uses internet access, push notifications (order and payment updates) and photo/camera access only when you upload a profile picture or financing document. It does not access your location, microphone, SMS or contacts.",
   },
 ];
 
@@ -45,11 +65,11 @@ export default function PrivacyScreen() {
         <LegalDocument
           slug="privacy"
           fallback={SECTIONS}
-          fallbackLabel="Last updated: January 2026 · We respect your privacy and are committed to protecting your personal data."
+          fallbackLabel="Last updated: October 2026 · Offline copy — the current policy is at lelstore.com/privacy."
         />
 
         <Text className="font-manrope text-xs text-gray-400 text-center mt-6">
-          For privacy requests, contact privacy@lel-marketplace.com
+          For privacy requests, contact support@lelstore.com
         </Text>
       </ScrollView>
     </SafeAreaView>

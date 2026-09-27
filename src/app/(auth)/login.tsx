@@ -127,6 +127,22 @@ export default function Login() {
               </TouchableOpacity>
             </Link>
           </View>
+
+          <View className="flex-row justify-center flex-wrap mt-4">
+            <Text className="font-manrope text-[11px] text-gray-400">By signing in, you agree to our </Text>
+            <Link href="/terms" asChild>
+              <TouchableOpacity hitSlop={8}>
+                <Text style={{ color: COLORS.primary }} className="text-[11px] font-grotesk-bold">Terms</Text>
+              </TouchableOpacity>
+            </Link>
+            <Text className="font-manrope text-[11px] text-gray-400"> and </Text>
+            <Link href="/privacy" asChild>
+              <TouchableOpacity hitSlop={8}>
+                <Text style={{ color: COLORS.primary }} className="text-[11px] font-grotesk-bold">Privacy Policy</Text>
+              </TouchableOpacity>
+            </Link>
+            <Text className="font-manrope text-[11px] text-gray-400">.</Text>
+          </View>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

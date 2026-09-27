@@ -2,13 +2,13 @@ import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { useEffect, useState } from "react";
 import {
   View, Text, ScrollView, TouchableOpacity, Switch, StatusBar,
-  Alert, Modal, TextInput, ActivityIndicator,
+  Alert, Modal, TextInput, ActivityIndicator, Linking,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { shadow } from "@/constants/shadows";
-import { Bell, Lock, Globe, Trash2, ChevronRight, Shield, Eye, EyeOff, KeyRound, X } from "lucide-react-native";
+import { Bell, Lock, Globe, Trash2, ChevronRight, Shield, Eye, EyeOff, KeyRound, X, ExternalLink } from "lucide-react-native";
 import { useAuthStore } from "@/store/authStore";
 import { authApi, notificationsApi } from "@/api";
 import type { NotificationPreferences } from "@/api";
@@ -121,7 +121,7 @@ export default function SettingsScreen() {
   const handleDeleteAccount = () => {
     Alert.alert(
       "Delete Account",
-      "This permanently deletes your account and cannot be undone.",
+      "Sign-in is blocked immediately and your personal data is permanently deleted after a 30-day grace period. Anonymised escrow records are kept up to 7 years as required by law.",
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -141,6 +141,12 @@ export default function SettingsScreen() {
           },
         },
       ],
+    );
+  };
+
+  const openDeletionHelp = () => {
+    Linking.openURL("https://lelstore.com/account-deletion").catch(() =>
+      Alert.alert("Cannot open link", "Visit lelstore.com/account-deletion in your browser.")
     );
   };
 
@@ -270,9 +276,21 @@ export default function SettingsScreen() {
               <Trash2 size={18} color="#ef4444" />
               <View className="flex-1">
                 <Text className="text-sm font-grotesk-semibold text-red-600">Delete Account</Text>
-                <Text className="font-manrope text-xs text-gray-400">This action is permanent and cannot be undone.</Text>
+                <Text className="font-manrope text-xs text-gray-400">Blocked immediately · data purged after 30 days.</Text>
               </View>
               {deletingAccount && <ActivityIndicator color="#ef4444" />}
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={openDeletionHelp}
+              className="bg-white border border-gray-100 rounded-2xl px-4 py-4 flex-row items-center gap-3 mt-3"
+              style={shadow.md}
+            >
+              <ExternalLink size={18} color="#6b7280" />
+              <View className="flex-1">
+                <Text className="text-sm font-grotesk-semibold text-gray-900">How deletion works</Text>
+                <Text className="font-manrope text-xs text-gray-400">What is deleted, what is kept, and web requests.</Text>
+              </View>
+              <ChevronRight size={16} color="#d1d5db" />
             </TouchableOpacity>
           </View>
 

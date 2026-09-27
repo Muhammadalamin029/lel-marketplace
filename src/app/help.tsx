@@ -36,7 +36,7 @@ function FAQItem({ item }: { item: typeof FAQS[0] }) {
 }
 
 const CONTACTS = [
-  { icon: Mail, label: "Email Support", value: "support@lel-marketplace.com", color: "#3b82f6", bg: "#eff6ff", action: "email" },
+  { icon: Mail, label: "Email Support", value: "support@lelstore.com", color: "#3b82f6", bg: "#eff6ff", action: "email" },
   { icon: MessageCircle, label: "Open a Dispute", value: "Escalate an order or agreement issue", color: "#22c55e", bg: "#f0fdf4", action: "disputes" },
   { icon: Phone, label: "Phone", value: "+234 800 LEL HELP", color: "#ff4b26", bg: "#fffbeb", action: "phone" },
 ] as const;
@@ -47,8 +47,8 @@ export default function HelpScreen() {
   /** Contact actions (web ContactSupportModal parity: reach support directly). */
   const handleContact = (action: string) => {
     if (action === "email") {
-      Linking.openURL("mailto:support@lel-marketplace.com?subject=Support Request").catch(() =>
-        Alert.alert("Email", "Please email us at support@lel-marketplace.com"),
+      Linking.openURL("mailto:support@lelstore.com?subject=Support Request").catch(() =>
+        Alert.alert("Email", "Please email us at support@lelstore.com"),
       );
     } else if (action === "phone") {
       Linking.openURL("tel:+2348005354357").catch(() =>

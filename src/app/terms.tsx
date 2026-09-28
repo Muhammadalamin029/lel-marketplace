@@ -26,7 +26,7 @@ const SECTIONS = [
   },
   {
     title: "6. Escrow, Payments and Financing",
-    body: "LEL Store holds inspection fees and purchase funds in escrow until completion triggers (inspection sign-off, agreement execution, delivery confirmation) are met. All card and transfer processing is handled by Paystack (PCI-DSS Level 1); we never store raw card numbers or bank passwords. Financing and direct-debit mandates follow your separate agreement terms; mandate activation may take up to 6 hours.",
+    body: "LEL Store holds inspection fees and purchase funds in escrow until completion triggers (inspection sign-off, agreement execution, delivery confirmation) are met. All card and transfer processing is handled by Flutterwave (PCI-DSS Level 1); we never store raw card numbers or bank passwords. Recurring card mandates follow your separate agreement terms.",
   },
   {
     title: "7. Returns, Refunds and Disputes",

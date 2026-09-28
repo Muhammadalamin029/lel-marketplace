@@ -148,19 +148,27 @@ export const ordersApi = {
     return unwrapData<CheckoutConfirmation>(data);
   },
 
-  /** POST /payments/initialize */
-  async initializePayment(order_id: string, email: string, amount: number, callback_url: string): Promise<{
-    authorization_url: string;
-    reference: string;
-    access_code: string;
+  /** POST /payments/charge-card — step 1 of the Direct-API card flow for orders. */
+  async chargeOrderCard(order_id: string, email: string, amount: number, card: {
+    card_number: string;
+    cvv: string;
+    expiry_month: string;
+    expiry_year: string;
+    fullname?: string;
+    phone_number?: string;
+  }): Promise<{
+    next_step: string;
+    tx_ref: string;
+    flw_ref?: string;
+    redirect_url?: string;
   }> {
-    const { data } = await api.post("/payments/initialize", {
+    const { data } = await api.post("/payments/charge-card", {
       order_id,
       email,
       amount,
-      callback_url,
       category: "order",
-      payment_method: "paystack",
+      payment_method: "flutterwave",
+      ...card,
     });
     return unwrapData(data);
   },

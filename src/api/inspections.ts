@@ -173,23 +173,30 @@ export const inspectionsApi = {
 
   // ── Asset payments (deposit + installments) ─────────────────────────────────
 
-  /** POST /payments/initialize — for asset deposit or installment */
-  async initializeAgreementPayment(
+  /** POST /payments/charge-card — step 1 of the Direct-API card flow for asset deposit/installment */
+  async chargeAgreementCard(
     agreementId: string,
     amount: number,
     email: string,
-    category: "asset_deposit" | "asset_installment",
-    callbackUrl: string
+    category: "asset_deposit" | "asset_installment" | "full_pay",
+    card: {
+      card_number: string;
+      cvv: string;
+      expiry_month: string;
+      expiry_year: string;
+      fullname?: string;
+      phone_number?: string;
+    }
   ) {
-    const { data } = await api.post("/payments/initialize", {
+    const { data } = await api.post("/payments/charge-card", {
       agreement_id: agreementId,
       amount,
       email,
-      payment_method: "paystack",
-      callback_url: callbackUrl,
+      payment_method: "flutterwave",
       category,
+      ...card,
     });
-    return unwrapData<{ authorization_url: string; reference: string; access_code: string }>(data);
+    return unwrapData<{ next_step: string; tx_ref: string; flw_ref?: string; redirect_url?: string }>(data);
   },
 
   async initializeAgreementBankTransfer(
@@ -207,7 +214,7 @@ export const inspectionsApi = {
     return unwrapData(data);
   },
 
-  /** POST /payments/verify — verify after Paystack redirect */
+  /** POST /payments/verify — verify after Flutterwave charge completes */
   async verifyPayment(reference: string) {
     const { data } = await api.post("/payments/verify", { reference });
     return unwrapData(data);

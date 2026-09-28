@@ -20,7 +20,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 };
 
 const METHOD_LABELS: Record<string, string> = {
-  paystack: "Paystack",
+  flutterwave: "Flutterwave",
   card:     "Card",
   bank_transfer: "Bank Transfer",
 };
@@ -188,7 +188,7 @@ export default function MyPaymentDetailsScreen() {
 
           <View className="bg-gray-50 rounded-2xl p-4 border border-gray-100">
             <Text className="font-manrope text-xs text-gray-400 text-center leading-relaxed">
-              All payments are processed securely via Paystack. Contact support if you have any issues with this transaction.
+              All payments are processed securely via Flutterwave. Contact support if you have any issues with this transaction.
             </Text>
           </View>
 

@@ -9,7 +9,7 @@ import { useRouter } from "expo-router";
 const FAQS = [
   { q: "How does the inspection process work?", a: "After expressing interest in a vehicle or property, you schedule a physical inspection with the seller. Our platform coordinates the date and time. You pay no inspection fee." },
   { q: "How do installment payments work?", a: "Once an inspection is complete and both parties agree on a price, the seller creates an agreement with a deposit and monthly plan. You pay the deposit to activate the agreement, then pay monthly installments until the asset is fully paid off." },
-  { q: "Is my payment secure?", a: "Yes. All payments are processed through Paystack, a PCI-DSS Level 1 compliant gateway. Funds are held in escrow until conditions are met." },
+  { q: "Is my payment secure?", a: "Yes. All payments are processed through Flutterwave, a PCI-DSS Level 1 compliant gateway. Funds are held in escrow until conditions are met." },
   { q: "How do I open a dispute?", a: "Go to Disputes in your profile menu and tap the '+' button. Provide a title, the order or agreement ID, and a detailed description. Our team responds within 2–3 business days." },
   { q: "Can I cancel an order?", a: "Orders can be cancelled before they are shipped. Go to My Orders, tap the order, and select Cancel. Refunds are processed within 3–5 business days." },
   { q: "How do I become a seller?", a: "Tap 'Become a Seller' on your profile and complete the seller registration form. You'll need to submit KYC documents for verification before you can list items." },

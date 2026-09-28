@@ -1,5 +1,20 @@
 import { api, unwrapData } from "./client";
 
+// Single-flight cache: concurrent identical initiations (double tap,
+// remount) share one request instead of minting duplicate accounts.
+const transferInflight = new Map<string, Promise<any>>();
+const TRANSFER_SHARE_TTL_MS = 90_000;
+
+function transferKey(payload: Record<string, any>): string {
+  return [
+    payload.category ?? "",
+    payload.order_id ?? "",
+    payload.agreement_id ?? "",
+    payload.amount,
+    payload.email ?? "",
+  ].join("|");
+}
+
 export interface Payment {
   id: string;
   order_id: string | null;
@@ -40,21 +55,48 @@ export const paymentsApi = {
     return data as { success: boolean; data: Payment[]; pagination: any };
   },
 
-  async initialize(payload: {
+  /** POST /payments/charge-card — step 1 of the Direct-API card flow. */
+  async chargeCard(payload: {
     order_id?: string;
     agreement_id?: string;
     category?: "order" | "asset_deposit" | "asset_installment" | "full_pay";
     amount: number;
     email: string;
-    callback_url?: string;
+    fullname?: string;
+    phone_number?: string;
+    card_number: string;
+    cvv: string;
+    expiry_month: string;
+    expiry_year: string;
+    redirect_url?: string;
     metadata?: Record<string, any>;
-    payment_method?: string;
   }) {
-    const { data } = await api.post("/payments/initialize", {
+    const { data } = await api.post("/payments/charge-card", {
       category: "order",
-      payment_method: "paystack",
+      payment_method: "flutterwave",
       ...payload,
     });
+    return unwrapData(data);
+  },
+
+  /** POST /payments/charge-card/authorize — step 2 (PIN / AVS). */
+  async authorizeCard(payload: {
+    tx_ref: string;
+    card_number: string;
+    cvv: string;
+    expiry_month: string;
+    expiry_year: string;
+    authorization: Record<string, any>;
+    email?: string;
+    fullname?: string;
+  }) {
+    const { data } = await api.post("/payments/charge-card/authorize", payload);
+    return unwrapData(data);
+  },
+
+  /** POST /payments/charge-card/validate — step 3 (OTP). */
+  async validateCard(tx_ref: string, otp: string) {
+    const { data } = await api.post("/payments/charge-card/validate", { tx_ref, otp });
     return unwrapData(data);
   },
 
@@ -66,15 +108,29 @@ export const paymentsApi = {
     email: string;
     metadata?: Record<string, any>;
   }) {
-    const { data } = await api.post("/payments/initialize-bank-transfer", {
+    const body = {
       category: "order",
       ...payload,
-    });
-    return unwrapData(data);
+    };
+    const key = transferKey(body);
+    const hit = transferInflight.get(key);
+    if (hit) return hit;
+    const promise = api
+      .post("/payments/initialize-bank-transfer", body)
+      .then(({ data }) => unwrapData(data))
+      .catch((err) => {
+        if (transferInflight.get(key) === promise) transferInflight.delete(key);
+        throw err;
+      });
+    transferInflight.set(key, promise);
+    setTimeout(() => {
+      if (transferInflight.get(key) === promise) transferInflight.delete(key);
+    }, TRANSFER_SHARE_TTL_MS);
+    return promise;
   },
 
-  async verify(reference: string) {
-    const { data } = await api.post("/payments/verify", { reference });
+  async verify(reference: string, transaction_id?: number) {
+    const { data } = await api.post("/payments/verify", { reference, transaction_id });
     return unwrapData(data);
   },
 };

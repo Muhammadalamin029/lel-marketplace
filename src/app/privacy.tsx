@@ -18,11 +18,11 @@ const SECTIONS = [
   },
   {
     title: "4. How We Share Data",
-    body: "Browsing users are not publicly identified. Paid inspection details go to LEL Store operations only; your home address stays masked unless delivery is required. Final receipts and agreements contain legal names as required by law. Processors: Paystack (payments, PCI-DSS Level 1), Cloudinary (images), Google Identity (sign-in), Gmail (transactional email) and Expo Push (notifications). We do not sell personal data.",
+    body: "Browsing users are not publicly identified. Paid inspection details go to LEL Store operations only; your home address stays masked unless delivery is required. Final receipts and agreements contain legal names as required by law. Processors: Flutterwave (payments, PCI-DSS Level 1), Cloudinary (images), Google Identity (sign-in), Gmail (transactional email) and Expo Push (notifications). We do not sell personal data.",
   },
   {
     title: "5. Financial Security and Data Protection",
-    body: "Card entry happens only inside the Paystack payment screen; card data never touches our servers. Connections use TLS, passwords use Argon2 hashing, sessions use short-lived tokens, and admin access is role-based. Report suspected compromise to support@lelstore.com immediately.",
+    body: "Card details are transmitted over TLS straight to our PCI-DSS Level 1 processor (Flutterwave) and are never stored on our servers or in logs. Connections use TLS, passwords use Argon2 hashing, sessions use short-lived tokens, and admin access is role-based. Report suspected compromise to support@lelstore.com immediately.",
   },
   {
     title: "6. Data Retention and Deletion",

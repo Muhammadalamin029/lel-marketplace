@@ -6,14 +6,14 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import Constants from "expo-constants";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { shadow } from "@/constants/shadows";
-import { Bell, Lock, Globe, Trash2, ChevronRight, Shield, Eye, EyeOff, KeyRound, X, ExternalLink } from "lucide-react-native";
+import { Lock, Trash2, ChevronRight, Shield, Eye, EyeOff, KeyRound, X, ExternalLink } from "lucide-react-native";
 import { useAuthStore } from "@/store/authStore";
 import { authApi, notificationsApi } from "@/api";
 import type { NotificationPreferences } from "@/api";
 
-type ToggleSetting = { id: string; label: string; subtitle: string; value: boolean };
 type NotifDraft = {
   email_order: boolean;
   email_promo: boolean;
@@ -28,12 +28,9 @@ export default function SettingsScreen() {
   const router = useRouter();
   const { changePassword, logout } = useAuthStore();
 
-  const [settings, setSettings] = useState<ToggleSetting[]>([
-    { id: "dark_mode",    label: "Dark Mode",            subtitle: "Easier on the eyes at night", value: false },
-    { id: "biometric",    label: "Biometric Login",      subtitle: "Use Face ID / fingerprint to sign in", value: false },
-  ]);
   const [notifPreferences, setNotifPreferences] = useState<NotificationPreferences | null>(null);
   const [notifDraft, setNotifDraft] = useState<NotifDraft | null>(null);
+  const [loadingNotif, setLoadingNotif] = useState(true);
   const [savingNotif, setSavingNotif] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
 
@@ -49,6 +46,7 @@ export default function SettingsScreen() {
   const resetPwForm = () => { setCurrentPw(""); setNewPw(""); setConfirmPw(""); };
 
   useEffect(() => {
+    setLoadingNotif(true);
     notificationsApi.getPreferences()
       .then((prefs) => {
         setNotifPreferences(prefs);
@@ -61,7 +59,8 @@ export default function SettingsScreen() {
           inapp_promo: prefs.in_app_notifications.promotional_offers,
         });
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setLoadingNotif(false));
   }, []);
 
   const handleChangePassword = async () => {
@@ -80,13 +79,6 @@ export default function SettingsScreen() {
       setChangingPw(false);
     }
   };
-
-  const toggle = (id: string) =>
-    setSettings((prev) => prev.map((s) => s.id === id ? { ...s, value: !s.value } : s));
-
-  const SECTIONS = [
-    { title: "Appearance & Security",  items: settings },
-  ];
 
   const saveNotificationPreferences = async () => {
     if (!notifDraft || !notifPreferences) return;
@@ -151,7 +143,6 @@ export default function SettingsScreen() {
   };
 
   const ACTIONS = [
-    { icon: Globe,  label: "Language",       value: "English", onPress: () => {} },
     { icon: Shield, label: "Privacy Policy",  onPress: () => router.push("/privacy") },
     { icon: Lock,   label: "Terms of Service",onPress: () => router.push("/terms") },
   ];
@@ -164,10 +155,16 @@ export default function SettingsScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
         <View className="px-5 pt-5 gap-6">
 
-          {/* Toggle sections */}
-          {notifDraft && (
-            <View>
-              <Text className="text-xs font-grotesk-bold text-gray-400 uppercase tracking-wider mb-3">Notifications</Text>
+          {/* Notifications */}
+          <View>
+            <Text className="text-xs font-grotesk-bold text-gray-400 uppercase tracking-wider mb-3">Notifications</Text>
+            {loadingNotif ? (
+              <View className="bg-white rounded-2xl items-center justify-center py-8" style={shadow.md}>
+                <ActivityIndicator color="#ff4b26" />
+                <Text className="font-manrope text-xs text-gray-400 mt-2">Loading preferences…</Text>
+              </View>
+            ) : notifDraft ? (
+              <>
               <View className="bg-white rounded-2xl overflow-hidden" style={shadow.md}>
                 {[
                   { key: "email_order", label: "Email order updates", subtitle: "Order status and delivery updates" },
@@ -199,30 +196,14 @@ export default function SettingsScreen() {
               >
                 {savingNotif ? <ActivityIndicator color="#fff" /> : <Text className="text-white font-grotesk-bold">Save preferences</Text>}
               </TouchableOpacity>
-            </View>
-          )}
-
-          {SECTIONS.map((section) => (
-            <View key={section.title}>
-              <Text className="text-xs font-grotesk-bold text-gray-400 uppercase tracking-wider mb-3">{section.title}</Text>
-              <View className="bg-white rounded-2xl overflow-hidden" style={shadow.md}>
-                {section.items.map((item, i) => (
-                  <View key={item.id} className={`flex-row items-center px-4 py-4 ${i < section.items.length - 1 ? "border-b border-gray-100" : ""}`}>
-                    <View className="flex-1">
-                      <Text className="text-sm font-grotesk-semibold text-gray-900">{item.label}</Text>
-                      <Text className="font-manrope text-xs text-gray-400 mt-0.5">{item.subtitle}</Text>
-                    </View>
-                    <Switch
-                      value={item.value}
-                      onValueChange={() => toggle(item.id)}
-                      trackColor={{ false: "#e5e7eb", true: "#fbbf24" }}
-                      thumbColor="#fff"
-                    />
-                  </View>
-                ))}
+              </>
+            ) : (
+              <View className="bg-white rounded-2xl items-center justify-center py-8 px-6" style={shadow.md}>
+                <Text className="text-sm font-grotesk-semibold text-gray-900">Couldn't load preferences</Text>
+                <Text className="font-manrope text-xs text-gray-400 mt-1 text-center">Check your connection and reopen Settings.</Text>
               </View>
-            </View>
-          ))}
+            )}
+          </View>
 
           {/* Account Security */}
           <View>
@@ -256,7 +237,6 @@ export default function SettingsScreen() {
                   >
                     <Icon size={18} color="#6b7280" style={{ marginRight: 12 }} />
                     <Text className="text-sm font-grotesk-semibold text-gray-900 flex-1">{action.label}</Text>
-                    {action.value && <Text className="font-manrope text-sm text-gray-400 mr-2">{action.value}</Text>}
                     <ChevronRight size={16} color="#d1d5db" />
                   </TouchableOpacity>
                 );
@@ -295,7 +275,9 @@ export default function SettingsScreen() {
           </View>
 
           <View className="items-center">
-            <Text className="font-manrope text-xs text-gray-300">LEL Marketplace · v1.0.0</Text>
+            <Text className="font-manrope text-xs text-gray-300">
+              LEL Store · v{Constants.expoConfig?.version ?? "1.0.0"}
+            </Text>
           </View>
 
         </View>

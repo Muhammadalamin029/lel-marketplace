@@ -8,6 +8,20 @@ export const BRAND = {
   location: "Osun State, Nigeria",
 } as const;
 
+/**
+ * Product-detail assurance rows. Single source of truth for the
+ * delivery / seller / returns copy — must stay identical to the
+ * web's PRODUCT_ASSURANCE in alhaq-frontend/src/config/brand.ts.
+ */
+export const PRODUCT_ASSURANCE = {
+  deliveryHeadline: "Nationwide delivery in 7 days",
+  deliverySubtext: "Delivery fee calculated at checkout.",
+  sellerHeadline: `Sold and fulfilled by ${BRAND.name}`,
+  sellerSubtext: "Every item is checked before dispatch.",
+  returnsHeadline: "7-day return window",
+  returnsSubtext: "Unused items in original packaging.",
+} as const;
+
 export const COLORS = {
   primary: "#ff4b26",
   primaryDark: "#e03f1c",

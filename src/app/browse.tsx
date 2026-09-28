@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import {
   View, Text, ScrollView, TouchableOpacity, TouchableWithoutFeedback, TextInput, StatusBar,
-  ActivityIndicator, Modal,
+  ActivityIndicator, Modal, RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useLocalSearchParams } from "expo-router";
@@ -91,6 +91,7 @@ export default function BrowseScreen() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [allItems, setAllItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [searchDebounce, setSearchDebounce] = useState(search);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
@@ -104,8 +105,9 @@ export default function BrowseScreen() {
     return () => clearTimeout(t);
   }, [search]);
 
-  const loadAll = useCallback(async (q: string) => {
-    setLoading(true);
+  const loadAll = useCallback(async (q: string, isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
+    else setLoading(true);
     try {
       const searchParam = q.trim() || undefined;
       const [productsRes, carsRes, propsRes] = await Promise.allSettled([
@@ -120,10 +122,12 @@ export default function BrowseScreen() {
       setAllItems(items);
       setVisibleCount(PAGE_SIZE);
     } catch { /* silent */ }
-    finally { setLoading(false); }
+    finally { setLoading(false); setRefreshing(false); }
   }, []);
 
   useEffect(() => { loadAll(searchDebounce); }, [loadAll, searchDebounce]);
+
+  const onRefresh = useCallback(() => { loadAll(searchDebounce, true); }, [loadAll, searchDebounce]);
 
   const activeFilterCount =
     (minPrice ? 1 : 0) + (maxPrice ? 1 : 0) + (minYear ? 1 : 0) + (maxYear ? 1 : 0);
@@ -137,7 +141,9 @@ export default function BrowseScreen() {
       if (tab === "products" && item.type !== "product") return false;
       if (tab === "cars" && item.type !== "vehicle") return false;
       if (tab === "apartments" && !(item.type === "real_estate" && item.listingType === "rental")) return false;
-      if (tab === "properties" && item.type !== "real_estate") return false;
+      // Web parity (/properties mobile): rentals live under Apartments only,
+      // Properties shows everything else (sale + professional).
+      if (tab === "properties" && !(item.type === "real_estate" && item.listingType !== "rental")) return false;
       if (lo != null && !Number.isNaN(lo) && item.rawPrice < lo) return false;
       if (hi != null && !Number.isNaN(hi) && item.rawPrice > hi) return false;
       if (item.type === "vehicle") {
@@ -167,7 +173,7 @@ export default function BrowseScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView edges={["top", "left", "right"]} className="flex-1 bg-white">
       <StatusBar barStyle="dark-content" />
 
       {/* Search */}
@@ -269,7 +275,14 @@ export default function BrowseScreen() {
         </View>
       )}
 
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
+      <ScrollView
+        className="flex-1"
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 120 }}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.primary} colors={[COLORS.primary]} />
+        }
+      >
         <View className="px-5">
           {loading ? (
             <View className="items-center justify-center pt-20 gap-3">

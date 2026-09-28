@@ -1,8 +1,8 @@
-import { useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
-  View, Text, ScrollView, TouchableOpacity, Image, ActivityIndicator,
+  View, Text, ScrollView, TouchableOpacity, Image, ActivityIndicator, RefreshControl,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { ShoppingBag, Trash2, Plus, Minus } from "lucide-react-native";
 import { EmptyState } from "@/components/EmptyState";
@@ -85,9 +85,24 @@ export default function CartScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await fetchPendingOrder();
+    } finally {
+      setRefreshing(false);
+    }
+  }, [fetchPendingOrder]);
+
   const items = pendingOrder?.order_items ?? [];
   const total = totalPrice();
   const qty = totalItems();
+  // Sticky checkout bar must dock ABOVE the tab bar, not at window bottom.
+  // Matches (tabs)/_layout.tsx: content zone 60 + bottom inset.
+  const insets = useSafeAreaInsets();
+  const tabBarHeight = 60 + Math.max(insets.bottom, 8);
+  const stickyBottomOffset = tabBarHeight + 8;
 
   const handleRemove = async (itemId: string) => {
     await removeItem(itemId);
@@ -102,7 +117,7 @@ export default function CartScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView edges={["top", "left", "right"]} className="flex-1 bg-white">
       <ScreenHeader title="Your Cart" subtitle={qty > 0 ? `(${qty} item${qty === 1 ? "" : "s"})` : undefined} />
 
       {isLoading && items.length === 0 ? (
@@ -118,7 +133,13 @@ export default function CartScreen() {
         />
       ) : (
         <>
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 150 }}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: stickyBottomOffset + 150 }}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.primary} colors={[COLORS.primary]} />
+            }
+          >
             {/* Items */}
             <View className="px-5">
               {items.map((item) => (
@@ -155,8 +176,11 @@ export default function CartScreen() {
             </View>
           </ScrollView>
 
-          {/* Sticky total + checkout */}
-          <View className="absolute bottom-0 left-0 right-0 bg-white px-5 pb-8 pt-3 border-t border-gray-100">
+          {/* Sticky total + checkout — offset above the tab bar so it never covers tabs */}
+          <View
+            className="absolute left-0 right-0 bg-white px-5 pt-3 border-t border-gray-100"
+            style={{ bottom: tabBarHeight, paddingBottom: Math.max(insets.bottom, 12) }}
+          >
             <View className="flex-row items-center justify-between mb-3">
               <Text className="font-manrope text-[13px] text-gray-400">Total</Text>
               <Text className="text-lg font-grotesk-extrabold" style={{ color: COLORS.primary }}>

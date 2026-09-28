@@ -1,6 +1,6 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import {
-  View, Text, TouchableOpacity, ScrollView, ActivityIndicator,
+  View, Text, TouchableOpacity, ScrollView, ActivityIndicator, RefreshControl,
   Linking, Image, Dimensions, NativeSyntheticEvent, NativeScrollEvent,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -37,6 +37,9 @@ interface CarouselSlide {
 
 function PromoCarousel({ campaigns, onOpenLink }: { campaigns: CampaignBanner[]; onOpenLink: (link?: string | null) => void }) {
   const [page, setPage] = useState(0);
+  const scrollRef = useRef<ScrollView>(null);
+  const pageRef = useRef(0);
+  const draggingRef = useRef(false);
   const slides: CarouselSlide[] = [
     { key: "local-campaign-1", localImage: FIRST_SLIDE_IMAGE, link: "/browse" },
     ...campaigns.map((c) => ({
@@ -46,19 +49,41 @@ function PromoCarousel({ campaigns, onOpenLink }: { campaigns: CampaignBanner[];
     })),
   ];
 
+  const SLIDE_W = SCREEN_W - 40;
+  const SLIDE_GAP = 10;
+  const STRIDE = SLIDE_W + SLIDE_GAP;
+
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const x = e.nativeEvent.contentOffset.x;
-    setPage(Math.round(x / (SCREEN_W - 40)));
+    const next = Math.round(x / STRIDE);
+    pageRef.current = next;
+    setPage(next);
   };
+
+  // Auto-advance every 4s; pauses while the user is dragging.
+  useEffect(() => {
+    if (slides.length < 2) return;
+    const id = setInterval(() => {
+      if (draggingRef.current) return;
+      const next = (pageRef.current + 1) % slides.length;
+      pageRef.current = next;
+      setPage(next);
+      scrollRef.current?.scrollTo({ x: next * STRIDE, animated: true });
+    }, 4000);
+    return () => clearInterval(id);
+  }, [slides.length]);
 
   return (
     <View>
       <ScrollView
+        ref={scrollRef}
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
         onScroll={onScroll}
         scrollEventThrottle={16}
+        onScrollBeginDrag={() => { draggingRef.current = true; }}
+        onScrollEndDrag={() => { draggingRef.current = false; }}
       >
         {slides.map((s, i) => (
           <TouchableOpacity
@@ -66,7 +91,7 @@ function PromoCarousel({ campaigns, onOpenLink }: { campaigns: CampaignBanner[];
             activeOpacity={0.9}
             onPress={() => onOpenLink(s.link)}
             className="rounded-2xl overflow-hidden bg-gray-100"
-            style={{ width: SCREEN_W - 40, height: 150 }}
+            style={{ width: SLIDE_W, height: 150, marginRight: i === slides.length - 1 ? 0 : SLIDE_GAP }}
           >
             {s.localImage ? (
               <Image source={s.localImage} style={{ width: "100%", height: "100%" }} resizeMode="cover" />
@@ -114,12 +139,14 @@ export default function HomeScreen() {
   const [campaigns, setCampaigns] = useState<CampaignBanner[]>([]);
   const [unread, setUnread] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const displayName = (profile as any)?.name || user?.email?.split("@")[0] || "there";
   const avatarUrl = (profile as any)?.avatar_url as string | undefined;
 
-  const loadListings = useCallback(async () => {
-    setLoading(true);
+  const loadListings = useCallback(async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
+    else setLoading(true);
     try {
       const [carsRes, propsRes, productsRes, catsRes, campaignsRes, notifRes] = await Promise.allSettled([
         productsApi.listCars({ limit: 8 }),
@@ -179,10 +206,12 @@ export default function HomeScreen() {
       if (campaignsRes.status === "fulfilled") setCampaigns(campaignsRes.value ?? []);
       if (notifRes.status === "fulfilled") setUnread(notifRes.value.unread_count ?? 0);
     } catch { /* silent */ }
-    finally { setLoading(false); }
+    finally { setLoading(false); setRefreshing(false); }
   }, []);
 
   useEffect(() => { loadListings(); }, [loadListings]);
+
+  const onRefresh = useCallback(() => { loadListings(true); }, [loadListings]);
 
   const handleSearch = () => {
     if (search.trim()) router.push(`/browse?search=${encodeURIComponent(search)}` as any);
@@ -218,8 +247,15 @@ export default function HomeScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
+    <SafeAreaView edges={["top", "left", "right"]} className="flex-1 bg-white">
+      <ScrollView
+        className="flex-1"
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 96 }}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.primary} colors={[COLORS.primary]} />
+        }
+      >
         {/* ── Header ── */}
         <View className="flex-row items-center justify-between px-5 pt-4 pb-3">
           <View className="flex-row items-center gap-3">

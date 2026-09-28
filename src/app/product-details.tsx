@@ -6,14 +6,14 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
-  ChevronLeft, Heart, Star, MapPin, ShieldCheck,
+  ChevronLeft, Heart, Star, MapPin, ShieldCheck, CheckCircle,
   AlertCircle, Truck, RotateCcw, BadgeCheck, ExternalLink,
   Minus, Plus, Calendar, Gauge, Palette, Hash,
   BedDouble, Bath, Ruler, Headphones, Clock,
 } from "lucide-react-native";
 import MapView, { Marker } from "react-native-maps";
 import { fmt } from "@/utils/format";
-import { COLORS } from "@/constants/brand";
+import { COLORS, PRODUCT_ASSURANCE } from "@/constants/brand";
 import { productsApi, reviewsApi, wishlistApi, getApiError } from "@/api";
 import type { Car, Property, Product, Review } from "@/api";
 import type { ProductCardItem } from "@/components/ProductCard";
@@ -652,11 +652,11 @@ export default function ProductDetailsScreen() {
           {(item.amenities?.length ?? 0) > 0 && (
             <View className="px-4 py-4 border-b border-gray-200">
               <View className="mb-3"><SectionTitle>Amenities</SectionTitle></View>
-              <View className="flex-row flex-wrap" style={{ rowGap: 10 }}>
+              <View className="gap-2">
                 {item.amenities!.map((a) => (
-                  <View key={a} className="flex-row items-center gap-2" style={{ width: "50%" }}>
-                    <View className="rounded-full bg-green-600" style={{ width: 6, height: 6 }} />
-                    <Text className="font-manrope text-gray-900" style={{ fontSize: 14 }}>{a}</Text>
+                  <View key={a} className="flex-row items-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3">
+                    <CheckCircle size={16} color="#16a34a" />
+                    <Text className="font-manrope text-gray-900 flex-1" style={{ fontSize: 14 }}>{a}</Text>
                   </View>
                 ))}
               </View>
@@ -851,26 +851,43 @@ export default function ProductDetailsScreen() {
             </>
           )}
 
+          {(item.amenities?.length ?? 0) > 0 && (
+            <>
+              <View>
+                <Text className="font-grotesk-extrabold text-gray-900 mb-2.5" style={{ fontSize: 14 }}>Amenities</Text>
+                <View className="gap-2">
+                  {item.amenities!.map((a) => (
+                    <View key={a} className="flex-row items-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3">
+                      <CheckCircle size={16} color="#16a34a" />
+                      <Text className="font-manrope text-gray-900 flex-1" style={{ fontSize: 13 }}>{a}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+              <View className="h-px bg-gray-100" />
+            </>
+          )}
+
           <View className="gap-4">
             <View className="flex-row gap-3">
               <Truck size={18} color="#111827" style={{ marginTop: 2 }} />
               <View className="flex-1">
-                <Text className="font-grotesk-bold text-gray-900" style={{ fontSize: 13 }}>Delivery — calculated at checkout</Text>
-                <Text className="font-manrope text-gray-400 mt-0.5" style={{ fontSize: 12 }}>Same-day dispatch for Lagos orders placed before noon.</Text>
+                <Text className="font-grotesk-bold text-gray-900" style={{ fontSize: 13 }}>{PRODUCT_ASSURANCE.deliveryHeadline}</Text>
+                <Text className="font-manrope text-gray-400 mt-0.5" style={{ fontSize: 12 }}>{PRODUCT_ASSURANCE.deliverySubtext}</Text>
               </View>
             </View>
             <View className="flex-row gap-3">
               <ShieldCheck size={18} color="#111827" style={{ marginTop: 2 }} />
               <View className="flex-1">
-                <Text className="font-grotesk-bold text-gray-900" style={{ fontSize: 13 }}>Sold and fulfilled by Lel Store</Text>
-                <Text className="font-manrope text-gray-400 mt-0.5" style={{ fontSize: 12 }}>Every item is checked before dispatch.</Text>
+                <Text className="font-grotesk-bold text-gray-900" style={{ fontSize: 13 }}>{PRODUCT_ASSURANCE.sellerHeadline}</Text>
+                <Text className="font-manrope text-gray-400 mt-0.5" style={{ fontSize: 12 }}>{PRODUCT_ASSURANCE.sellerSubtext}</Text>
               </View>
             </View>
             <View className="flex-row gap-3">
               <RotateCcw size={18} color="#111827" style={{ marginTop: 2 }} />
               <View className="flex-1">
-                <Text className="font-grotesk-bold text-gray-900" style={{ fontSize: 13 }}>7-day return window</Text>
-                <Text className="font-manrope text-gray-400 mt-0.5" style={{ fontSize: 12 }}>Unused items in original packaging.</Text>
+                <Text className="font-grotesk-bold text-gray-900" style={{ fontSize: 13 }}>{PRODUCT_ASSURANCE.returnsHeadline}</Text>
+                <Text className="font-manrope text-gray-400 mt-0.5" style={{ fontSize: 12 }}>{PRODUCT_ASSURANCE.returnsSubtext}</Text>
               </View>
             </View>
           </View>

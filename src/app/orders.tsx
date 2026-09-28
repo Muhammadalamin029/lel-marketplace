@@ -1,6 +1,6 @@
 import { useRequireAuth } from "@/hooks/useRequireAuth";
-import { useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, ScrollView, StatusBar, ActivityIndicator, Image } from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import { View, Text, TouchableOpacity, ScrollView, StatusBar, ActivityIndicator, Image, RefreshControl } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Package } from "lucide-react-native";
@@ -40,22 +40,36 @@ export default function OrdersScreen() {
   const [activeTab, setActiveTab] = useState<Tab>("All");
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const loadOrders = useCallback(async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
+    else setLoading(true);
+    setError(null);
+    try {
+      const { data } = await ordersApi.list({ limit: 50 });
+      setOrders(data);
+    } catch (e: any) {
+      if (!isRefresh) setError(e?.message ?? "Failed to load orders");
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
-    ordersApi.list({ limit: 50 })
-      .then(({ data }) => { if (!cancelled) setOrders(data); })
-      .catch((e) => { if (!cancelled) setError(e?.message ?? "Failed to load orders"); })
-      .finally(() => { if (!cancelled) setLoading(false); });
+    loadOrders().catch(() => { if (!cancelled) {} });
     return () => { cancelled = true; };
-  }, []);
+  }, [loadOrders]);
+
+  const onRefresh = useCallback(() => { loadOrders(true); }, [loadOrders]);
 
   const visible = tabFilter(orders, activeTab);
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView edges={["top", "left", "right"]} className="flex-1 bg-white">
       <StatusBar barStyle="dark-content" />
       <ScreenHeader
         title="Your Orders"
@@ -84,7 +98,14 @@ export default function OrdersScreen() {
         </ScrollView>
       </View>
 
-      <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
+      <ScrollView
+        className="flex-1 px-5"
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 96 }}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.primary} colors={[COLORS.primary]} />
+        }
+      >
         {loading ? (
           <View className="items-center justify-center pt-20">
             <ActivityIndicator size="large" color={COLORS.primary} />

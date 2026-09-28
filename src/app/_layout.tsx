@@ -62,20 +62,17 @@ export default function RootLayout() {
     }
   }, [hasHydrated, fontsLoaded]);
 
-  // Block all rendering until session + fonts are ready (prevents a flash of
-  // the wrong screen and a flash of fallback system fonts).
-  if (!hasHydrated || !fontsLoaded) {
-    return (
-      <View style={styles.splash}>
-        <Image source={require("../../assets/images/splash-icon.png")} style={styles.splashLogo} resizeMode="contain" />
-        <Text style={styles.splashTitle}>{BRAND.name}</Text>
-        <Text style={styles.splashSubtitle}>{BRAND.subtitle}</Text>
-      </View>
-    );
-  }
+  // Keep the navigator mounted from the first frame and cover it with the
+  // splash brand view until session + fonts are ready. Early-returning a
+  // splash View unmounts the navigator underneath expo-router's async
+  // useLinking initial-URL resolution, which then sets state on an
+  // unmounted fiber on reload ("Can't perform a React state update on a
+  // component that hasn't mounted yet").
+  const ready = hasHydrated && fontsLoaded;
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <View style={styles.root}>
+      <Stack screenOptions={{ headerShown: false }}>
       {/* Entry — decides onboarding vs tabs */}
       <Stack.Screen name="index" />
 
@@ -116,11 +113,22 @@ export default function RootLayout() {
       <Stack.Screen name="notifications" />
       <Stack.Screen name="edit-profile" />
       <Stack.Screen name="settings" />
-    </Stack>
+      </Stack>
+      {!ready && (
+        <View style={styles.splashOverlay}>
+          <Image source={require("../../assets/images/splash-mark.png")} style={styles.splashLogo} resizeMode="contain" />
+          <Text style={styles.splashTitle}>{BRAND.name}</Text>
+          <Text style={styles.splashSubtitle}>{BRAND.subtitle}</Text>
+        </View>
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
   splash: {
     flex: 1,
     alignItems: "center",
@@ -128,9 +136,20 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
     padding: 32,
   },
+  splashOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: COLORS.primary,
+    padding: 32,
+  },
   splashLogo: {
-    width: 164,
-    height: 164,
+    width: 184,
+    height: 184,
     marginBottom: 20,
   },
   splashTitle: {

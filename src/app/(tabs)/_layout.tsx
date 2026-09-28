@@ -1,5 +1,7 @@
-import { Redirect, Tabs } from "expo-router";
-import { View, Text } from "react-native";
+import { useEffect } from "react";
+import { Tabs, useRouter } from "expo-router";
+import { View, Text, Platform } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Home, LayoutGrid, ShoppingCart, ClipboardList, User } from "lucide-react-native";
 import { COLORS } from "@/constants/brand";
 import { useAuthStore } from "@/store/authStore";
@@ -10,20 +12,51 @@ function TabLabel({ label, focused }: { label: string; focused: boolean }) {
     <Text
       numberOfLines={1}
       className={focused ? "font-grotesk-bold" : "font-manrope"}
-      style={{ color: focused ? COLORS.primary : "#6b7280", fontSize: 10, marginTop: 2, textAlign: "center" }}
+      style={{
+        color: focused ? COLORS.primary : "#6b7280",
+        fontSize: 10,
+        lineHeight: 12,
+        marginTop: 3,
+        textAlign: "center",
+      }}
     >
       {label}
     </Text>
   );
 }
 
+function TabIconWrap({ children }: { children: React.ReactNode }) {
+  return (
+    <View style={{ alignItems: "center", justifyContent: "center", minWidth: 56 }}>
+      {children}
+    </View>
+  );
+}
+
 export default function TabsLayout() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const user = useAuthStore((s) => s.user);
+  const router = useRouter();
   const cartCount = useCartStore((s) => s.totalItems());
+  const insets = useSafeAreaInsets();
 
-  if (isAuthenticated && !user?.email_verified) {
-    return <Redirect href="/(auth)/verify-email" />;
+  // Dynamic height: fixed content zone (56) + device bottom inset.
+  // Previously a hardcoded height: 72 / paddingBottom: 12 clipped on
+  // notched iPhones and left a gap on gesture-nav Android.
+  const bottomInset = Math.max(insets.bottom, Platform.OS === "android" ? 8 : 0);
+  const tabBarHeight = 60 + bottomInset;
+
+  // Unverified users can't use tabs — bounce to verify-email in an effect
+  // so the redirect doesn't fire mid-render on reload.
+  const needsVerify = isAuthenticated && !user?.email_verified;
+  useEffect(() => {
+    if (needsVerify) {
+      router.replace("/(auth)/verify-email");
+    }
+  }, [needsVerify, router]);
+
+  if (needsVerify) {
+    return null;
   }
 
   return (
@@ -31,12 +64,20 @@ export default function TabsLayout() {
       screenOptions={{
         headerShown: false,
         tabBarShowLabel: false,
+        tabBarHideOnKeyboard: true,
+        tabBarActiveTintColor: COLORS.primary,
+        tabBarInactiveTintColor: "#374151",
+        tabBarItemStyle: {
+          justifyContent: "center",
+          alignItems: "center",
+          paddingVertical: 4,
+        },
         tabBarStyle: {
           backgroundColor: "#ffffff",
           borderTopWidth: 1,
           borderTopColor: "#f3f4f6",
-          height: 72,
-          paddingBottom: 12,
+          height: tabBarHeight,
+          paddingBottom: bottomInset,
           paddingTop: 8,
         },
       }}
@@ -46,10 +87,10 @@ export default function TabsLayout() {
         options={{
           title: "Home",
           tabBarIcon: ({ focused }) => (
-            <View className="items-center">
+            <TabIconWrap>
               <Home size={22} color={focused ? COLORS.primary : "#374151"} strokeWidth={focused ? 2.2 : 1.8} />
               <TabLabel label="Home" focused={focused} />
-            </View>
+            </TabIconWrap>
           ),
         }}
       />
@@ -58,10 +99,10 @@ export default function TabsLayout() {
         options={{
           title: "Shop",
           tabBarIcon: ({ focused }) => (
-            <View className="items-center">
+            <TabIconWrap>
               <LayoutGrid size={22} color={focused ? COLORS.primary : "#374151"} strokeWidth={focused ? 2.2 : 1.8} />
               <TabLabel label="Shop" focused={focused} />
-            </View>
+            </TabIconWrap>
           ),
         }}
       />
@@ -70,7 +111,7 @@ export default function TabsLayout() {
         options={{
           title: "Cart",
           tabBarIcon: ({ focused }) => (
-            <View className="items-center">
+            <TabIconWrap>
               <View>
                 <ShoppingCart size={22} color={focused ? COLORS.primary : "#374151"} strokeWidth={focused ? 2.2 : 1.8} />
                 {cartCount > 0 && (
@@ -89,7 +130,7 @@ export default function TabsLayout() {
                 )}
               </View>
               <TabLabel label="Cart" focused={focused} />
-            </View>
+            </TabIconWrap>
           ),
         }}
       />
@@ -98,10 +139,10 @@ export default function TabsLayout() {
         options={{
           title: "Orders",
           tabBarIcon: ({ focused }) => (
-            <View className="items-center">
+            <TabIconWrap>
               <ClipboardList size={22} color={focused ? COLORS.primary : "#374151"} strokeWidth={focused ? 2.2 : 1.8} />
               <TabLabel label="Orders" focused={focused} />
-            </View>
+            </TabIconWrap>
           ),
         }}
       />
@@ -110,10 +151,10 @@ export default function TabsLayout() {
         options={{
           title: "Account",
           tabBarIcon: ({ focused }) => (
-            <View className="items-center">
+            <TabIconWrap>
               <User size={22} color={focused ? COLORS.primary : "#374151"} strokeWidth={focused ? 2.2 : 1.8} />
               <TabLabel label="Account" focused={focused} />
-            </View>
+            </TabIconWrap>
           ),
         }}
       />

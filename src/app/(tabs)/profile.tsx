@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, TouchableOpacity, StatusBar, Alert, Image } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, StatusBar, Alert, Image, RefreshControl } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import {
@@ -10,7 +10,7 @@ import { COLORS } from "@/constants/brand";
 import { useAuthStore } from "@/store/authStore";
 import { useCartStore } from "@/store/cartStore";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { dashboardApi, notificationsApi, financingApi } from "@/api";
 
 type MenuItem = {
@@ -71,26 +71,40 @@ export default function ProfileScreen() {
   const [savedCount, setSavedCount] = useState<string | null>(null);
   const [unreadCount, setUnreadCount] = useState<string | null>(null);
   const [financeMeta, setFinanceMeta] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    dashboardApi.customerStats()
-      .then((s) => {
-        setOrderCount(`${s.total_orders ?? 0} total`);
-        setSavedCount(`${s.wishlist_items ?? 0} saved`);
-      })
-      .catch(() => {});
-    notificationsApi.list({ limit: 1 })
-      .then((res) => setUnreadCount(`${res.unread_count ?? 0} unread`))
-      .catch(() => {});
-    financingApi.getMyApplication()
-      .then((app) => {
+  const loadStats = useCallback(async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
+    try {
+      const [statsRes, notifRes, financeRes] = await Promise.allSettled([
+        dashboardApi.customerStats(),
+        notificationsApi.list({ limit: 1 }),
+        financingApi.getMyApplication(),
+      ]);
+      if (statsRes.status === "fulfilled") {
+        setOrderCount(`${statsRes.value.total_orders ?? 0} total`);
+        setSavedCount(`${statsRes.value.wishlist_items ?? 0} saved`);
+      }
+      if (notifRes.status === "fulfilled") {
+        setUnreadCount(`${notifRes.value.unread_count ?? 0} unread`);
+      }
+      if (financeRes.status === "fulfilled") {
+        const app = financeRes.value;
         if (!app) setFinanceMeta("apply");
         else if (app.status === "approved") setFinanceMeta("approved");
         else if (app.status === "pending_review") setFinanceMeta("in review");
         else setFinanceMeta(String(app.status).replace(/_/g, " "));
-      })
-      .catch(() => {});
+      }
+    } finally {
+      if (isRefresh) setRefreshing(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadStats();
+  }, [loadStats]);
+
+  const onRefresh = useCallback(() => { loadStats(true); }, [loadStats]);
 
   const handleLogout = () => {
     Alert.alert("Sign Out", "Are you sure you want to sign out?", [
@@ -111,9 +125,15 @@ export default function ProfileScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView edges={["top", "left", "right"]} className="flex-1 bg-white">
       <StatusBar barStyle="dark-content" />
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 96 }}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.primary} colors={[COLORS.primary]} />
+        }
+      >
         <View className="px-5 pt-6">
           {/* Identity */}
           <View className="flex-row items-center gap-4">
@@ -223,7 +243,7 @@ export default function ProfileScreen() {
           </TouchableOpacity>
 
           <Text className="font-manrope text-[11px] text-gray-300 text-center mt-5">
-            Lel Store · v1.0.0 · Lagos, Nigeria
+            LEL Store · v1.0.0 · Lagos, Nigeria
           </Text>
         </View>
       </ScrollView>

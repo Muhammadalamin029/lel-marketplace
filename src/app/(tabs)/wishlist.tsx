@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Image, Alert } from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Image, Alert, RefreshControl } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Heart, Trash2, ShoppingCart } from "lucide-react-native";
@@ -23,6 +23,7 @@ export default function WishlistScreen() {
   const [removing, setRemoving] = useState<string | null>(null);
   const [addingToCart, setAddingToCart] = useState<string | null>(null);
   const [clearing, setClearing] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const loadPage = async (p: number, append: boolean) => {
     if (append) setLoadingMore(true);
@@ -38,6 +39,17 @@ export default function WishlistScreen() {
 
   useEffect(() => {
     loadPage(1, false);
+  }, []);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      const res = await wishlistApi.list({ page: 1, limit: 20 });
+      setItems(res.items ?? []);
+      setPage(1);
+      setTotalPages(res.pagination.total_pages ?? 1);
+    } catch { /* silent */ }
+    finally { setRefreshing(false); }
   }, []);
 
   const handleRemove = async (productId: string) => {
@@ -107,7 +119,7 @@ export default function WishlistScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
+    <SafeAreaView edges={["top", "left", "right"]} className="flex-1 bg-gray-50">
       {/* Header */}
       <View className="flex-row items-center justify-between px-5 pt-4 pb-3 bg-white">
         <View>
@@ -160,7 +172,13 @@ export default function WishlistScreen() {
           </TouchableOpacity>
         </View>
       ) : (
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ padding: 20, paddingBottom: 96 }}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#ff4b26" colors={["#ff4b26"]} />
+          }
+        >
           <View className="gap-3">
             {items.map((item) => {
               const product = item.product;

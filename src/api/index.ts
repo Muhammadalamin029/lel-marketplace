@@ -9,6 +9,8 @@ export { wishlistApi } from "./wishlist";
 export { disputesApi } from "./disputes";
 export { notificationsApi } from "./notifications";
 export { paymentsApi } from "./payments";
+export { saveCardSession, loadCardSession, clearCardSession, sessionTargetMatches } from "./cardSession";
+export type { CardSession, CardPendingStep } from "./cardSession";
 export { reviewsApi } from "./reviews";
 export { categoriesApi, publicApi, legalApi } from "./public";
 export type { LegalSlug, LegalDocumentResponse } from "./public";

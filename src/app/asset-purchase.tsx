@@ -16,6 +16,7 @@ import { Check, CreditCard, Landmark, Package } from "lucide-react-native";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { shadow } from "@/constants/shadows";
 import { inspectionsApi, paymentsApi, productsApi } from "@/api";
+import { saveCardSession, loadCardSession, clearCardSession, sessionTargetMatches } from "@/api/cardSession";
 import type { Agreement, Car, Property } from "@/api";
 import { useAuthStore } from "@/store/authStore";
 import { useFinancingStore } from "@/store/financingStore";
@@ -531,24 +532,60 @@ function CardPaymentForm({ agreementId, amount, email, category, onSuccess }: {
   const [avs, setAvs] = useState({ address: "", city: "", state: "", country: "", zipcode: "" });
   const [txRef, setTxRef] = useState<string | null>(null);
   const [cardSnap, setCardSnap] = useState<{ card_number: string; cvv: string; expiry_month: string; expiry_year: string } | null>(null);
+  const [resumed, setResumed] = useState(false);
+  const resumeStep = useRef<"pin" | "avs" | null>(null);
 
   const digits = cardNumber.replace(/\D/g, "");
   const expDigits = expiry.replace(/\D/g, "");
 
+  useEffect(() => {
+    // Resume an in-progress session wiped by navigation/reload/Fast Refresh.
+    // Card data is never stored, so PIN/AVS steps ask for the card again.
+    (async () => {
+      const saved = await loadCardSession();
+      if (!saved) return;
+      if (!sessionTargetMatches(saved, { agreementId, category, amount })) return;
+      setTxRef(saved.tx_ref);
+      if (saved.step === "otp" || saved.step === "redirect") {
+        setStep(saved.step);
+      } else {
+        resumeStep.current = saved.step;
+        setStep("card");
+      }
+      setResumed(true);
+      Alert.alert("Session restored", "Re-enter your card details to continue where you left off.");
+    })();
+  }, []);
+
   const applyNextStep = (data: any) => {
+    // NOTE: setTxRef is async — persist with the fresh ref from `data`
+    // directly so a remount seconds later still resumes correctly.
+    const currentRef = data?.tx_ref || txRef;
     if (data?.tx_ref) setTxRef(data.tx_ref);
     const next = String(data?.next_step ?? "");
     if (next === "success") {
+      clearCardSession();
+      setResumed(false);
       onSuccess();
       return;
     }
-    if (next === "pin") return setStep("pin");
-    if (next === "avs") return setStep("avs");
+    if (next === "pin") {
+      if (currentRef) saveCardSession({ tx_ref: currentRef, step: "pin", agreementId, category, amount });
+      return setStep("pin");
+    }
+    if (next === "avs") {
+      if (currentRef) saveCardSession({ tx_ref: currentRef, step: "avs", agreementId, category, amount });
+      return setStep("avs");
+    }
     if (next === "otp") {
+      if (currentRef) saveCardSession({ tx_ref: currentRef, step: "otp", agreementId, category, amount });
       Alert.alert("OTP sent", String(data?.processor_response ?? "Enter the OTP sent to your phone."));
       return setStep("otp");
     }
-    if (next === "redirect") return setStep("redirect");
+    if (next === "redirect") {
+      if (currentRef) saveCardSession({ tx_ref: currentRef, step: "redirect", agreementId, category, amount });
+      return setStep("redirect");
+    }
     Alert.alert("Card payment failed", String(data?.processor_response ?? "The card charge was declined."));
   };
 
@@ -558,6 +595,18 @@ function CardPaymentForm({ agreementId, amount, email, category, onSuccess }: {
     if (!/^\d{3,4}$/.test(cvv)) return Alert.alert("Invalid CVV", "Please enter a valid CVV.");
     const snap = { card_number: digits, cvv, expiry_month: expDigits.slice(0, 2), expiry_year: expDigits.slice(2) };
     setCardSnap(snap);
+    // Resumed session: card re-entered after remount — skip the charge and
+    // continue at the saved credential step with the stored tx_ref.
+    if (resumeStep.current && txRef) {
+      const resumedTo = resumeStep.current;
+      resumeStep.current = null;
+      setResumed(false);
+      setBusy(false);
+      setStep(resumedTo);
+      return;
+    }
+    // Fresh charge replaces any stale persisted session.
+    clearCardSession();
     setBusy(true);
     try {
       const res = await paymentsApi.chargeCard({
@@ -610,6 +659,7 @@ function CardPaymentForm({ agreementId, amount, email, category, onSuccess }: {
       const res = await paymentsApi.validateCard(txRef, otp.trim()) as any;
       const data = res?.data ?? res;
       if (res?.success && data?.next_step === "success") {
+        clearCardSession();
         onSuccess();
       } else {
         Alert.alert("OTP failed", String(res?.message ?? "OTP validation failed."));
@@ -626,6 +676,7 @@ function CardPaymentForm({ agreementId, amount, email, category, onSuccess }: {
     setBusy(true);
     try {
       await paymentsApi.verify(txRef);
+      clearCardSession();
       onSuccess();
     } catch (e: any) {
       Alert.alert("Not completed yet", e?.response?.data?.detail ?? "Bank authentication is not complete yet. Please try again.");
@@ -649,6 +700,11 @@ function CardPaymentForm({ agreementId, amount, email, category, onSuccess }: {
 
   return (
     <View className="gap-3">
+      {resumed && (
+        <Text className="font-manrope text-xs text-gray-500 text-center">
+          Session restored — re-enter your card details to continue. No new charge is created.
+        </Text>
+      )}
       {step === "card" && (
         <>
           <CardField label="Card number" value={cardNumber} onChange={(v) => setCardNumber(v.replace(/[^\d]/g, "").slice(0, 19))} placeholder="5531 8866 5214 2950" numeric />

@@ -1,10 +1,18 @@
 import { useState } from "react";
 import {
-  View, Text, TouchableOpacity, Modal, ActivityIndicator, Alert,
-  Platform, ScrollView,
+  View,
+  Text,
+  TouchableOpacity,
+  Modal,
+  ActivityIndicator,
+  Alert,
+  Platform,
+  ScrollView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
+import DateTimePicker, {
+  DateTimePickerEvent,
+} from "@react-native-community/datetimepicker";
 import { useRouter } from "expo-router";
 import { X, Calendar, Clock, Shield, Info } from "lucide-react-native";
 import { shadow } from "@/constants/shadows";
@@ -22,7 +30,14 @@ interface Props {
   unitId?: string;
 }
 
-export function InspectionModal({ visible, onClose, assetId, assetType, assetTitle, unitId }: Props) {
+export function InspectionModal({
+  visible,
+  onClose,
+  assetId,
+  assetType,
+  assetTitle,
+  unitId,
+}: Props) {
   const router = useRouter();
   const isVehicle = assetType === "vehicle";
 
@@ -56,10 +71,14 @@ export function InspectionModal({ visible, onClose, assetId, assetType, assetTit
   };
 
   const formattedDate = date.toLocaleDateString("en-NG", {
-    weekday: "long", day: "numeric", month: "long", year: "numeric",
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
   });
   const formattedTime = date.toLocaleTimeString("en-NG", {
-    hour: "2-digit", minute: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 
   // minimum date = tomorrow
@@ -69,7 +88,10 @@ export function InspectionModal({ visible, onClose, assetId, assetType, assetTit
   const handleConfirm = async () => {
     const now = new Date();
     if (date <= now) {
-      Alert.alert("Invalid Date", "Please select a future date and time for the inspection.");
+      Alert.alert(
+        "Invalid Date",
+        "Please select a future date and time for the inspection.",
+      );
       return;
     }
 
@@ -88,14 +110,19 @@ export function InspectionModal({ visible, onClose, assetId, assetType, assetTit
         isVehicle ? "Inspection Requested!" : "Viewing Requested!",
         `The ${isVehicle ? "seller" : "agent"} has been notified and will confirm a suitable time.`,
         [
-          { text: "View My Inspections", onPress: () => router.push("/inspections") },
+          {
+            text: "View My Inspections",
+            onPress: () => router.push("/inspections"),
+          },
           { text: "OK", style: "cancel" },
-        ]
+        ],
       );
     } catch (e: any) {
       Alert.alert(
         "Booking Failed",
-        e?.response?.data?.detail ?? e?.message ?? "Could not schedule at this time. Please try again."
+        e?.response?.data?.detail ??
+          e?.message ??
+          "Could not schedule at this time. Please try again.",
       );
     } finally {
       setIsSubmitting(false);
@@ -103,7 +130,12 @@ export function InspectionModal({ visible, onClose, assetId, assetType, assetTit
   };
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="pageSheet"
+      onRequestClose={onClose}
+    >
       <SafeAreaView className="flex-1 bg-white">
         {/* Header */}
         <View className="flex-row items-center justify-between px-5 pt-4 pb-4 border-b border-gray-100">
@@ -111,7 +143,12 @@ export function InspectionModal({ visible, onClose, assetId, assetType, assetTit
             <Text className="text-lg font-grotesk-extrabold text-gray-900">
               {isVehicle ? "Request Inspection" : "Book a Viewing"}
             </Text>
-            <Text className="font-manrope text-xs text-gray-400 mt-0.5" numberOfLines={1}>{assetTitle}</Text>
+            <Text
+              className="font-manrope text-xs text-gray-400 mt-0.5"
+              numberOfLines={1}
+            >
+              {assetTitle}
+            </Text>
           </View>
           <TouchableOpacity
             onPress={onClose}
@@ -121,9 +158,11 @@ export function InspectionModal({ visible, onClose, assetId, assetType, assetTit
           </TouchableOpacity>
         </View>
 
-        <ScrollView className="flex-1 px-5 pt-5" showsVerticalScrollIndicator={false}>
+        <ScrollView
+          className="flex-1 px-5 pt-5"
+          showsVerticalScrollIndicator={false}
+        >
           <View className="gap-5 pb-10">
-
             {/* Description */}
             <Text className="font-grotesk text-sm text-gray-600 leading-relaxed">
               {isVehicle
@@ -134,7 +173,9 @@ export function InspectionModal({ visible, onClose, assetId, assetType, assetTit
             {/* Date picker */}
             <View className="gap-2">
               <Text className="text-sm font-grotesk-bold text-gray-700">
-                {isVehicle ? "Proposed Date & Time" : "Preferred Viewing Date & Time"}
+                {isVehicle
+                  ? "Proposed Date & Time"
+                  : "Preferred Viewing Date & Time"}
               </Text>
 
               <View className="flex-row gap-3">
@@ -146,8 +187,15 @@ export function InspectionModal({ visible, onClose, assetId, assetType, assetTit
                 >
                   <Calendar size={18} color="#ff4b26" />
                   <View className="flex-1">
-                    <Text className="text-[10px] text-gray-400 font-grotesk-semibold uppercase">Date</Text>
-                    <Text className="text-sm font-grotesk-bold text-gray-900" numberOfLines={1}>{formattedDate}</Text>
+                    <Text className="text-[10px] text-gray-400 font-grotesk-semibold uppercase">
+                      Date
+                    </Text>
+                    <Text
+                      className="text-sm font-grotesk-bold text-gray-900"
+                      numberOfLines={1}
+                    >
+                      {formattedDate}
+                    </Text>
                   </View>
                 </TouchableOpacity>
 
@@ -159,8 +207,12 @@ export function InspectionModal({ visible, onClose, assetId, assetType, assetTit
                 >
                   <Clock size={18} color="#ff4b26" />
                   <View>
-                    <Text className="text-[10px] text-gray-400 font-grotesk-semibold uppercase">Time</Text>
-                    <Text className="text-sm font-grotesk-bold text-gray-900">{formattedTime}</Text>
+                    <Text className="text-[10px] text-gray-400 font-grotesk-semibold uppercase">
+                      Time
+                    </Text>
+                    <Text className="text-sm font-grotesk-bold text-gray-900">
+                      {formattedTime}
+                    </Text>
                   </View>
                 </TouchableOpacity>
               </View>
@@ -187,9 +239,15 @@ export function InspectionModal({ visible, onClose, assetId, assetType, assetTit
 
             {/* Selected summary */}
             <View className="bg-[#fff0e9] rounded-2xl p-4 border border-[#ffd9c7]">
-              <Text className="text-xs font-grotesk-bold text-[#c23a12] uppercase tracking-wide mb-2">Selected</Text>
-              <Text className="text-sm font-grotesk-bold text-amber-900">{formattedDate}</Text>
-              <Text className="font-grotesk text-sm text-[#c23a12]">{formattedTime}</Text>
+              <Text className="text-xs font-grotesk-bold text-[#c23a12] uppercase tracking-wide mb-2">
+                Selected
+              </Text>
+              <Text className="text-sm font-grotesk-bold text-amber-900">
+                {formattedDate}
+              </Text>
+              <Text className="font-grotesk text-sm text-[#c23a12]">
+                {formattedTime}
+              </Text>
             </View>
 
             {/* Info note */}
@@ -208,9 +266,11 @@ export function InspectionModal({ visible, onClose, assetId, assetType, assetTit
             <View className="bg-green-50 rounded-2xl p-4 border border-green-100 flex-row items-center gap-3">
               <Shield size={20} color="#22c55e" />
               <View className="flex-1">
-                <Text className="text-sm font-grotesk-bold text-green-800">Free Physical Inspection</Text>
+                <Text className="text-sm font-grotesk-bold text-green-800">
+                  Free Physical Inspection
+                </Text>
                 <Text className="font-grotesk text-xs text-green-600 mt-0.5">
-                  There is no charge for scheduling an inspection on LEL Marketplace.
+                  There is no charge for scheduling an inspection on LEL Store.
                 </Text>
               </View>
             </View>
@@ -222,13 +282,14 @@ export function InspectionModal({ visible, onClose, assetId, assetType, assetTit
               className="bg-[#ff4b26] py-4 rounded-2xl items-center"
               style={shadow.btn}
             >
-              {isSubmitting
-                ? <ActivityIndicator color="#fff" />
-                : <Text className="text-white font-grotesk-bold text-base">
-                    {isVehicle ? "Confirm Booking" : "Confirm Request"}
-                  </Text>}
+              {isSubmitting ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text className="text-white font-grotesk-bold text-base">
+                  {isVehicle ? "Confirm Booking" : "Confirm Request"}
+                </Text>
+              )}
             </TouchableOpacity>
-
           </View>
         </ScrollView>
       </SafeAreaView>

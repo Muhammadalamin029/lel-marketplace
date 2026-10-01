@@ -50,6 +50,20 @@ export const paymentsApi = {
     return typeof data === "string" ? data : String(data ?? "");
   },
 
+  /** GET /payments/{id}/receipt.pdf — server-generated vector PDF bytes. */
+  async getReceiptPdf(id: string): Promise<ArrayBuffer> {
+    const { data } = await api.get(`/payments/${id}/receipt.pdf`, {
+      responseType: "arraybuffer",
+      headers: { Accept: "application/pdf" },
+      timeout: 30000,
+    });
+    const buf = data as ArrayBuffer;
+    if (!buf || buf.byteLength < 5) throw new Error("Empty receipt PDF");
+    const head = String.fromCharCode(...new Uint8Array(buf).slice(0, 4));
+    if (head !== "%PDF") throw new Error("Could not generate receipt");
+    return buf;
+  },
+
   async list(params: { page?: number; limit?: number } = {}) {
     const { data } = await api.get("/payments/", { params: { limit: 30, ...params } });
     return data as { success: boolean; data: Payment[]; pagination: any };

@@ -491,7 +491,7 @@ export default function ProductDetailsScreen() {
           {/* Overview */}
           <View className="px-4 py-4 border-b border-gray-200">
             <View className="mb-2"><SectionTitle>Overview</SectionTitle></View>
-            <Text className="font-manrope text-gray-500 leading-relaxed" style={{ fontSize: 14 }}>
+            <Text className="font-manrope text-gray-500 leading-relaxed italic" style={{ fontSize: 14, fontStyle: "italic" }}>
               Experience reliable, verified vehicle ownership with the {item.year} {item.name} — every
               listing on LEL Store is physically inspected so you can buy with total confidence.
             </Text>
@@ -621,7 +621,7 @@ export default function ProductDetailsScreen() {
           {/* About */}
           <View className="px-4 py-4 border-b border-gray-200">
             <View className="mb-2"><SectionTitle>About this home</SectionTitle></View>
-            <Text className="font-manrope text-gray-500 leading-relaxed" style={{ fontSize: 14 }}>
+            <Text className="font-manrope text-gray-500 leading-relaxed italic" style={{ fontSize: 14, fontStyle: "italic" }}>
               {item.description || `A verified ${item.location ?? ""} listing on LEL Store — every property is physically inspected so you can buy or view with total confidence.`}
             </Text>
           </View>
@@ -845,7 +845,7 @@ export default function ProductDetailsScreen() {
             <>
               <View>
                 <Text className="font-grotesk-extrabold text-gray-900 mb-1.5" style={{ fontSize: 14 }}>Description</Text>
-                <Text className="font-manrope text-gray-500 leading-relaxed" style={{ fontSize: 13 }}>{item.description}</Text>
+                <Text className="font-manrope text-gray-500 leading-relaxed italic" style={{ fontSize: 13, fontStyle: "italic" }}>{item.description}</Text>
               </View>
               <View className="h-px bg-gray-100" />
             </>

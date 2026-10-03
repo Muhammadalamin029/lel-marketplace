@@ -40,9 +40,10 @@ function timeAgo(iso: string): string {
 }
 
 function fmtStamp(iso: string): string {
-  return new Date(iso).toLocaleString("en-NG", {
-    day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
-  });
+  const d = new Date(iso);
+  const date = d.toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" });
+  const time = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
+  return `${date}, ${time}`;
 }
 
 function statusColor(status: string): string {
@@ -54,22 +55,49 @@ function statusColor(status: string): string {
   }
 }
 
-const RANK: Record<string, number> = { pending: 0, processing: 1, paid: 2, shipped: 3, delivered: 4 };
+const RANK: Record<string, number> = { pending: 0, processing: 1, paid: 2, partially_cancelled: 2, shipped: 3, partially_shipped: 3, partially_delivered: 4, delivered: 4, cancelled: 0 };
+
+// Canonical stage labels shared with the FE tracker (CustomerOrderDetail).
+// Order follows the backend flow: Order Placed -> Processing -> Paid -> Shipped -> Delivered.
+const STAGE_LABELS: Record<string, string> = {
+  "Order Placed": "Order Placed",
+  Processing: "Processing",
+  Paid: "Payment confirmed",
+  Shipped: "Shipped",
+  Delivered: "Delivered",
+  Cancelled: "Cancelled",
+};
+
+function stageTitle(rawEvent: string): string {
+  if (STAGE_LABELS[rawEvent]) return STAGE_LABELS[rawEvent];
+  return rawEvent.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function estimatedDeliveryFallback(order: Order): string {
+  const raw = order.estimated_delivery_date ?? (() => {
+    const d = new Date(order.created_at);
+    d.setDate(d.getDate() + 7);
+    return d.toISOString();
+  })();
+  return new Date(raw).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" });
+}
 
 function Timeline({ order, events }: { order: Order; events: TimelineEvent[] }) {
   const current = RANK[order.status] ?? 0;
   const safeEvents = Array.isArray(events) ? events : [];
-  const done = safeEvents.map((e) => ({
-    title: (e.event ?? "Status update").replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
-    subtitle: e.timestamp ? fmtStamp(e.timestamp) : e.description ?? "",
-  }));
+  const done = safeEvents.map((e) => {
+    const title = stageTitle(e.event ?? "Status update");
+    const stamp = e.timestamp ? fmtStamp(e.timestamp) : "";
+    const subtitle = e.description && stamp
+      ? `${e.description} · ${stamp}`
+      : e.description ?? stamp;
+    return { title, subtitle };
+  });
 
   const pending: { title: string; subtitle: string }[] = [];
-  const eta = order.estimated_delivery_date
-    ? new Date(order.estimated_delivery_date).toLocaleDateString("en-NG", { day: "numeric", month: "short" })
-    : "";
+  const eta = estimatedDeliveryFallback(order);
   if (current < 3 && order.status !== "cancelled") {
-    pending.push({ title: "Out for delivery", subtitle: eta ? `Expected ${eta}` : "On its way" });
+    pending.push({ title: "Shipped", subtitle: eta ? `Expected ${eta}` : "On its way" });
   }
   if (current < 4 && order.status !== "cancelled") {
     pending.push({ title: "Delivered", subtitle: eta ? `Expected ${eta}` : "Awaiting delivery" });

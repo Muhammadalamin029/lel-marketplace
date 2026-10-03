@@ -75,6 +75,9 @@ export interface ProductListParams {
   category_id?: string;
   min_price?: number;
   max_price?: number;
+  status?: string;
+  sort_by?: "price" | "name" | "created_at";
+  sort_order?: "asc" | "desc";
 }
 
 export interface ListResponse<T> {

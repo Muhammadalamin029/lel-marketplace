@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { productsApi, type Order } from "@/api";
+import { getEffectivePrice } from "./discount";
 
 const GUEST_CART_KEY = "guest_cart";
 
@@ -69,7 +70,7 @@ export async function buildVirtualPendingOrder(items: GuestCartItem[]): Promise<
       return {
         id: item.product_id, // sentinel: for guest items, itemId === product_id
         quantity: item.quantity,
-        price: product.price,
+        price: getEffectivePrice(product),
         status: "pending",
         product,
       };

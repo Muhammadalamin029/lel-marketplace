@@ -15,6 +15,7 @@ import { productsApi, wishlistApi, getApiError } from "@/api";
 import { useAuthStore } from "@/store/authStore";
 import type { Product, Car as CarType, Property } from "@/api";
 import { fmt } from "@/utils/format";
+import { getDiscountPct, getEffectivePrice, isOnSale } from "@/lib/discount";
 
 type ShopTab = "products" | "cars" | "apartments" | "properties";
 type SortOption = "featured" | "price_asc" | "price_desc" | "name_asc";
@@ -48,16 +49,19 @@ function safePrice(v: unknown): number {
 }
 
 function toCardItemForProduct(p: Product, likedIds: Set<string>): Item {
-  const price = safePrice((p as any).price);
+  const base = safePrice((p as any).price);
+  const effective = getEffectivePrice({ ...p, price: base });
+  const onSale = isOnSale(p);
   return {
     id: p.id,
     name: p.name ?? "Product",
-    price: fmt(price),
-    rawPrice: price,
+    price: fmt(effective),
+    rawPrice: effective,
     type: "product",
     imageUrl: p.images?.[0]?.image_url ?? null,
     subtitle: p.category?.name,
     liked: likedIds.has(p.id),
+    ...(onSale ? { originalPrice: fmt(base), discountPct: getDiscountPct(p) } : {}),
   };
 }
 

@@ -9,6 +9,11 @@ export interface Product {
   name: string;
   description: string | null;
   price: number;
+  discount_percent?: number | null;
+  discount_starts_at?: string | null;
+  discount_ends_at?: string | null;
+  effective_price?: number;
+  is_on_sale?: boolean;
   stock_quantity: number;
   status: string;
   amenities?: string[] | null;

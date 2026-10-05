@@ -9,6 +9,7 @@ import type { ProductCardItem } from "@/components/ProductCard";
 import { Package } from "lucide-react-native";
 import { COLORS } from "@/constants/brand";
 import { fmt } from "@/utils/format";
+import { getDiscountPct, getEffectivePrice, isOnSale } from "@/lib/discount";
 import { categoriesApi, getApiError, wishlistApi } from "@/api";
 import { useAuthStore } from "@/store/authStore";
 import type { Product } from "@/api";
@@ -16,15 +17,22 @@ import type { Product } from "@/api";
 const PAGE_LIMIT = 20;
 
 function toCardItem(p: Product, likedIds: Set<string>): ProductCardItem & { liked?: boolean } {
-  const price = Number((p as any).price);
+  const base = Number((p as any).price);
+  const onSale = isOnSale(p);
   return {
     id: p.id,
     name: p.name ?? "Product",
-    price: fmt(Number.isFinite(price) ? price : 0),
+    price: fmt(getEffectivePrice({ ...p, price: Number.isFinite(base) ? base : 0 })),
     type: "product",
     imageUrl: p.images?.[0]?.image_url ?? null,
     subtitle: p.category?.name,
     liked: likedIds.has(p.id),
+    ...(onSale
+      ? {
+          originalPrice: fmt(Number.isFinite(base) ? base : 0),
+          discountPct: getDiscountPct(p),
+        }
+      : {}),
   };
 }
 

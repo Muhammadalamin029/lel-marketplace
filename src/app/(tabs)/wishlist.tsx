@@ -7,6 +7,7 @@ import { shadow } from "@/constants/shadows";
 import { wishlistApi } from "@/api";
 import type { WishlistItem } from "@/api";
 import { fmt } from "@/utils/format";
+import { ProductPrice } from "@/components/ProductPrice";
 import { useCartStore } from "@/store/cartStore";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 
@@ -205,9 +206,18 @@ export default function WishlistScreen() {
                     <Text className="text-sm font-grotesk-bold text-gray-900" numberOfLines={2}>
                       {product?.name ?? "Product"}
                     </Text>
-                    <Text className="text-sm font-grotesk-extrabold text-[#ff4b26] mt-0.5">
-                      {fmt(product?.price ?? 0)}
-                    </Text>
+                    <View className="mt-0.5">
+                      {product ? (
+                        <ProductPrice
+                          product={product}
+                          priceSize={14}
+                          originalSize={11}
+                          priceColor="#ff4b26"
+                        />
+                      ) : (
+                        <Text className="text-sm font-grotesk-extrabold text-[#ff4b26]">{fmt(0)}</Text>
+                      )}
+                    </View>
                   </View>
                   <View className="gap-2 items-center">
                     <TouchableOpacity

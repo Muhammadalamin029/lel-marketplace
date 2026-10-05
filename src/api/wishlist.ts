@@ -4,7 +4,17 @@ export interface WishlistItem {
   id: string;
   product_id: string;
   created_at: string;
-  product?: { id: string; name: string; price: number; images?: { image_url: string }[] };
+  product?: {
+    id: string;
+    name: string;
+    price: number;
+    images?: { image_url: string }[];
+    discount_percent?: number | null;
+    discount_starts_at?: string | null;
+    discount_ends_at?: string | null;
+    effective_price?: number | null;
+    is_on_sale?: boolean | null;
+  };
 }
 
 export const wishlistApi = {

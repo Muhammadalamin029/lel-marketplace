@@ -16,7 +16,7 @@ const TYPE_CONFIG: Record<ProductType, { bg: string; color: string; Icon: any }>
 export interface ProductCardItem {
   id: string;
   name: string;
-  price: string;             // pre-formatted, e.g. "₦18,500,000"
+  price: string;             // pre-formatted current price (sale price when on discount)
   type: ProductType;
   imageUrl?: string | null;
   /** on-image top-left pill badge (web parity: year for cars, For Sale/Rent) */
@@ -24,6 +24,10 @@ export interface ProductCardItem {
   /** gray meta line under the name (category / mileage / location) */
   subtitle?: string;
   liked?: boolean;
+  /** pre-formatted original price — set only when the item is on sale */
+  originalPrice?: string | null;
+  /** discount percent — set only when the item is on sale */
+  discountPct?: number | null;
 }
 
 interface ProductCardProps {
@@ -103,9 +107,25 @@ export function ProductCard({ item, onPress, variant = "vertical", onWishlist, w
           </Text>
         </View>
       )}
-      <Text className="font-grotesk-bold" style={{ fontSize: 14, color: COLORS.primary }} numberOfLines={1}>
+      <Text className="font-grotesk-bold" style={{ fontSize: 13, color: COLORS.primary }} numberOfLines={1}>
         {item.price}
       </Text>
+      {!!item.originalPrice && item.discountPct != null && (
+        <View className="flex-row items-center mt-0.5" style={{ gap: 4 }}>
+          <Text
+            className="font-manrope"
+            style={{ fontSize: 11, color: "#9ca3af", textDecorationLine: "line-through" }}
+            numberOfLines={1}
+          >
+            {item.originalPrice}
+          </Text>
+          <View className="rounded-full items-center justify-center" style={{ backgroundColor: "#dc2626", paddingHorizontal: 6, paddingVertical: 1 }}>
+            <Text className="font-grotesk-bold text-white" style={{ fontSize: 9 }}>
+              -{Number.isInteger(item.discountPct) ? item.discountPct : item.discountPct}%
+            </Text>
+          </View>
+        </View>
+      )}
     </View>
   );
 

@@ -13,6 +13,8 @@ import {
 } from "lucide-react-native";
 import MapView, { Marker } from "react-native-maps";
 import { fmt } from "@/utils/format";
+import { getDiscountPct, getEffectivePrice, isOnSale } from "@/lib/discount";
+import { ProductPrice } from "@/components/ProductPrice";
 import { COLORS, PRODUCT_ASSURANCE } from "@/constants/brand";
 import { productsApi, reviewsApi, wishlistApi, getApiError } from "@/api";
 import type { Car, Property, Product, Review } from "@/api";
@@ -58,6 +60,8 @@ interface DisplayItem {
   id: string;
   name: string;
   price: number;
+  basePrice: number;
+  discountPct: number | null;
   type: ItemType;
   description: string | null;
   images: string[];
@@ -91,6 +95,8 @@ function carToDisplay(c: Car): DisplayItem {
     id: c.id,
     name: `${c.brand} ${c.model}`,
     price: c.price,
+    basePrice: c.price,
+    discountPct: null,
     type: "vehicle",
     description: null,
     images: c.images.map((i) => i.image_url),
@@ -114,6 +120,8 @@ function propertyToDisplay(p: Property): DisplayItem {
     id: p.id,
     name: p.title,
     price: p.price,
+    basePrice: p.price,
+    discountPct: null,
     type: "real_estate",
     description: p.description ?? null,
     images: p.images.map((i) => i.image_url),
@@ -136,10 +144,13 @@ function propertyToDisplay(p: Property): DisplayItem {
 }
 
 function productToDisplay(p: Product): DisplayItem {
+  const onSale = isOnSale(p);
   return {
     id: p.id,
     name: p.name,
-    price: p.price,
+    price: getEffectivePrice(p),
+    basePrice: Number(p.price) || 0,
+    discountPct: onSale ? getDiscountPct(p) : null,
     type: "product",
     description: p.description ?? null,
     images: p.images?.map((i) => i.image_url) ?? [],
@@ -358,11 +369,15 @@ export default function ProductDetailsScreen() {
           if (reviewsRes.status === "fulfilled") setReviews(reviewsRes.value.data ?? []);
           if (statsRes.status === "fulfilled") setReviewStats(statsRes.value);
           if (relRes.status === "fulfilled") {
-            setRelated(relRes.value.data.filter((p) => p.id !== id).slice(0, 6).map((p) => ({
-              id: p.id, name: p.name, price: fmt(p.price),
-              type: "product" as const, imageUrl: p.images?.[0]?.image_url ?? null,
-              subtitle: p.category?.name,
-            })));
+            setRelated(relRes.value.data.filter((p) => p.id !== id).slice(0, 6).map((p) => {
+              const relOnSale = isOnSale(p);
+              return {
+                id: p.id, name: p.name, price: fmt(getEffectivePrice(p)),
+                type: "product" as const, imageUrl: p.images?.[0]?.image_url ?? null,
+                subtitle: p.category?.name,
+                ...(relOnSale ? { originalPrice: fmt(Number(p.price) || 0), discountPct: getDiscountPct(p) } : {}),
+              };
+            }));
           }
         }
       } catch (e: any) {
@@ -815,9 +830,13 @@ export default function ProductDetailsScreen() {
             )}
           </View>
 
-          <Text className="font-grotesk-extrabold" style={{ fontSize: 24, color: COLORS.primary }}>
-            {fmt(item.price)}
-          </Text>
+          <View className="mt-1">
+            <ProductPrice
+              product={{ price: item.basePrice, effective_price: item.price, discount_percent: item.discountPct }}
+              priceSize={22}
+              originalSize={13}
+            />
+          </View>
 
           <View className="h-px bg-gray-100" />
 

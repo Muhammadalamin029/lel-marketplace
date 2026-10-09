@@ -2,6 +2,8 @@ export { api, getApiError, authEventEmitter } from "./client";
 export { storage } from "./storage";
 export { authApi } from "./auth";
 export { productsApi } from "./products";
+export { imageSearchApi } from "./imageSearch";
+export type { ImageSearchDetection, ImageSearchResult } from "./imageSearch";
 export { ordersApi } from "./orders";
 export { inspectionsApi } from "./inspections";
 export { addressesApi } from "./addresses";

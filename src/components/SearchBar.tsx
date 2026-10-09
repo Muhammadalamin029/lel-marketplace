@@ -1,6 +1,7 @@
 import { TextInput, TouchableOpacity, View } from "react-native";
 import { Search, SlidersHorizontal } from "lucide-react-native";
 import { COLORS } from "@/constants/brand";
+import { ImageSearchButton } from "@/components/ImageSearchButton";
 
 /** Mockup search bar: gray rounded field + sliders button. */
 export function SearchBar({
@@ -9,12 +10,14 @@ export function SearchBar({
   onSubmit,
   onFilterPress,
   placeholder = "Search,Product,Autos,Real estate",
+  showCamera = true,
 }: {
   value: string;
   onChangeText: (v: string) => void;
   onSubmit?: () => void;
   onFilterPress?: () => void;
   placeholder?: string;
+  showCamera?: boolean;
 }) {
   return (
     <View className="flex-row items-center gap-2.5">
@@ -32,6 +35,7 @@ export function SearchBar({
           placeholderTextColor="#9ca3af"
           className="flex-1 font-manrope text-sm text-gray-900 py-2.5"
         />
+        {showCamera && <ImageSearchButton />}
       </View>
       <TouchableOpacity
         onPress={onFilterPress ?? onSubmit}

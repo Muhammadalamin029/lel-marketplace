@@ -106,7 +106,8 @@ function sortParams(sort: SortOption): { sort_by?: "price" | "name" | "created_a
 
 export default function BrowseScreen() {
   const router = useRouter();
-  const { search: initialSearch } = useLocalSearchParams<{ search?: string }>();
+  const { search: initialSearch, detected: initialDetected, confidence: initialConfidence } =
+    useLocalSearchParams<{ search?: string; detected?: string; confidence?: string }>();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const [search, setSearch] = useState(typeof initialSearch === "string" ? initialSearch : "");
   const [tab, setTab] = useState<ShopTab>("products");
@@ -144,6 +145,11 @@ export default function BrowseScreen() {
   useEffect(() => {
     if (typeof initialSearch === "string") setSearch(initialSearch);
   }, [initialSearch]);
+
+  const detectedLabel = typeof initialDetected === "string" ? initialDetected : "";
+  const detectedConfidence = typeof initialConfidence === "string" ? initialConfidence : "";
+  const [dismissedDetected, setDismissedDetected] = useState("");
+  const showDetectedBanner = detectedLabel !== "" && dismissedDetected !== detectedLabel;
 
   useEffect(() => {
     const t = setTimeout(() => setSearchDebounce(search), 500);
@@ -402,6 +408,21 @@ export default function BrowseScreen() {
           onFilterPress={() => setFiltersOpen((v) => !v)}
         />
       </View>
+
+      {/* Photo-detection banner (image search arrivals) */}
+      {showDetectedBanner && (
+        <View className="px-5 pb-2">
+          <View className="flex-row items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5">
+            <Text className="flex-1 font-manrope text-xs text-gray-700" numberOfLines={2}>
+              Photo detected as <Text className="font-bold">“{detectedLabel}”</Text>
+              {detectedConfidence !== "" ? ` (${detectedConfidence}% confident)` : ""} — edit the search box to refine
+            </Text>
+            <TouchableOpacity onPress={() => setDismissedDetected(detectedLabel)} hitSlop={8}>
+              <X size={14} color="#6b7280" />
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
 
       {/* Category tabs */}
       <View className="flex-row px-5 border-b border-gray-100">

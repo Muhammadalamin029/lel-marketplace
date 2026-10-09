@@ -1,5 +1,5 @@
 import { TextInput, TouchableOpacity, View } from "react-native";
-import { Search, SlidersHorizontal } from "lucide-react-native";
+import { Search, SlidersHorizontal, X } from "lucide-react-native";
 import { COLORS } from "@/constants/brand";
 import { ImageSearchButton } from "@/components/ImageSearchButton";
 
@@ -9,6 +9,7 @@ export function SearchBar({
   onChangeText,
   onSubmit,
   onFilterPress,
+  onClear,
   placeholder = "Search,Product,Autos,Real estate",
   showCamera = true,
 }: {
@@ -16,6 +17,7 @@ export function SearchBar({
   onChangeText: (v: string) => void;
   onSubmit?: () => void;
   onFilterPress?: () => void;
+  onClear?: () => void;
   placeholder?: string;
   showCamera?: boolean;
 }) {
@@ -35,6 +37,18 @@ export function SearchBar({
           placeholderTextColor="#9ca3af"
           className="flex-1 font-manrope text-sm text-gray-900 py-2.5"
         />
+        {value !== "" && (
+          <TouchableOpacity
+            onPress={() => {
+              onChangeText("");
+              onClear?.();
+            }}
+            hitSlop={8}
+            accessibilityLabel="Clear search"
+          >
+            <X size={16} color="#9ca3af" />
+          </TouchableOpacity>
+        )}
         {showCamera && <ImageSearchButton />}
       </View>
       <TouchableOpacity

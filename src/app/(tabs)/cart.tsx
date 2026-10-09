@@ -118,7 +118,7 @@ export default function CartScreen() {
 
   return (
     <SafeAreaView edges={["top", "left", "right"]} className="flex-1 bg-white">
-      <ScreenHeader title="Your Cart" subtitle={qty > 0 ? `(${qty} item${qty === 1 ? "" : "s"})` : undefined} />
+      <ScreenHeader title="Your Cart" subtitle={qty > 0 ? `(${qty} item${qty === 1 ? "" : "s"})` : undefined} hideBack />
 
       {isLoading && items.length === 0 ? (
         <View className="flex-1 items-center justify-center gap-3">

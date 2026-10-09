@@ -5,7 +5,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { ArrowUpDown, SlidersHorizontal, X, Check, Package } from "lucide-react-native";
+import { ArrowUpDown, ChevronLeft, SlidersHorizontal, X, Check, Package } from "lucide-react-native";
 import { EmptyState } from "@/components/EmptyState";
 import { ProductCard } from "@/components/ProductCard";
 import type { ProductCardItem } from "@/components/ProductCard";
@@ -398,15 +398,28 @@ export default function BrowseScreen() {
 
       {/* Search */}
       <View className="px-5 pt-4 pb-2">
-        <SearchBar
-          value={search}
-          onChangeText={setSearch}
-          onSubmit={() => {
-            if (isProductsTab) fetchProducts(1);
-            else fetchAssets(search);
-          }}
-          onFilterPress={() => setFiltersOpen((v) => !v)}
-        />
+        <View className="flex-row items-center gap-1">
+          <TouchableOpacity onPress={() => router.back()} hitSlop={12} className="p-1 -ml-1 shrink-0" accessibilityLabel="Go back">
+            <ChevronLeft size={22} color="#111827" />
+          </TouchableOpacity>
+          <View className="flex-1">
+            <SearchBar
+              value={search}
+              onChangeText={setSearch}
+              onSubmit={() => {
+                if (isProductsTab) fetchProducts(1);
+                else fetchAssets(search);
+              }}
+              onFilterPress={() => setFiltersOpen((v) => !v)}
+              onClear={() => {
+                // Match web: clearing drops the query AND the photo-detection
+                // params so the cleared search can't come back.
+                setDismissedDetected(detectedLabel || "cleared");
+                router.setParams({ search: undefined, detected: undefined, confidence: undefined } as any);
+              }}
+            />
+          </View>
+        </View>
       </View>
 
       {/* Photo-detection banner (image search arrivals) */}

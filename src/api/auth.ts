@@ -127,6 +127,15 @@ export const authApi = {
   },
 
   async logout(): Promise<void> {
+    // Best-effort server revocation before wiping local state.
+    try {
+      const refreshToken = await storage.getRefreshToken();
+      if (refreshToken) {
+        await api.post("/auth/logout", { refresh_token: refreshToken });
+      }
+    } catch {
+      // Logout still proceeds locally even if revocation fails.
+    }
     await storage.clearTokens();
   },
 };

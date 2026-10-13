@@ -14,11 +14,11 @@ const SECTIONS = [
   },
   {
     title: "3. Purposes and Legal Basis (NDPR)",
-    body: "We process your data to run your account, checkout, inspections, agreements, delivery and support (contract); for marketing notifications only with your consent, withdrawable in Settings; for AML, tax and deed-tracing record-keeping (legal obligation); and for fraud prevention and security (legitimate interests). Sensitive financing data is processed only when you submit an application.",
+    body: "We process your data to run your account, checkout, inspections, agreements, delivery and support (contract); for marketing notifications only with your consent, withdrawable in Settings; for AML, tax and deed-tracing record-keeping (legal obligation); and for fraud prevention and security (legitimate interests), including bot screening at website registration. Sensitive financing data is processed only when you submit an application.",
   },
   {
     title: "4. How We Share Data",
-    body: "Browsing users are not publicly identified. Paid inspection details go to LEL Store operations only; your home address stays masked unless delivery is required. Final receipts and agreements contain legal names as required by law. Processors: Flutterwave (payments, PCI-DSS Level 1), Cloudinary (images and receipt PDFs), Google Identity (sign-in), Gmail (transactional email), Expo Push (notifications) and our AI vision provider (photo product labeling — photo transmitted, never stored; text label cached up to 24 hours). We do not sell personal data. Receipts are generated when you request them; offline-payment receipts are stored as link-accessible files and the link is sent to the payer's email.",
+    body: "Browsing users are not publicly identified. Paid inspection details go to LEL Store operations only; your home address stays masked unless delivery is required. Final receipts and agreements contain legal names as required by law. Processors: Flutterwave (payments, PCI-DSS Level 1), Cloudinary (images and receipt PDFs), Google Identity (sign-in), Gmail (transactional email), Expo Push (notifications) and our AI vision provider (photo product labeling — photo transmitted, never stored; text label cached up to 24 hours). We do not sell personal data. Website registration is protected by Cloudflare Turnstile bot verification (IP address and browser signals sent to Cloudflare); the mobile app does not use it. Receipts are generated when you request them; offline-payment receipts are stored as link-accessible files and the link is sent to the payer's email.",
   },
   {
     title: "5. Financial Security and Data Protection",
@@ -26,7 +26,7 @@ const SECTIONS = [
   },
   {
     title: "6. Data Retention and Deletion",
-    body: "Account data is kept while your account is active. On deletion (Settings, Danger Zone, Delete Account, or https://lelstore.com/account-deletion by email to support@lelstore.com with no login needed): sign-in is blocked immediately, the account has a 30-day grace period, then personal data is permanently deleted or irreversibly anonymised. Anonymised escrow and financial ledgers — including offline payment records — are kept up to 7 years for anti-money laundering, tax and deed-tracing law and cannot be expunged.",
+    body: "Account data is kept while your account is active. On deletion (Settings, Danger Zone, Delete Account, or https://lelstore.com/account-deletion by email to support@lelstore.com with no login needed): sign-in is blocked immediately, the account has a 30-day grace period, then personal data is permanently deleted or irreversibly anonymised. Anonymised escrow and financial ledgers — including offline payment records — are kept up to 7 years for anti-money laundering, tax and deed-tracing law and cannot be expunged. Accounts removed by our administrators for fraud, abuse or bot activity may be erased in full, including transaction records, with an internal audit entry recording the action.",
   },
   {
     title: "7. Your Rights",

@@ -41,7 +41,9 @@ We respond within 30 days.
 
 Contract (account, checkout, inspections, delivery, support); consent
 (marketing notifications, withdrawable in Settings); legal obligation
-(AML, tax, deed-tracing records); legitimate interests (fraud, security).
+(AML, tax, deed-tracing records); legitimate interests (fraud, security),
+including bot screening at website registration (a condition of creating
+an account).
 
 ## Sharing
 
@@ -49,7 +51,9 @@ Operations team (inspection appointments only; home address masked unless
 delivery is needed); Flutterwave, Cloudinary (images and receipt PDFs),
 Google Identity, Gmail (transactional email), Expo Push, and our AI
 vision provider (photo labeling — photo transmitted, never stored).
-Sessions use short-lived tokens with single-use refresh rotation and
+Website registration is protected by Cloudflare Turnstile bot
+verification (IP address and browser signals sent to Cloudflare); the
+mobile app does not use it. Sessions use short-lived tokens with single-use refresh rotation and
 immediate revocation on logout. We do not sell personal data.
 
 ## Retention and deletion
@@ -61,7 +65,10 @@ immediate revocation on logout. We do not sell personal data.
   data is permanently deleted or irreversibly anonymised.
 - Anonymised escrow/financial ledgers — including offline payment
   records — are kept up to 7 years for anti-money laundering, tax and
-  deed-tracing law and cannot be expunged.
+  deed-tracing law and cannot be expunged on user request. Accounts
+  removed by our administrators for fraud, abuse or bot activity may be
+  erased in full, including transaction records, with an internal audit
+  entry recording the action.
 
 ## Your rights
 

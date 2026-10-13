@@ -81,12 +81,12 @@ so this must be completed before release.
 ## Graphics checklist (verify before upload)
 
 - [x] Store icon `store/icon-512.png`: 512×512, 32-bit PNG (generated
-  from `assets/images/app-icon.png`).
+      from `assets/images/app-icon.png`).
 - [x] Feature graphic `store/feature-graphic.png`: exactly 1024×500, no
-  alpha (brand gradient + app mark + tagline).
+      alpha (brand gradient + app mark + tagline).
 - [ ] Phone screenshots: minimum 2, maximum 8; JPEG or 24-bit PNG (no alpha);
-  9:16 or 16:9 aspect; each side 320–3840px. Cover: home/browse, product
-  details, checkout, inspection booking, settings deletion row.
+      9:16 or 16:9 aspect; each side 320–3840px. Cover: home/browse, product
+      details, checkout, inspection booking, settings deletion row.
 - All graphics must show the real production UI — no mocks or edits.
 
 ## Data Safety (declare in Play Console)

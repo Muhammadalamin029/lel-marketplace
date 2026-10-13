@@ -24,9 +24,10 @@ Buy with confidence:
 How it works:
 
 1. Create your account (email or Google) and verify it.
-2. Browse products, cars and properties.
+2. Browse products, cars and properties — or snap a photo to search
+   by image.
 3. Book a physical inspection for vehicles and real estate.
-4. Pay securely through Paystack — card, bank transfer or direct debit.
+4. Pay securely through Flutterwave — card, bank transfer or direct debit.
    LEL Store never sees or stores your card numbers or bank passwords.
 5. Track orders, inspections, agreements and payments in one place.
 
@@ -68,11 +69,12 @@ so this must be completed before release.
 
 ## Permissions (declare; verify in merged manifest)
 
-- `INTERNET`, `ACCESS_NETWORK_STATE` — API, Paystack, push.
+- `INTERNET`, `ACCESS_NETWORK_STATE` — API, Flutterwave, push.
 - `POST_NOTIFICATIONS` — order, payment and inspection updates
   (expo-notifications; registered on launch, toggles in Settings).
 - Photo/media read + camera — only when the user uploads a profile photo
-  or financing document (expo-image-picker, expo-document-picker).
+  or financing document, or uses photo search (expo-image-picker,
+  expo-document-picker).
 - No location permission — maps are display-only with manual pins.
 - No microphone, SMS, call log, or background location.
 
@@ -91,9 +93,12 @@ so this must be completed before release.
 
 - Data collected: name, email, phone, addresses, purchase and order
   history, financing application data (employment, income, ID/payslip
-  documents), device IDs and push tokens.
-- Data shared: Paystack (payments), Cloudinary (images), Google Identity
-  (sign-in), Expo Push (notifications). No sale of personal data.
+  documents), photo-search images (sent to AI vision provider, never
+  stored), offline payer records (name, email, receipt link), device IDs
+  and push tokens.
+- Data shared: Flutterwave (payments), Cloudinary (images, receipt PDFs),
+  Google Identity (sign-in), Expo Push (notifications), AI vision
+  provider (photo labeling). No sale of personal data.
 - Data is encrypted in transit (TLS); passwords hashed with Argon2.
 - Account deletion offered in-app (Settings, Danger Zone) and via the web
   resource above; ledgers retained anonymised up to 7 years for AML/tax/
@@ -103,9 +108,9 @@ so this must be completed before release.
 
 Initial release of LEL Store.
 
-- Curated products, cars and property listings
+- Curated products, cars and property listings (browse or photo search)
 - Physical inspection booking with sign-off
-- Escrow checkout via Paystack (card, transfer, direct debit)
+- Escrow checkout via Flutterwave (card, transfer, direct debit)
 - Financing applications with document upload
 - Orders, agreements, payments and dispute tracking
 - Push, email and in-app notification preferences

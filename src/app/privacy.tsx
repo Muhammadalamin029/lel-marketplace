@@ -10,7 +10,7 @@ const SECTIONS = [
   },
   {
     title: "2. Data We Collect",
-    body: "Identity and account: name, email, password (stored only as an Argon2 hash), Google ID if you use Google sign-in, and login security data. Profile and contact: phone number, bio, profile photo, delivery and billing addresses. Transactions: cart, orders, inspection bookings, agreements, reviews, wishlist and disputes. Financing (only if you apply): employment details, income and uploaded ID or payslip documents. Payments: non-sensitive references only (amounts, receipt numbers, escrow states) — we never collect raw card numbers or bank passwords. Technical: notification preferences and Expo push tokens if you enable notifications.",
+    body: "Identity and account: name, email, password (stored only as an Argon2 hash), Google ID if you use Google sign-in, and login security data. Profile and contact: phone number, bio, profile photo, delivery and billing addresses. Transactions: cart, orders, inspection bookings, agreements, reviews, wishlist and disputes. Financing (only if you apply): employment details, income and uploaded ID or payslip documents. Payments: non-sensitive references only (amounts, receipt numbers, escrow states) — we never collect raw card numbers or bank passwords. Photo search: product photos you choose (camera or library, no login needed) are sent to our AI vision provider for labeling and never stored. Offline payments: payer name, email and receipt link when you pay outside the app. Technical: notification preferences and Expo push tokens if you enable notifications.",
   },
   {
     title: "3. Purposes and Legal Basis (NDPR)",
@@ -18,19 +18,19 @@ const SECTIONS = [
   },
   {
     title: "4. How We Share Data",
-    body: "Browsing users are not publicly identified. Paid inspection details go to LEL Store operations only; your home address stays masked unless delivery is required. Final receipts and agreements contain legal names as required by law. Processors: Flutterwave (payments, PCI-DSS Level 1), Cloudinary (images), Google Identity (sign-in), Gmail (transactional email) and Expo Push (notifications). We do not sell personal data.",
+    body: "Browsing users are not publicly identified. Paid inspection details go to LEL Store operations only; your home address stays masked unless delivery is required. Final receipts and agreements contain legal names as required by law. Processors: Flutterwave (payments, PCI-DSS Level 1), Cloudinary (images and receipt PDFs), Google Identity (sign-in), Gmail (transactional email), Expo Push (notifications) and our AI vision provider (photo product labeling — photo transmitted, never stored; text label cached up to 24 hours). We do not sell personal data. Receipts are generated when you request them; offline-payment receipts are stored as link-accessible files and the link is sent to the payer's email.",
   },
   {
     title: "5. Financial Security and Data Protection",
-    body: "Card details are transmitted over TLS straight to our PCI-DSS Level 1 processor (Flutterwave) and are never stored on our servers or in logs. Connections use TLS, passwords use Argon2 hashing, sessions use short-lived tokens, and admin access is role-based. Report suspected compromise to support@lelstore.com immediately.",
+    body: "Card details are transmitted over TLS straight to our PCI-DSS Level 1 processor (Flutterwave) and are never stored on our servers or in logs; an interrupted card payment keeps only a transaction reference on your device. Connections use TLS, passwords use Argon2 hashing, sessions use short-lived tokens with single-use refresh rotation and immediate revocation on logout, and admin access is role-based. Report suspected compromise to support@lelstore.com immediately.",
   },
   {
     title: "6. Data Retention and Deletion",
-    body: "Account data is kept while your account is active. On deletion (Settings, Danger Zone, Delete Account, or https://lelstore.com/account-deletion by email to support@lelstore.com with no login needed): sign-in is blocked immediately, the account has a 30-day grace period, then personal data is permanently deleted or irreversibly anonymised. Anonymised escrow and financial ledgers are kept up to 7 years for anti-money laundering, tax and deed-tracing law and cannot be expunged.",
+    body: "Account data is kept while your account is active. On deletion (Settings, Danger Zone, Delete Account, or https://lelstore.com/account-deletion by email to support@lelstore.com with no login needed): sign-in is blocked immediately, the account has a 30-day grace period, then personal data is permanently deleted or irreversibly anonymised. Anonymised escrow and financial ledgers — including offline payment records — are kept up to 7 years for anti-money laundering, tax and deed-tracing law and cannot be expunged.",
   },
   {
     title: "7. Your Rights",
-    body: "You may access, correct, erase, export (JSON), restrict or object to processing of your data, and withdraw consent at any time — in Settings or by emailing support@lelstore.com from your account email. Web requests are actioned within 7 days, with purge after the 30-day grace period.",
+    body: "You may access, correct, erase, export (JSON), restrict or object to processing of your data, and withdraw consent at any time — in Settings or by emailing support@lelstore.com from your account email. Guests who paid offline without an account: email from the address given at payment time with subject Delete my payer data. Web requests are actioned within 7 days, with purge after the 30-day grace period.",
   },
   {
     title: "8. Cookies and Analytics",
@@ -50,7 +50,7 @@ const SECTIONS = [
   },
   {
     title: "12. Contact and App Permissions",
-    body: "Privacy contact: support@lelstore.com, +234 800 123 4567, Osun State, Nigeria. You may also complain to the Nigeria Data Protection Commission (NDPC). The app uses internet access, push notifications (order and payment updates) and photo/camera access only when you upload a profile picture or financing document. It does not access your location, microphone, SMS or contacts.",
+    body: "Privacy contact: support@lelstore.com, +234 800 123 4567, Osun State, Nigeria. You may also complain to the Nigeria Data Protection Commission (NDPC). The app uses internet access, push notifications (order and payment updates) and photo/camera access when you upload a profile picture or financing document, or use photo search (camera or library). It does not access your location, microphone, SMS or contacts.",
   },
 ];
 

@@ -30,7 +30,9 @@ track. Needs a backend with the October 2026 legal content saved
 ## Browse → checkout (escrow)
 
 - [ ] Browse products, cars, properties; details load with images (*)
-- [ ] Checkout totals, delivery/pickup options, Paystack screen opens (*)
+- [ ] Photo search: camera + library options return a detection banner
+      and matching products; permission asked only on use (*)
+- [ ] Checkout totals, delivery/pickup options, Flutterwave screen opens (*)
 - [ ] Order appears in Orders with receipt; my-payments shows reference
 - [ ] test-mode payments clearly labelled; no real charge on preview
 
@@ -46,7 +48,8 @@ track. Needs a backend with the October 2026 legal content saved
 - [ ] Launch permission prompt for notifications appears once (*)
 - [ ] Order update triggers a push when granted; toggles in Settings
       stop their category
-- [ ] Camera/photos permission asked only on upload, never at launch
+- [ ] Camera/photos permission asked only on upload or photo search,
+      never at launch
 - [ ] No location permission prompt anywhere (*)
 
 ## Account deletion (Play requirement)

@@ -93,12 +93,13 @@ Account deletion available: **Yes** (see §4).
 | Data type | Collected (required?) | Shared | Purpose / notes |
 |---|---|---|---|
 | Name | Yes, required (account) | No | App functionality, account management |
-| Email | Yes, required (account) | Yes — Paystack (payment/mandate auth), Google (sign-in verification) | Account, payments |
+| Email | Yes, required (account) | Yes — Flutterwave (payment/mandate auth), Google (sign-in verification) | Account, payments |
 | Phone | Yes, required (account, delivery) | No | Account, delivery coordination |
 | Address (delivery/billing) | Yes, required for delivery orders | No | Fulfilment |
-| Purchase history | Yes, required | Yes — Paystack (amounts/refs) | Order processing, escrow |
+| Purchase history | Yes, required | Yes — Flutterwave (amounts/refs) | Order processing, escrow |
 | Financial info (income, employer, financing docs) | Yes, optional (only if user applies) | No (processed first-party; docs via Cloudinary infra — see Photos) | Eligibility checks |
 | Photos / videos (avatar, ID, payslips) | Yes, optional (user-initiated uploads) | Yes — Cloudinary (image hosting) | Account + financing verification |
+| Photos (visual product search) | Yes, optional (user-initiated, no login needed) | Yes — AI vision provider (product labeling; photo transmitted, never stored; text label cached 24h) | App functionality (photo search) |
 | Files / docs | Yes, optional (same uploads) | Yes — Cloudinary | Verification |
 | Device / push IDs (Expo tokens) | Yes, required if notifications on | Yes — Expo Push | Notifications |
 | Location, contacts, microphone, SMS, call logs | No | No | Not accessed (maps display-only) |

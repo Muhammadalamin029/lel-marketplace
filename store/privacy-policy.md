@@ -22,9 +22,18 @@ We respond within 30 days.
   wishlist, disputes.
 - **Financing (only if you apply):** employment details, income, uploaded
   ID/payslip documents.
-- **Payments:** non-sensitive references only. Card entry happens inside
-  the Paystack screen; raw card numbers and bank passwords never touch
-  our servers.
+- **Payments:** non-sensitive references only. Card details go straight
+  to our PCI-DSS Level 1 processor (Flutterwave) over TLS; raw card
+  numbers and bank passwords never touch our servers or logs. An
+  interrupted card payment keeps only a transaction reference on your
+  device. Standard receipts are generated when you request them.
+- **Photo search:** product photos you choose (camera or library, no
+  login needed) are sent to our AI vision provider for product labeling
+  and never stored; only the text label is cached up to 24 hours.
+- **Offline payments:** payer name, email, optional phone, amount,
+  channel and receipt link when you pay outside the app (cash, bank
+  transfer, POS). Receipt PDFs are stored as link-accessible files and
+  the link is sent to the payer's email.
 - **Technical:** notification preferences and Expo push tokens (if you
   enable notifications). The app uses no cookies and no analytics SDKs.
 
@@ -37,8 +46,11 @@ Contract (account, checkout, inspections, delivery, support); consent
 ## Sharing
 
 Operations team (inspection appointments only; home address masked unless
-delivery is needed); Paystack, Cloudinary, Google Identity, Gmail
-(transactional email), Expo Push. We do not sell personal data.
+delivery is needed); Flutterwave, Cloudinary (images and receipt PDFs),
+Google Identity, Gmail (transactional email), Expo Push, and our AI
+vision provider (photo labeling — photo transmitted, never stored).
+Sessions use short-lived tokens with single-use refresh rotation and
+immediate revocation on logout. We do not sell personal data.
 
 ## Retention and deletion
 
@@ -47,14 +59,17 @@ delivery is needed); Paystack, Cloudinary, Google Identity, Gmail
   at https://lelstore.com/account-deletion (email support@lelstore.com).
   Sign-in is blocked immediately; 30-day grace period; then personal
   data is permanently deleted or irreversibly anonymised.
-- Anonymised escrow/financial ledgers are kept up to 7 years for
-  anti-money laundering, tax and deed-tracing law and cannot be expunged.
+- Anonymised escrow/financial ledgers — including offline payment
+  records — are kept up to 7 years for anti-money laundering, tax and
+  deed-tracing law and cannot be expunged.
 
 ## Your rights
 
 Access, correct, erase, export, restrict, object, withdraw consent — in
 Settings or by emailing support@lelstore.com from your account email.
-Web requests are actioned within 7 days (purge after the 30-day grace).
+Guests who paid offline without an account: email from the address given
+at payment time with subject Delete my payer data. Web requests are
+actioned within 7 days (purge after the 30-day grace).
 
 ## Children
 
@@ -62,9 +77,10 @@ Web requests are actioned within 7 days (purge after the 30-day grace).
 
 ## App permissions
 
-Internet, push notifications (order/payment updates), photo/camera only
-when you upload a picture or document. No location, microphone, SMS or
-contacts access. Maps are display-only.
+Internet, push notifications (order/payment updates), photo/camera when
+you upload a picture or document, or use photo search (camera or
+library). No location, microphone, SMS or contacts access. Maps are
+display-only.
 
 ## Changes
 

@@ -11,8 +11,9 @@ import { ProductCard } from "@/components/ProductCard";
 import type { ProductCardItem } from "@/components/ProductCard";
 import { SearchBar } from "@/components/SearchBar";
 import { COLORS } from "@/constants/brand";
-import { productsApi, wishlistApi, getApiError } from "@/api";
+import { productsApi, wishlistApi, imageSearchApi, getApiError } from "@/api";
 import { useAuthStore } from "@/store/authStore";
+import { useImageSearchPendingStore } from "@/store/imageSearchStore";
 import type { Product, Car as CarType, Property } from "@/api";
 import { fmt } from "@/utils/format";
 import { getDiscountPct, getEffectivePrice, isOnSale } from "@/lib/discount";
@@ -106,8 +107,9 @@ function sortParams(sort: SortOption): { sort_by?: "price" | "name" | "created_a
 
 export default function BrowseScreen() {
   const router = useRouter();
-  const { search: initialSearch, detected: initialDetected, confidence: initialConfidence } =
-    useLocalSearchParams<{ search?: string; detected?: string; confidence?: string }>();
+  const { search: initialSearch, detected: initialDetected, confidence: initialConfidence, "image-search": imageSearchSignal } =
+    useLocalSearchParams<{ search?: string; detected?: string; confidence?: string; "image-search"?: string }>();
+  const pendingAnalysisId = useImageSearchPendingStore((s) => s.analysisId);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const [search, setSearch] = useState(typeof initialSearch === "string" ? initialSearch : "");
   const [tab, setTab] = useState<ShopTab>("products");
@@ -140,6 +142,87 @@ export default function BrowseScreen() {
   const [maxYear, setMaxYear] = useState("");
 
   const requestId = useRef(0);
+  const runningAnalysisRef = useRef(0);
+  // Initialize from the URL so the very first render is already the analyzing
+  // state — the normal listing must never flash before the search results.
+  const [isImageAnalyzing, setIsImageAnalyzing] = useState(imageSearchSignal === "analyzing");
+  const [dismissedDetected, setDismissedDetected] = useState("");
+
+  // Image search: the photo arrives first (stored, then immediate navigation
+  // here), so the analysis — spinner + skeletons — happens on this screen.
+  useEffect(() => {
+    if (imageSearchSignal !== "analyzing") return;
+    const pending = useImageSearchPendingStore.getState();
+    // Refresh / deep link with no photo in memory: nothing to analyze.
+    if (!pending.uri || pending.status !== "analyzing") {
+      router.setParams({ "image-search": undefined } as any);
+      setIsImageAnalyzing(false);
+      return;
+    }
+    // De-dupe (StrictMode) + ignore stale uploads superseded by a newer one.
+    if (runningAnalysisRef.current === pending.analysisId) return;
+    runningAnalysisRef.current = pending.analysisId;
+    const currentId = pending.analysisId;
+    const { uri, mimeType, fileName } = pending;
+    let cancelled = false;
+
+    // Reset so the analyzing state replaces old results.
+    setSearch("");
+    setSearchDebounce("");
+    setSort("featured");
+    setTab("products");
+    setMinPrice(""); setMaxPrice(""); setMinYear(""); setMaxYear("");
+    setProductItems([]);
+    setProductTotal(0);
+    setDismissedDetected("");
+    setIsImageAnalyzing(true);
+
+    imageSearchApi
+      .analyze(uri, mimeType, fileName)
+      .then((result) => {
+        if (cancelled || runningAnalysisRef.current !== currentId) return;
+        const query = result.searched_query || result.detected.detected_name;
+        if (!query || query.toLowerCase() === "unknown") {
+          Alert.alert("No match", "Couldn't recognize a product in that photo — try another angle.");
+          useImageSearchPendingStore.getState().clear();
+          setIsImageAnalyzing(false);
+          router.setParams({ "image-search": undefined } as any);
+          return;
+        }
+        if (result.pagination.total === 0) {
+          Alert.alert(
+            "No close matches",
+            `Detected "${result.detected.detected_name}". Showing the search so you can refine it.`
+          );
+        }
+        useImageSearchPendingStore.getState().markDone();
+        // Apply the search to state synchronously (batched with the lines
+        // below): the refetch effect must fire with the detected query on its
+        // very first run, never with the stale empty search — that gap is what
+        // flashed the normal listing before the results.
+        setSearch(query);
+        setSearchDebounce(query);
+        setIsImageAnalyzing(false);
+        router.setParams({
+          "image-search": undefined,
+          search: query,
+          detected: result.detected.detected_name,
+          confidence: String(Math.round(result.detected.confidence * 100)),
+        } as any);
+      })
+      .catch((e) => {
+        if (cancelled || runningAnalysisRef.current !== currentId) return;
+        Alert.alert("Image search failed", getApiError(e));
+        useImageSearchPendingStore.getState().clear();
+        setIsImageAnalyzing(false);
+        router.setParams({ "image-search": undefined } as any);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [imageSearchSignal, pendingAnalysisId]);
 
   // Sync search box when navigating here with ?search= (e.g. from Home).
   useEffect(() => {
@@ -148,7 +231,6 @@ export default function BrowseScreen() {
 
   const detectedLabel = typeof initialDetected === "string" ? initialDetected : "";
   const detectedConfidence = typeof initialConfidence === "string" ? initialConfidence : "";
-  const [dismissedDetected, setDismissedDetected] = useState("");
   const showDetectedBanner = detectedLabel !== "" && dismissedDetected !== detectedLabel;
 
   useEffect(() => {
@@ -261,10 +343,12 @@ export default function BrowseScreen() {
   }, []);
 
   // Refetch on tab / search / sort / price-filter change.
+  // Skipped while a photo is being analyzed (filters were just reset for it).
   useEffect(() => {
+    if (isImageAnalyzing) return;
     if (tab === "products") fetchProducts(1);
     else fetchAssets(searchDebounce);
-  }, [tab, searchDebounce, sort, priceBounds.lo, priceBounds.hi, fetchProducts, fetchAssets]);
+  }, [tab, searchDebounce, sort, priceBounds.lo, priceBounds.hi, fetchProducts, fetchAssets, isImageAnalyzing]);
 
   const onRefresh = useCallback(() => {
     if (tab === "products") fetchProducts(1, { isRefresh: true });
@@ -415,12 +499,26 @@ export default function BrowseScreen() {
                 // Match web: clearing drops the query AND the photo-detection
                 // params so the cleared search can't come back.
                 setDismissedDetected(detectedLabel || "cleared");
-                router.setParams({ search: undefined, detected: undefined, confidence: undefined } as any);
+                useImageSearchPendingStore.getState().clear();
+                setIsImageAnalyzing(false);
+                router.setParams({ search: undefined, detected: undefined, confidence: undefined, "image-search": undefined } as any);
               }}
             />
           </View>
         </View>
       </View>
+
+      {/* Photo-analysis banner (spinner + skeletons show below while this runs) */}
+      {isImageAnalyzing && (
+        <View className="px-5 pb-2">
+          <View className="flex-row items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5">
+            <ActivityIndicator size="small" color={COLORS.primary} />
+            <Text className="flex-1 font-manrope text-xs text-gray-700" numberOfLines={2}>
+              <Text className="font-bold">Analyzing your photo…</Text> finding matching products
+            </Text>
+          </View>
+        </View>
+      )}
 
       {/* Photo-detection banner (image search arrivals) */}
       {showDetectedBanner && (
@@ -454,7 +552,7 @@ export default function BrowseScreen() {
       {/* Results + Sort/Filter */}
       <View className="flex-row items-center justify-between px-5 py-3">
         <Text className="font-manrope text-xs text-gray-400">
-          {loading && shownCount === 0 ? "Loading…" : `${shownCount} result${shownCount === 1 ? "" : "s"}`}
+          {isImageAnalyzing ? "Analyzing photo…" : loading && shownCount === 0 ? "Loading…" : `${shownCount} result${shownCount === 1 ? "" : "s"}`}
         </Text>
         <View className="flex-row gap-2">
           <TouchableOpacity
@@ -535,7 +633,25 @@ export default function BrowseScreen() {
         }
       >
         <View className="px-5">
-          {loading && rows.length === 0 ? (
+          {isImageAnalyzing ? (
+            <View className="gap-4">
+              <View className="items-center justify-center pt-6 pb-2 gap-3">
+                <ActivityIndicator size="large" color={COLORS.primary} />
+                <Text className="font-manrope text-sm text-gray-400">Analyzing your photo…</Text>
+              </View>
+              {[0, 1, 2].map((r) => (
+                <View key={r} className="flex-row" style={{ gap: 12 }}>
+                  {[0, 1].map((c) => (
+                    <View key={c} style={{ flex: 1 }} className="gap-2">
+                      <View className="bg-gray-100 rounded-2xl" style={{ height: 150 }} />
+                      <View className="bg-gray-100 rounded-md" style={{ height: 12, width: "75%" }} />
+                      <View className="bg-gray-100 rounded-md" style={{ height: 12, width: "50%" }} />
+                    </View>
+                  ))}
+                </View>
+              ))}
+            </View>
+          ) : loading && rows.length === 0 ? (
             <View className="items-center justify-center pt-20 gap-3">
               <ActivityIndicator size="large" color={COLORS.primary} />
               <Text className="font-manrope text-sm text-gray-400">Loading listings…</Text>

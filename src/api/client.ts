@@ -1,7 +1,16 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
+import { Platform } from "react-native";
 import { storage } from "./storage";
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
+
+// Native app bot-exemption headers (backend skips Turnstile for these).
+// EXPO_PUBLIC_MOBILE_APP_KEY must match the backend's MOBILE_APP_KEY.
+const MOBILE_APP_KEY = process.env.EXPO_PUBLIC_MOBILE_APP_KEY ?? "";
+const MOBILE_HEADERS: Record<string, string> =
+  MOBILE_APP_KEY && Platform.OS !== "web"
+    ? { "X-App-Platform": Platform.OS, "X-App-Key": MOBILE_APP_KEY }
+    : {};
 
 export interface ApiEnvelope<T> {
   success?: boolean;
@@ -24,7 +33,7 @@ export interface Pagination {
 export const api = axios.create({
   baseURL: BASE_URL,
   timeout: 15000,
-  headers: { "Content-Type": "application/json" },
+  headers: { "Content-Type": "application/json", ...MOBILE_HEADERS },
 });
 
 // ── Request interceptor: attach access token ─────────────────────────────────

@@ -174,6 +174,7 @@ export default function HomeScreen() {
   const [autos, setAutos] = useState<ProductCardItem[]>([]);
   const [properties, setProperties] = useState<ProductCardItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [categorySpotlights, setCategorySpotlights] = useState<{ category: Category; items: ProductCardItem[] }[]>([]);
   const [campaigns, setCampaigns] = useState<CampaignBanner[]>([]);
   const [unread, setUnread] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -256,8 +257,31 @@ export default function HomeScreen() {
         );
       }
       setHotSales(items.slice(0, 6));
-      if (catsRes.status === "fulfilled")
-        setCategories(catsRes.value.slice(0, 8));
+      if (catsRes.status === "fulfilled") {
+        const cats = catsRes.value.slice(0, 8);
+        setCategories(cats);
+        // Top 3 categories by product count, each with its own product grid.
+        const top = [...cats]
+          .sort((a, b) => (b.product_count ?? 0) - (a.product_count ?? 0))
+          .slice(0, 3);
+        const settled = await Promise.allSettled(
+          top.map((c) => categoriesApi.getProducts(c.id, { limit: 8 })),
+        );
+        setCategorySpotlights(
+          settled.flatMap((r, i) => {
+            if (r.status !== "fulfilled") return [];
+            const catItems: ProductCardItem[] = r.value.data.map((p: Product) => ({
+              id: p.id,
+              name: p.name,
+              price: fmt(p.price),
+              type: "product",
+              imageUrl: p.images?.[0]?.image_url ?? null,
+              subtitle: p.category?.name,
+            }));
+            return catItems.length > 0 ? [{ category: top[i], items: catItems }] : [];
+          }),
+        );
+      }
       if (campaignsRes.status === "fulfilled")
         setCampaigns(campaignsRes.value ?? []);
       if (notifRes.status === "fulfilled")
@@ -487,6 +511,76 @@ export default function HomeScreen() {
             </View>
           )}
         </View>
+
+        {/* ── Shop by Category (top 3 by product count, grids not carousels) ── */}
+        {categorySpotlights.length > 0 && (
+          <View className="mt-6 px-5">
+            <View className="flex-row items-center justify-between mb-3">
+              <Text
+                className="font-grotesk-extrabold text-gray-900"
+                style={{ fontSize: 16 }}
+              >
+                Shop by Category
+              </Text>
+              <TouchableOpacity
+                onPress={() => router.push("/categories")}
+                className="flex-row items-center gap-1"
+              >
+                <Text className="font-manrope text-xs text-gray-400">
+                  See all
+                </Text>
+                <ArrowRight size={13} color="#9ca3af" />
+              </TouchableOpacity>
+            </View>
+            {categorySpotlights.map(({ category, items }) => (
+              <View key={category.id} className="mb-5">
+                <View className="flex-row items-center justify-between mb-1">
+                  <Text
+                    className="font-grotesk-extrabold text-gray-900 flex-1"
+                    style={{ fontSize: 15 }}
+                    numberOfLines={1}
+                  >
+                    {category.name}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() =>
+                      router.push(
+                        `/category-products?id=${category.id}&name=${encodeURIComponent(category.name)}` as any,
+                      )
+                    }
+                    className="flex-row items-center gap-1"
+                  >
+                    <Text className="font-manrope text-xs text-gray-400">
+                      See more
+                    </Text>
+                    <ArrowRight size={13} color="#9ca3af" />
+                  </TouchableOpacity>
+                </View>
+                <Text
+                  className="font-manrope text-[11px] text-gray-400 mb-3"
+                  numberOfLines={2}
+                >
+                  {category.description?.trim() ||
+                    `Explore the latest ${category.name} on the marketplace.`}
+                </Text>
+                <View className="flex-row flex-wrap" style={{ gap: GRID_GAP }}>
+                  {items.map((item) => (
+                    <View
+                      key={`${item.type}-${item.id}`}
+                      style={{ width: GRID_TILE_W }}
+                    >
+                      <ProductCard
+                        item={item}
+                        onPress={() => goToItem(item)}
+                        variant="vertical"
+                      />
+                    </View>
+                  ))}
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
 
         {/* ── Find your next Auto ── */}
         {autos.length > 0 && (

@@ -88,6 +88,9 @@ export default function CategoriesScreen() {
 
                   <Text className="text-sm font-grotesk-extrabold text-gray-900" numberOfLines={1}>{cat.name}</Text>
                   <Text className="font-manrope text-xs text-gray-400 mt-0.5">{cat.product_count ?? 0} products</Text>
+                  {!!cat.description?.trim() && (
+                    <Text className="font-manrope text-xs text-gray-500 mt-1" numberOfLines={2}>{cat.description}</Text>
+                  )}
 
                   <View className="flex-row items-center gap-1 mt-3">
                     <Text className="text-[10px] font-grotesk-bold uppercase tracking-wide" style={{ color: accent }}>Browse</Text>
